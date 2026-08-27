@@ -523,7 +523,7 @@ function drawPlayer(time, palette) {
   ctx.save();
   ctx.translate(point.x, point.y);
   ctx.rotate(player.angle + player.direction * Math.PI / 2 + player.flip * player.direction * 0.18);
-  ctx.scale(player.direction * scale, scale);
+  ctx.scale(scale, scale);
   drawGlider(ctx, currentRider(), palette, 1, time, player.flip, state.fever > 0, player.glow);
   ctx.restore();
 }
