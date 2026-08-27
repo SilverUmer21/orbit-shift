@@ -9,3 +9,5 @@ From this folder:
 ```powershell
 python -m http.server 3000 --bind 0.0.0.0
 ```
+
+Open `http://127.0.0.1:3000/` on the computer.
