@@ -18,3 +18,8 @@ For a phone test:
 2. Run `ipconfig` and find the Wi-Fi adapter's IPv4 address.
 3. Open `http://YOUR-LAN-IP:3000/` on the phone, for example `http://192.168.1.20:3000/`.
 4. Allow Python through Windows Firewall if the phone cannot connect.
+
+## Deploy to Vercel
+
+1. Create an empty GitHub repository.
+2. In this folder run `git add .`, `git commit -m "Orbit Shift"`, `git branch -M main`, `git remote add origin YOUR_REPOSITORY_URL`, and `git push -u origin main`.
