@@ -32,3 +32,5 @@ For a phone test:
 - Mobile or mouse: tap the game to reverse direction.
 - Keyboard: Space, Left Arrow, or Right Arrow.
 - SFX button: mute or unmute sound.
+
+Progress, unlocked biomes, tutorial completion, and sound preference are stored locally in the browser. The old Neon Subway save remains untouched.
