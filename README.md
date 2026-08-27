@@ -1,6 +1,6 @@
 # Orbit Shift
 
-A dependency-free mobile Canvas game with an authored Luminous Papercut renderer. Tap to reverse around a living planet, pass through contracting gates, chain perfect dodges, and trigger fever mode.
+A dependency-free mobile Canvas game with authored Luminous Papercut worlds and a six-ship Cosmic Glider collection. Tap to reverse around a living planet, pass through contracting gates, chain perfect dodges, and trigger fever mode.
 
 ## Play locally
 
@@ -31,9 +31,15 @@ For a phone test:
 
 - Mobile or mouse: tap the game to reverse direction.
 - Keyboard: Space, Left Arrow, or Right Arrow.
-- SFX button: mute or unmute sound.
+- Home: play, open the garage, or change settings.
+- Garage: spend run-earned stars to unlock and equip gliders; choose any unlocked biome independently.
+- Settings: sound, supported-device haptics, and reduced effects.
 
-Progress, unlocked biomes, tutorial completion, and sound preference are stored locally in the browser. The old Neon Subway save remains untouched.
+Stars are awarded for passed gates, perfect dodges, and fever activations. Scores, stars, owned gliders, selected glider, unlocked biomes, tutorial completion, and preferences are stored locally under `orbit-shift-save`. Existing Orbit Shift saves migrate automatically and the old Neon Subway save remains untouched.
+
+## Android direction
+
+Keep the Vercel build as the playtest version. Once controls and replay balance are proven, wrap this same static app with Capacitor, add adaptive icons and splash assets, test offline/device behavior, sign an Android App Bundle, and release it through Play Console internal testing before a public listing.
 
 ## Godot mapping
 

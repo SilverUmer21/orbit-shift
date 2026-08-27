@@ -3,10 +3,14 @@ const ctx = canvas.getContext("2d");
 const ui = {
   score: document.querySelector("#score"), multiplier: document.querySelector("#multiplier"),
   best: document.querySelector("#best"), fever: document.querySelector("#feverBar"),
-  menu: document.querySelector("#menu"), results: document.querySelector("#results"),
+  shell: document.querySelector(".shell"), home: document.querySelector("#home"),
+  garage: document.querySelector("#garage"), settings: document.querySelector("#settings"), results: document.querySelector("#results"),
   resultScore: document.querySelector("#resultScore"), resultStats: document.querySelector("#resultStats"),
   record: document.querySelector("#recordText"), unlock: document.querySelector("#unlockText"),
-  cosmetics: document.querySelector("#cosmetics"), mute: document.querySelector("#mute"),
+  cosmetics: document.querySelector("#cosmetics"), riderGrid: document.querySelector("#riderGrid"),
+  homeBest: document.querySelector("#homeBest"), homeStars: document.querySelector("#homeStars"), garageStars: document.querySelector("#garageStars"),
+  resultStars: document.querySelector("#resultStars"), preview: document.querySelector("#riderPreview"),
+  sound: document.querySelector("#soundToggle"), haptics: document.querySelector("#hapticsToggle"), effects: document.querySelector("#effectsToggle"),
 };
 
 const TAU = Math.PI * 2;
@@ -16,12 +20,23 @@ const cosmetics = [
   { id: "ember", name: "Ember", score: 250, bg: "#1b1118", ink: "#4b2632", paper: "#ba4f4c", mid: "#e7795f", light: "#f2d8a0", accent: "#62c6b4", gold: "#f1bd4e", shape: "flame" },
   { id: "void", name: "Void", score: 700, bg: "#0e1020", ink: "#25274d", paper: "#5753a6", mid: "#8b76c7", light: "#d9d1df", accent: "#76d9c1", gold: "#e4bd5d", shape: "moon" },
 ];
+const riders = [
+  { id: "manta", name: "Manta", price: 0, shape: "manta" },
+  { id: "dart", name: "Dart", price: 40, shape: "dart" },
+  { id: "crescent", name: "Crescent", price: 100, shape: "crescent" },
+  { id: "splitwing", name: "Splitwing", price: 200, shape: "splitwing" },
+  { id: "shuttle", name: "Shuttle", price: 350, shape: "shuttle" },
+  { id: "ringsail", name: "Ring Sail", price: 550, shape: "ringsail" },
+];
 const saved = loadSave();
 const state = {
-  mode: "menu", score: 0, multiplier: 1, streak: 0, runBestStreak: 0, fever: 0,
+  mode: "home", score: 0, multiplier: 1, streak: 0, runBestStreak: 0, fever: 0,
   best: saved.best || 0, bestStreak: saved.bestStreak || 0,
   unlocked: saved.unlocked || ["bloom"], selected: saved.selected || "bloom",
-  muted: Boolean(saved.muted), tutorialSeen: Boolean(saved.tutorialSeen), elapsed: 0, paused: false,
+  stars: Number(saved.stars) || 0, runStars: 0, gatesPassed: 0, perfects: 0, feverCount: 0,
+  ownedRiders: saved.ownedRiders || ["manta"], selectedRider: saved.selectedRider || "manta",
+  muted: Boolean(saved.muted), haptics: saved.haptics !== false, reducedEffects: Boolean(saved.reducedEffects),
+  tutorialSeen: Boolean(saved.tutorialSeen), elapsed: 0, paused: false,
 };
 
 let width = 0;
@@ -59,7 +74,8 @@ function loadSave() {
 function save() {
   localStorage.setItem("orbit-shift-save", JSON.stringify({
     best: state.best, bestStreak: state.bestStreak, unlocked: state.unlocked,
-    selected: state.selected, muted: state.muted, tutorialSeen: state.tutorialSeen,
+    selected: state.selected, stars: state.stars, ownedRiders: state.ownedRiders, selectedRider: state.selectedRider,
+    muted: state.muted, haptics: state.haptics, reducedEffects: state.reducedEffects, tutorialSeen: state.tutorialSeen,
   }));
 }
 
@@ -93,6 +109,10 @@ function startRun() {
   state.runBestStreak = 0;
   state.fever = 0;
   state.elapsed = 0;
+  state.runStars = 0;
+  state.gatesPassed = 0;
+  state.perfects = 0;
+  state.feverCount = 0;
   state.paused = false;
   player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0 };
   gates = [];
@@ -109,11 +129,13 @@ function startRun() {
   pinch = 0;
   shake = 0;
   flash = 0;
-  ui.menu.hidden = true;
+  hideScreens();
   ui.results.hidden = true;
+  ui.shell.classList.add("playing");
   lastTime = performance.now();
   updateHud();
   beep(360, 0.07, "triangle");
+  vibrate(12);
 }
 
 function reverse() {
@@ -130,19 +152,21 @@ function reverse() {
     save();
   }
   beep(300 + (player.direction > 0 ? 65 : 0), 0.045, "triangle");
+  vibrate(8);
 }
 
 function beginCrash() {
   if (state.mode !== "run") return;
   state.mode = "crash";
   crashTimer = 0.62;
-  shake = 14;
+  shake = state.reducedEffects ? 3 : 14;
   flash = 0.8;
   const point = playerPoint();
-  beetleBurst(point, currentCosmetic());
+  gliderBurst(point, currentCosmetic(), currentRider());
   burst(point, currentCosmetic().accent, 10, 190, "shard");
   rings.push({ radius: orbitRadius, life: 1, max: 1, color: currentCosmetic().accent, speed: 100 });
   beep(92, 0.22, "sawtooth");
+  vibrate(55);
 }
 
 function finishRun() {
@@ -151,15 +175,18 @@ function finishRun() {
   state.mode = "results";
   state.best = Math.max(state.best, Math.floor(state.score));
   state.bestStreak = Math.max(state.bestStreak, state.runBestStreak);
+  state.stars += state.runStars;
   for (const cosmetic of cosmetics) {
     if (state.best >= cosmetic.score && !state.unlocked.includes(cosmetic.id)) state.unlocked.push(cosmetic.id);
   }
   save();
   ui.resultScore.textContent = Math.floor(state.score);
   ui.resultStats.textContent = `Best flow x${Math.max(1, state.runBestStreak)} - All-time ${state.best}`;
+  ui.resultStars.textContent = `+${state.runStars} stars`;
   ui.record.textContent = state.best > oldBest ? "New orbit record" : "";
   ui.unlock.textContent = state.unlocked.length > previousUnlocks ? "New biome awakened" : "";
   ui.results.hidden = false;
+  ui.shell.classList.remove("playing");
   renderCosmetics();
   updateHud();
 }
@@ -269,7 +296,11 @@ function resolveGate(gate) {
   const distance = angleDistance(player.angle, gate.gap);
   const clearance = gate.opening / 2 - 0.105 - distance;
   if (clearance < 0) { beginCrash(); return; }
+  state.gatesPassed += 1;
+  state.runStars += 1;
   if (clearance < 0.145) {
+    state.perfects += 1;
+    state.runStars += 2;
     state.streak += 1;
     state.runBestStreak = Math.max(state.runBestStreak, state.streak);
     state.multiplier = 1 + Math.min(4, state.streak);
@@ -282,6 +313,8 @@ function resolveGate(gate) {
     beep(570 + Math.min(5, state.streak) * 62, 0.07, "triangle");
     if (state.streak >= 5 && state.fever <= 0) {
       state.fever = 6;
+      state.feverCount += 1;
+      state.runStars += 5;
       state.multiplier = 5;
       flash = 0.65;
       beep(900, 0.17, "sine");
@@ -487,43 +520,11 @@ function drawTrail(palette) {
 function drawPlayer(time, palette) {
   const point = playerPoint();
   const scale = width < 350 ? 0.88 : width > 420 ? 1.08 : 1;
-  const fever = state.fever > 0 ? 1 : 0;
-  const squeeze = 1 - player.flip * 0.13;
   ctx.save();
   ctx.translate(point.x, point.y);
   ctx.rotate(player.angle + player.direction * Math.PI / 2 + player.flip * player.direction * 0.18);
-  ctx.scale(player.direction * scale * squeeze, scale * (1 + player.flip * 0.1));
-
-  ctx.fillStyle = "rgba(0,0,0,.3)";
-  ctx.beginPath(); ctx.ellipse(2, 4, 25, 16, 0, 0, TAU); ctx.fill();
-
-  drawBeetleFin(palette, fever, 3, 3);
-
-  ctx.fillStyle = palette.ink;
-  ctx.beginPath(); ctx.ellipse(0, 0, 21, 14, -0.08, 0, TAU); ctx.fill();
-
-  drawFeelers(time, palette, player.flip);
-
-  ctx.fillStyle = palette.light;
-  beetleShell(0, 0); ctx.fill();
-
-  ctx.fillStyle = palette.paper;
-  ctx.beginPath(); ctx.ellipse(-4, 4, 11, 7, -0.18, 0, TAU); ctx.fill();
-
-  const eyePulse = 5.5 + player.glow * 2.2 + fever * (1.2 + Math.sin(time * 10) * 0.6);
-  ctx.fillStyle = palette.accent;
-  ctx.beginPath(); ctx.arc(12, -1, eyePulse + 2.5, 0, TAU); ctx.fill();
-  ctx.fillStyle = palette.gold;
-  ctx.beginPath(); ctx.arc(12, -1, eyePulse, 0, TAU); ctx.fill();
-  ctx.fillStyle = palette.light;
-  ctx.beginPath(); ctx.arc(14, -3, Math.max(1.3, eyePulse * 0.28), 0, TAU); ctx.fill();
-  ctx.fillStyle = palette.ink;
-  ctx.beginPath(); ctx.arc(12, -1, Math.max(1.2, eyePulse * 0.22), 0, TAU); ctx.fill();
-
-  if (palette.shape === "moon") {
-    ctx.strokeStyle = palette.mid; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(-2, -2, 17, 3.55, 5.45); ctx.stroke();
-  }
+  ctx.scale(player.direction * scale, scale);
+  drawGlider(ctx, currentRider(), palette, 1, time, player.flip, state.fever > 0, player.glow);
   ctx.restore();
 }
 
@@ -592,7 +593,8 @@ function drawFever(time, palette) {
 }
 
 function burst(point, color, count, speed, shape) {
-  const room = Math.max(0, MAX_PARTICLES - particles.length);
+  const cap = state.reducedEffects ? 90 : MAX_PARTICLES;
+  const room = Math.max(0, cap - particles.length);
   for (let i = 0; i < Math.min(count, room); i += 1) {
     const angle = Math.random() * TAU;
     const velocity = speed * (0.35 + Math.random() * 0.65);
@@ -605,53 +607,33 @@ function burst(point, color, count, speed, shape) {
   }
 }
 
-function beetleShell(x, y) {
-  ctx.beginPath();
-  ctx.moveTo(x - 18, y + 9);
-  ctx.quadraticCurveTo(x - 23, y - 13, x + 1, y - 18);
-  ctx.quadraticCurveTo(x + 18, y - 17, x + 22, y - 5);
-  ctx.quadraticCurveTo(x + 12, y - 9, x + 4, y - 5);
-  ctx.quadraticCurveTo(x - 4, y, x - 8, y + 12);
-  ctx.closePath();
+function drawGlider(target, rider, palette, scale = 1, time = 0, flip = 0, fever = false, glow = 0) {
+  const wing = (fever ? 1.16 : 1) * (1 - flip * 0.14);
+  target.save(); target.scale(scale, scale * wing);
+  target.fillStyle = "rgba(0,0,0,.28)"; target.beginPath(); target.ellipse(-2, 4, 30, 17, 0, 0, TAU); target.fill();
+  const path = () => {
+    target.beginPath();
+    if (rider.shape === "manta") { target.moveTo(31,0); target.lineTo(5,-7); target.lineTo(-17,-24); target.lineTo(-29,-18); target.lineTo(-20,0); target.lineTo(-29,18); target.lineTo(-17,24); target.lineTo(5,7); }
+    else if (rider.shape === "dart") { target.moveTo(32,0); target.lineTo(-17,-23); target.lineTo(-8,-5); target.lineTo(-30,-10); target.lineTo(-19,0); target.lineTo(-30,10); target.lineTo(-8,5); target.lineTo(-17,23); }
+    else if (rider.shape === "crescent") { target.moveTo(31,0); target.quadraticCurveTo(-4,-7,-25,-24); target.quadraticCurveTo(-36,-5,-16,0); target.quadraticCurveTo(-36,5,-25,24); target.quadraticCurveTo(-4,7,31,0); }
+    else if (rider.shape === "splitwing") { target.moveTo(32,0); target.lineTo(-25,-22); target.lineTo(-8,-3); target.lineTo(-28,0); target.lineTo(-8,3); target.lineTo(-25,22); }
+    else if (rider.shape === "shuttle") { target.moveTo(30,0); target.lineTo(12,-9); target.lineTo(-20,-17); target.lineTo(-28,-8); target.lineTo(-24,0); target.lineTo(-28,8); target.lineTo(-20,17); target.lineTo(12,9); }
+    else { target.moveTo(31,0); target.lineTo(5,-7); target.arc(-8,0,22,-.3,TAU+.3); target.lineTo(5,7); }
+    target.closePath();
+  };
+  target.fillStyle = palette.ink; path(); target.fill();
+  target.save(); target.scale(.91,.82); target.fillStyle = palette.light; path(); target.fill(); target.restore();
+  target.fillStyle = palette.paper; target.beginPath(); target.moveTo(29,0); target.lineTo(2,-7); target.lineTo(-12,0); target.lineTo(2,7); target.closePath(); target.fill();
+  target.fillStyle = palette.accent; target.beginPath(); target.moveTo(14,0); target.lineTo(-8,-5); target.lineTo(-17,0); target.lineTo(-8,5); target.closePath(); target.fill();
+  target.fillStyle = palette.gold; target.beginPath(); target.moveTo(-20,-5); target.lineTo(-31-(fever?7:0),0); target.lineTo(-20,5); target.closePath(); target.fill();
+  if (glow || fever) { target.globalAlpha=.35+glow*.3+Math.sin(time*9)*.08; target.strokeStyle=palette.gold; target.lineWidth=2+glow*2; path(); target.stroke(); }
+  target.restore();
 }
 
-function drawBeetleFin(palette, fever, x = 0, y = 0) {
-  const reach = fever ? 37 : 31;
-  ctx.fillStyle = palette.accent;
-  ctx.beginPath();
-  if (palette.shape === "leaf") {
-    ctx.moveTo(x - 14, y - 3); ctx.quadraticCurveTo(x - reach, y - 18, x - reach - 4, y);
-    ctx.quadraticCurveTo(x - 28, y + 14, x - 12, y + 7);
-  } else if (palette.shape === "flame") {
-    ctx.moveTo(x - 13, y - 8); ctx.lineTo(x - reach - 5, y - 1); ctx.lineTo(x - 24, y + 4);
-    ctx.lineTo(x - reach, y + 12); ctx.lineTo(x - 10, y + 8);
-  } else {
-    ctx.moveTo(x - 12, y - 9); ctx.quadraticCurveTo(x - reach, y - 17, x - reach - 4, y + 1);
-    ctx.quadraticCurveTo(x - 28, y + 15, x - 12, y + 9);
-    ctx.quadraticCurveTo(x - 20, y + 2, x - 12, y - 9);
-  }
-  ctx.closePath(); ctx.fill();
-}
-
-function drawFeelers(time, palette, flip) {
-  const drag = flip * 7 + Math.sin(time * 6) * 0.8;
-  ctx.strokeStyle = palette.ink; ctx.lineWidth = 2.2; ctx.lineCap = "round";
-  for (const side of [-1, 1]) {
-    ctx.beginPath(); ctx.moveTo(14, -5 + side * 3);
-    ctx.quadraticCurveTo(21 - drag, -12 + side * 5, 27 - drag, -10 + side * 9); ctx.stroke();
-    ctx.fillStyle = palette.mid; ctx.beginPath(); ctx.ellipse(28 - drag, -10 + side * 9, 3.4, 5.2, 0.45 * side, 0, TAU); ctx.fill();
-  }
-}
-
-function beetleBurst(point, palette) {
-  const pieces = [
-    ["beetle-shell", palette.light, 8], ["beetle-fin", palette.accent, 8],
-    ["beetle-eye", palette.gold, 5], ["beetle-feeler", palette.ink, 7],
-  ];
-  for (const [shape, color, size] of pieces) {
-    const angle = Math.random() * TAU;
-    const life = 0.48 + Math.random() * 0.2;
-    particles.push({ x: point.x, y: point.y, vx: Math.cos(angle) * 150, vy: Math.sin(angle) * 150, size, life, max: life, color, shape, rotation: angle, spin: (Math.random() - 0.5) * 9 });
+function gliderBurst(point, palette) {
+  for (let i=0;i<5;i+=1) {
+    const angle=Math.random()*TAU, life=.48+Math.random()*.2;
+    particles.push({x:point.x,y:point.y,vx:Math.cos(angle)*150,vy:Math.sin(angle)*150,size:5+Math.random()*4,life,max:life,color:[palette.light,palette.paper,palette.accent,palette.gold][i%4],shape:"shard",rotation:angle,spin:(Math.random()-.5)*9});
   }
 }
 
@@ -677,6 +659,7 @@ function playerSpeed() { return Math.min(2.45, 1.66 + state.elapsed * 0.009); }
 function normalize(angle) { return (angle % TAU + TAU) % TAU; }
 function angleDistance(a, b) { return Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b))); }
 function currentCosmetic() { return cosmetics.find((item) => item.id === state.selected) || cosmetics[0]; }
+function currentRider() { return riders.find((item) => item.id === state.selectedRider) || riders[0]; }
 function colorAlpha(hex, alpha) { const value = parseInt(hex.slice(1), 16); return `rgba(${value >> 16},${value >> 8 & 255},${value & 255},${alpha})`; }
 
 function renderCosmetics() {
@@ -692,10 +675,61 @@ function renderCosmetics() {
     button.setAttribute("aria-label", button.title);
     button.addEventListener("click", () => {
       if (!unlocked) return;
-      state.selected = cosmetic.id; save(); renderCosmetics();
+      state.selected = cosmetic.id; save();
+      if (state.mode === "garage") renderGarage(); else renderCosmetics();
     });
     ui.cosmetics.append(button);
   }
+}
+
+function showScreen(name) {
+  ui.shell.classList.remove("playing");
+  hideScreens();
+  ui[name].hidden = false;
+  state.mode = name;
+  if (name === "home") updateHome();
+  if (name === "garage") renderGarage();
+}
+
+function hideScreens() { for (const screen of [ui.home, ui.garage, ui.settings, ui.results]) screen.hidden = true; }
+
+function updateHome() {
+  ui.homeBest.textContent = state.best;
+  ui.homeStars.textContent = state.stars;
+  ui.sound.checked = !state.muted;
+  ui.haptics.checked = state.haptics;
+  ui.effects.checked = state.reducedEffects;
+}
+
+function renderGarage() {
+  ui.garageStars.textContent = `${state.stars} stars`;
+  ui.riderGrid.innerHTML = "";
+  const palette = currentCosmetic();
+  for (const rider of riders) {
+    const owned = state.ownedRiders.includes(rider.id);
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = `rider-card${owned ? "" : " locked"}${state.selectedRider === rider.id ? " selected" : ""}`;
+    card.innerHTML = `<canvas width="130" height="78"></canvas><b>${rider.name}</b><small>${state.selectedRider === rider.id ? "Equipped" : owned ? "Equip" : `${rider.price} stars`}</small>`;
+    const mini = card.querySelector("canvas").getContext("2d");
+    mini.translate(65,39); drawGlider(mini,rider,palette,1.45,0,0,false,0);
+    card.addEventListener("click", () => {
+      if (!owned) {
+        if (state.stars < rider.price) { card.animate([{transform:"translateX(-3px)"},{transform:"translateX(3px)"},{transform:"none"}],{duration:180}); beep(120,.08,"square"); return; }
+        state.stars -= rider.price; state.ownedRiders.push(rider.id); beep(820,.14,"triangle"); vibrate(25);
+      }
+      state.selectedRider = rider.id; save(); renderGarage(); updateHome();
+    });
+    ui.riderGrid.append(card);
+  }
+  renderCosmetics();
+}
+
+function drawHomePreview(time) {
+  if (ui.home.hidden) return;
+  const target = ui.preview.getContext("2d");
+  target.clearRect(0,0,ui.preview.width,ui.preview.height);
+  target.save(); target.translate(130,75+Math.sin(time*2)*3); drawGlider(target,currentRider(),currentCosmetic(),2.45,time,0,false,.25); target.restore();
 }
 
 function updateHud() {
@@ -703,9 +737,9 @@ function updateHud() {
   ui.multiplier.textContent = `x${state.multiplier}`;
   ui.best.textContent = state.best;
   ui.fever.style.width = `${(state.fever > 0 ? state.fever / 6 : Math.min(1, state.streak / 5)) * 100}%`;
-  ui.mute.classList.toggle("is-muted", state.muted);
-  ui.mute.setAttribute("aria-label", state.muted ? "Unmute sound" : "Mute sound");
 }
+
+function vibrate(duration) { if (state.haptics && navigator.vibrate) navigator.vibrate(duration); }
 
 function beep(frequency, duration, type) {
   if (state.muted) return;
@@ -728,6 +762,8 @@ function runSelfChecks() {
     console.assert(angleDistance(normalize(plan.gap + plan.rotation * plan.flight), plan.target) < 0.0001, "Gate opening must resolve to its reachable target");
   }
   console.assert(angleDistance(0.05, TAU - 0.05) < 0.11, "Wrapped angle distance must stay small");
+  console.assert(riders[0].id === "manta" && riders[0].price === 0, "Manta must remain the free default");
+  console.assert(riders.slice(1).map((rider) => rider.price).join() === "40,100,200,350,550", "Garage prices must remain ordered");
 }
 
 function frame(time) {
@@ -735,19 +771,26 @@ function frame(time) {
   lastTime = time;
   update(delta);
   draw();
+  drawHomePreview(time / 1000);
   requestAnimationFrame(frame);
 }
 
 window.addEventListener("resize", resize);
 canvas.addEventListener("pointerdown", reverse);
-document.querySelector("#start").addEventListener("click", startRun);
+document.querySelector("#play").addEventListener("click", startRun);
 document.querySelector("#retry").addEventListener("click", startRun);
-ui.mute.addEventListener("click", () => { state.muted = !state.muted; save(); updateHud(); });
+document.querySelector("#openGarage").addEventListener("click", () => showScreen("garage"));
+document.querySelector("#openSettings").addEventListener("click", () => showScreen("settings"));
+document.querySelector("#resultHome").addEventListener("click", () => showScreen("home"));
+for (const button of document.querySelectorAll("[data-home]")) button.addEventListener("click", () => showScreen("home"));
+ui.sound.addEventListener("change", () => { state.muted = !ui.sound.checked; save(); });
+ui.haptics.addEventListener("change", () => { state.haptics = ui.haptics.checked; save(); vibrate(15); });
+ui.effects.addEventListener("change", () => { state.reducedEffects = ui.effects.checked; save(); });
 window.addEventListener("keydown", (event) => {
   if (event.repeat) return;
   if (["Space", "ArrowLeft", "ArrowRight"].includes(event.code)) {
     event.preventDefault();
-    if (state.mode === "run") reverse(); else if (state.mode !== "crash") startRun();
+    if (state.mode === "run") reverse(); else if (state.mode === "home" || state.mode === "results") startRun();
   }
 });
 document.addEventListener("visibilitychange", () => {
@@ -759,5 +802,6 @@ document.addEventListener("touchmove", (event) => event.preventDefault(), { pass
 resize();
 renderCosmetics();
 updateHud();
+updateHome();
 runSelfChecks();
 requestAnimationFrame(frame);
