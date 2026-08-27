@@ -34,3 +34,8 @@ For a phone test:
 - SFX button: mute or unmute sound.
 
 Progress, unlocked biomes, tutorial completion, and sound preference are stored locally in the browser. The old Neon Subway save remains untouched.
+
+## Godot mapping
+
+- Canvas loop -> main scene and `_process(delta)`
+- Player angle -> orbiting Player node
