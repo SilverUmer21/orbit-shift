@@ -26,3 +26,8 @@ For a phone test:
 3. In Vercel choose **Add New -> Project** and import the GitHub repository.
 4. Select framework preset **Other**, leave the build command empty, and keep the output directory as `.`.
 5. Deploy and open the generated HTTPS URL on the phone.
+
+## Controls
+
+- Mobile or mouse: tap the game to reverse direction.
+- Keyboard: Space, Left Arrow, or Right Arrow.
