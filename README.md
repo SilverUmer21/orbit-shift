@@ -41,3 +41,5 @@ Progress, unlocked biomes, tutorial completion, and sound preference are stored 
 - Player angle -> orbiting Player node
 - Gate list -> gate scene instances and spawner
 - Angular checks -> collision and signal handling
+- DOM panels -> Control nodes
+- `localStorage` -> `ConfigFile` or local save resource
