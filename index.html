@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#08151c">
+    <title>Orbit Shift</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <canvas id="game" aria-label="Orbit Shift game area"></canvas>
+      <header class="hud" aria-label="Game stats">
+        <div><span>Score</span><strong id="score">0</strong></div>
+        <div class="combo"><span>Flow</span><strong id="multiplier">x1</strong></div>
+        <div><span>Best</span><strong id="best">0</strong></div>
+      </header>
+      <div class="fever" aria-label="Fever progress"><i id="feverBar"></i></div>
+      <button id="mute" class="mute" type="button" aria-label="Mute sound">SFX</button>
+      <section id="menu" class="panel">
+        <p class="eyebrow">A tiny world in motion</p>
+        <h1>Orbit<br>Shift</h1>
+        <p class="copy">Thread the living rings.</p>
+        <div id="cosmetics" class="cosmetics" aria-label="Cosmetic selector"></div>
+        <button id="start" type="button">Start orbit</button>
+      </section>
+      <section id="results" class="panel" hidden>
+        <p class="eyebrow">Orbit broken</p>
+        <h2 id="resultScore">0</h2>
+        <p id="resultStats" class="copy">Best flow x1</p>
+        <p id="recordText" class="record"></p>
+        <p id="unlockText" class="unlock"></p>
+        <button id="retry" type="button">Again</button>
+      </section>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>
