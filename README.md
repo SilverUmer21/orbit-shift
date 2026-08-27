@@ -23,3 +23,6 @@ For a phone test:
 
 1. Create an empty GitHub repository.
 2. In this folder run `git add .`, `git commit -m "Orbit Shift"`, `git branch -M main`, `git remote add origin YOUR_REPOSITORY_URL`, and `git push -u origin main`.
+3. In Vercel choose **Add New -> Project** and import the GitHub repository.
+4. Select framework preset **Other**, leave the build command empty, and keep the output directory as `.`.
+5. Deploy and open the generated HTTPS URL on the phone.
