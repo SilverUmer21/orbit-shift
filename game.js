@@ -30,7 +30,7 @@ let cx = 0;
 let cy = 0;
 let planetRadius = 0;
 let orbitRadius = 0;
-let player = { angle: -Math.PI / 2, direction: 1, flip: 0 };
+let player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0 };
 let gates = [];
 let hazards = [];
 let particles = [];
@@ -94,7 +94,7 @@ function startRun() {
   state.fever = 0;
   state.elapsed = 0;
   state.paused = false;
-  player = { angle: -Math.PI / 2, direction: 1, flip: 0 };
+  player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0 };
   gates = [];
   hazards = [];
   particles = [];
@@ -139,7 +139,8 @@ function beginCrash() {
   shake = 14;
   flash = 0.8;
   const point = playerPoint();
-  burst(point, currentCosmetic().accent, 22, 210, "shard");
+  beetleBurst(point, currentCosmetic());
+  burst(point, currentCosmetic().accent, 10, 190, "shard");
   rings.push({ radius: orbitRadius, life: 1, max: 1, color: currentCosmetic().accent, speed: 100 });
   beep(92, 0.22, "sawtooth");
 }
@@ -227,6 +228,7 @@ function update(delta) {
   const worldScale = (state.fever > 0 ? 0.8 : 1) * (pinch > 0 ? 0.42 : 1);
   player.angle = normalize(player.angle + player.direction * playerSpeed() * delta * (pinch > 0 ? 0.65 : 1));
   player.flip = Math.max(0, player.flip - delta * 7);
+  player.glow = Math.max(0, player.glow - delta * 2.8);
   trail.unshift({ ...playerPoint(), life: 1 });
   trail = trail.slice(0, state.fever > 0 ? 26 : 14);
   for (const point of trail) point.life -= delta * 1.9;
@@ -273,6 +275,7 @@ function resolveGate(gate) {
     state.multiplier = 1 + Math.min(4, state.streak);
     state.score += 28 * state.multiplier;
     pinch = 0.095;
+    player.glow = 1;
     rings.push({ radius: orbitRadius, life: 0.65, max: 0.65, color: currentCosmetic().gold, speed: 72 });
     labels.push({ text: state.streak >= 5 ? "FEVER" : "PERFECT", life: 0.8, max: 0.8, y: cy - orbitRadius - 28 });
     burst(playerPoint(), currentCosmetic().gold, 18, 175, "paper");
@@ -483,30 +486,45 @@ function drawTrail(palette) {
 
 function drawPlayer(time, palette) {
   const point = playerPoint();
+  const scale = width < 350 ? 0.88 : width > 420 ? 1.08 : 1;
+  const fever = state.fever > 0 ? 1 : 0;
+  const squeeze = 1 - player.flip * 0.13;
   ctx.save();
   ctx.translate(point.x, point.y);
   ctx.rotate(player.angle + player.direction * Math.PI / 2 + player.flip * player.direction * 0.18);
-  ctx.scale(player.direction, 1);
+  ctx.scale(player.direction * scale * squeeze, scale * (1 + player.flip * 0.1));
+
   ctx.fillStyle = "rgba(0,0,0,.3)";
-  riderShape(3, 4, 1.04); ctx.fill();
-  ctx.fillStyle = palette.light;
-  riderShape(0, 0, 1); ctx.fill();
-  ctx.fillStyle = palette.paper;
-  riderShape(-2, 1, 0.73); ctx.fill();
-  ctx.fillStyle = palette.accent;
-  if (palette.shape === "leaf") {
-    ctx.beginPath(); ctx.ellipse(-14, 4, 7, 15, -0.7, 0, TAU); ctx.fill();
-  } else if (palette.shape === "flame") {
-    ctx.beginPath(); ctx.moveTo(-23, 7); ctx.lineTo(-10, -3); ctx.lineTo(-12, 12); ctx.closePath(); ctx.fill();
-  } else {
-    ctx.beginPath(); ctx.arc(-12, 2, 13, 0.6, 5.4); ctx.arc(-8, 2, 9, 5.2, 0.8, true); ctx.fill();
-  }
+  ctx.beginPath(); ctx.ellipse(2, 4, 25, 16, 0, 0, TAU); ctx.fill();
+
+  drawBeetleFin(palette, fever, 3, 3);
+
   ctx.fillStyle = palette.ink;
-  ctx.beginPath(); ctx.arc(7, -3, 2.6, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(0, 0, 21, 14, -0.08, 0, TAU); ctx.fill();
+
+  drawFeelers(time, palette, player.flip);
+
+  ctx.fillStyle = palette.light;
+  beetleShell(0, 0); ctx.fill();
+
+  ctx.fillStyle = palette.paper;
+  ctx.beginPath(); ctx.ellipse(-4, 4, 11, 7, -0.18, 0, TAU); ctx.fill();
+
+  const eyePulse = 5.5 + player.glow * 2.2 + fever * (1.2 + Math.sin(time * 10) * 0.6);
+  ctx.fillStyle = palette.accent;
+  ctx.beginPath(); ctx.arc(12, -1, eyePulse + 2.5, 0, TAU); ctx.fill();
   ctx.fillStyle = palette.gold;
-  ctx.beginPath(); ctx.arc(7.7, -3.8, 0.9, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(12, -1, eyePulse, 0, TAU); ctx.fill();
+  ctx.fillStyle = palette.light;
+  ctx.beginPath(); ctx.arc(14, -3, Math.max(1.3, eyePulse * 0.28), 0, TAU); ctx.fill();
+  ctx.fillStyle = palette.ink;
+  ctx.beginPath(); ctx.arc(12, -1, Math.max(1.2, eyePulse * 0.22), 0, TAU); ctx.fill();
+
+  if (palette.shape === "moon") {
+    ctx.strokeStyle = palette.mid; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(-2, -2, 17, 3.55, 5.45); ctx.stroke();
+  }
   ctx.restore();
-  void time;
 }
 
 function drawHazards(time, palette) {
@@ -525,7 +543,10 @@ function drawHazards(time, palette) {
 function drawParticles() {
   for (const item of particles) {
     ctx.save(); ctx.globalAlpha = item.life / item.max; ctx.fillStyle = item.color; ctx.translate(item.x, item.y); ctx.rotate(item.rotation);
-    if (item.shape === "shard") { ctx.beginPath(); ctx.moveTo(-item.size, item.size); ctx.lineTo(0, -item.size * 1.8); ctx.lineTo(item.size, item.size); ctx.fill(); }
+    if (item.shape === "shard" || item.shape === "beetle-fin") { ctx.beginPath(); ctx.moveTo(-item.size, item.size); ctx.lineTo(0, -item.size * 1.8); ctx.lineTo(item.size, item.size); ctx.fill(); }
+    else if (item.shape === "beetle-shell") { ctx.beginPath(); ctx.arc(0, 0, item.size, 0.45, 5.7); ctx.arc(2, 0, item.size * 0.58, 5.55, 0.6, true); ctx.fill(); }
+    else if (item.shape === "beetle-eye") { ctx.beginPath(); ctx.arc(0, 0, item.size, 0, TAU); ctx.fill(); }
+    else if (item.shape === "beetle-feeler") { ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-item.size, 0); ctx.quadraticCurveTo(0, -item.size, item.size, 0); ctx.stroke(); }
     else if (item.shape === "paper") paperDiamond(0, 0, item.size, 0);
     else { ctx.beginPath(); ctx.arc(0, 0, item.size, 0, TAU); ctx.fill(); }
     ctx.restore();
@@ -584,13 +605,54 @@ function burst(point, color, count, speed, shape) {
   }
 }
 
-function riderShape(x, y, scale) {
+function beetleShell(x, y) {
   ctx.beginPath();
-  ctx.moveTo(x - 20 * scale, y + 2 * scale);
-  ctx.quadraticCurveTo(x - 7 * scale, y - 15 * scale, x + 15 * scale, y - 9 * scale);
-  ctx.quadraticCurveTo(x + 24 * scale, y - 1 * scale, x + 13 * scale, y + 10 * scale);
-  ctx.quadraticCurveTo(x - 7 * scale, y + 17 * scale, x - 20 * scale, y + 2 * scale);
+  ctx.moveTo(x - 18, y + 9);
+  ctx.quadraticCurveTo(x - 23, y - 13, x + 1, y - 18);
+  ctx.quadraticCurveTo(x + 18, y - 17, x + 22, y - 5);
+  ctx.quadraticCurveTo(x + 12, y - 9, x + 4, y - 5);
+  ctx.quadraticCurveTo(x - 4, y, x - 8, y + 12);
   ctx.closePath();
+}
+
+function drawBeetleFin(palette, fever, x = 0, y = 0) {
+  const reach = fever ? 37 : 31;
+  ctx.fillStyle = palette.accent;
+  ctx.beginPath();
+  if (palette.shape === "leaf") {
+    ctx.moveTo(x - 14, y - 3); ctx.quadraticCurveTo(x - reach, y - 18, x - reach - 4, y);
+    ctx.quadraticCurveTo(x - 28, y + 14, x - 12, y + 7);
+  } else if (palette.shape === "flame") {
+    ctx.moveTo(x - 13, y - 8); ctx.lineTo(x - reach - 5, y - 1); ctx.lineTo(x - 24, y + 4);
+    ctx.lineTo(x - reach, y + 12); ctx.lineTo(x - 10, y + 8);
+  } else {
+    ctx.moveTo(x - 12, y - 9); ctx.quadraticCurveTo(x - reach, y - 17, x - reach - 4, y + 1);
+    ctx.quadraticCurveTo(x - 28, y + 15, x - 12, y + 9);
+    ctx.quadraticCurveTo(x - 20, y + 2, x - 12, y - 9);
+  }
+  ctx.closePath(); ctx.fill();
+}
+
+function drawFeelers(time, palette, flip) {
+  const drag = flip * 7 + Math.sin(time * 6) * 0.8;
+  ctx.strokeStyle = palette.ink; ctx.lineWidth = 2.2; ctx.lineCap = "round";
+  for (const side of [-1, 1]) {
+    ctx.beginPath(); ctx.moveTo(14, -5 + side * 3);
+    ctx.quadraticCurveTo(21 - drag, -12 + side * 5, 27 - drag, -10 + side * 9); ctx.stroke();
+    ctx.fillStyle = palette.mid; ctx.beginPath(); ctx.ellipse(28 - drag, -10 + side * 9, 3.4, 5.2, 0.45 * side, 0, TAU); ctx.fill();
+  }
+}
+
+function beetleBurst(point, palette) {
+  const pieces = [
+    ["beetle-shell", palette.light, 8], ["beetle-fin", palette.accent, 8],
+    ["beetle-eye", palette.gold, 5], ["beetle-feeler", palette.ink, 7],
+  ];
+  for (const [shape, color, size] of pieces) {
+    const angle = Math.random() * TAU;
+    const life = 0.48 + Math.random() * 0.2;
+    particles.push({ x: point.x, y: point.y, vx: Math.cos(angle) * 150, vy: Math.sin(angle) * 150, size, life, max: life, color, shape, rotation: angle, spin: (Math.random() - 0.5) * 9 });
+  }
 }
 
 function blobPath(x, y, radius, wobble, lobes, offset = 0) {
