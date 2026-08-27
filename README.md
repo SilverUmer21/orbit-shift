@@ -39,3 +39,5 @@ Progress, unlocked biomes, tutorial completion, and sound preference are stored 
 
 - Canvas loop -> main scene and `_process(delta)`
 - Player angle -> orbiting Player node
+- Gate list -> gate scene instances and spawner
+- Angular checks -> collision and signal handling
