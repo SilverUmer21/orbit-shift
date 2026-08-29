@@ -386,9 +386,11 @@ function update(delta) {
   }
 
   state.elapsed += delta;
+  const phase = updateJourney();
   tutorial = Math.max(0, tutorial - delta);
   state.score += delta * (4 + state.multiplier * 1.45);
   state.fever = Math.max(0, state.fever - delta);
+  state.invulnerable = Math.max(0, state.invulnerable - delta);
   pinch = Math.max(0, pinch - delta);
   const worldScale = (state.fever > 0 ? 0.8 : 1) * (pinch > 0 ? 0.42 : 1);
   player.angle = normalize(player.angle + player.direction * playerSpeed() * delta * (pinch > 0 ? 0.65 : 1));
@@ -401,10 +403,10 @@ function update(delta) {
   nextGate -= delta;
   if (nextGate <= 0) {
     spawnGate();
-    nextGate = gateCount < 3 ? 2.85 : Math.max(1.7, 2.55 - state.elapsed * 0.011);
+    nextGate = phase.transition ? phase.end - state.elapsed + .2 : phase.guardian ? 1.55 : gateCount < 3 ? 2.85 : Math.max(1.72, 2.52 - state.elapsed * 0.006);
   }
   nextHazard -= delta;
-  if (state.elapsed > 28 && nextHazard <= 0) {
+  if ((phase.id === "void" || phase.id === "eclipse" || phase.id === "ascension") && nextHazard <= 0) {
     spawnHazard();
     nextHazard = 10 + Math.random() * 3;
   }
@@ -420,7 +422,7 @@ function update(delta) {
   for (const hazard of hazards) {
     hazard.angle = normalize(hazard.angle + hazard.speed * delta * worldScale);
     hazard.life -= delta;
-    if (hazard.life > 0.35 && angleDistance(player.angle, hazard.angle) < 0.135) beginCrash();
+    if (hazard.life > 0.35 && angleDistance(player.angle, hazard.angle) < 0.135) beginCrash("hazard");
   }
   hazards = hazards.filter((hazard) => hazard.life > 0);
 
@@ -433,12 +435,15 @@ function resolveGate(gate) {
   gate.resolved = true;
   const distance = angleDistance(player.angle, gate.gap);
   const clearance = gate.opening / 2 - 0.105 - distance;
-  if (clearance < 0) { beginCrash(); return; }
+  if (clearance < 0) { beginCrash("gate"); return; }
   state.gatesPassed += 1;
   state.runStars += 1;
+  updateGoals("gate", 1);
+  if (gate.guardian && gate.guardianId === state.phaseId) state.guardianPassed += 1;
   if (clearance < 0.145) {
     state.perfects += 1;
     state.runStars += 2;
+    updateGoals("perfect", 1);
     state.streak += 1;
     state.runBestStreak = Math.max(state.runBestStreak, state.streak);
     state.multiplier = 1 + Math.min(4, state.streak);
@@ -453,6 +458,8 @@ function resolveGate(gate) {
       state.fever = 6;
       state.feverCount += 1;
       state.runStars += 5;
+      updateGoals("fever", 1);
+      if (!state.shieldEarned) { state.shield = true; state.shieldEarned = true; }
       state.multiplier = 5;
       flash = 0.65;
       beep(900, 0.17, "sine");
@@ -486,8 +493,10 @@ function draw() {
   ctx.save();
   ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
   drawBackground(time, palette);
+  drawJourneyTransition(time, palette);
   drawPaperWaves(time, palette);
   drawGates(time, palette);
+  drawGuardianAura(time, palette);
   drawPlanet(time, palette);
   drawOrbit(time, palette);
   drawHazards(time, palette);
@@ -522,6 +531,18 @@ function drawBackground(time, palette) {
   ctx.globalAlpha = 1;
 }
 
+function drawJourneyTransition(time, palette) {
+  const phase = phaseAt(state.elapsed);
+  if (!phase.transition) return;
+  const progress = (state.elapsed - phase.start) / (phase.end - phase.start);
+  ctx.save(); ctx.globalAlpha = Math.sin(progress * Math.PI) * .7; ctx.fillStyle = palette.paper;
+  for (let i=0;i<8;i+=1) {
+    const angle=i*TAU/8+time*.25;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(angle-.16)*height,cy+Math.sin(angle-.16)*height); ctx.lineTo(cx+Math.cos(angle+.16)*height,cy+Math.sin(angle+.16)*height); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
 function drawPaperWaves(time, palette) {
   ctx.save();
   ctx.globalAlpha = state.fever > 0 ? 0.18 : 0.08;
@@ -549,11 +570,11 @@ function drawGates(time, palette) {
     ctx.save();
     ctx.globalAlpha = Math.max(0.12, alpha);
     ctx.strokeStyle = palette.ink;
-    ctx.lineWidth = 13;
+    ctx.lineWidth = gate.guardian ? 18 : 13;
     ctx.lineCap = "round";
     ctx.beginPath(); ctx.arc(cx + 2, cy + 3, gate.radius, start, end); ctx.stroke();
     ctx.strokeStyle = color;
-    ctx.lineWidth = gate.type === 3 ? 9 : 7;
+    ctx.lineWidth = gate.guardian ? 11 : gate.type === 3 ? 9 : 7;
     ctx.beginPath(); ctx.arc(cx, cy, gate.radius, start, end); ctx.stroke();
     drawGateDetails(gate, start, end, color, palette, time);
     for (const side of [-1, 1]) {
@@ -565,6 +586,20 @@ function drawGates(time, palette) {
     }
     ctx.restore();
   }
+}
+
+function drawGuardianAura(time, palette) {
+  const phase = phaseAt(state.elapsed);
+  if (!phase.guardian || state.mode !== "run") return;
+  const count = phase.id === "forge" ? 4 : phase.id === "eclipse" ? 2 : 8;
+  ctx.save(); ctx.globalAlpha = .32; ctx.strokeStyle = palette.accent; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(cx, cy, planetRadius + 18 + Math.sin(time * 4) * 3, 0, TAU); ctx.stroke();
+  ctx.fillStyle = phase.id === "eclipse" ? palette.ink : palette.gold;
+  for (let i=0;i<count;i+=1) {
+    const angle=time*(phase.id === "forge" ? 1.4 : .45)+i*TAU/count;
+    paperDiamond(cx+Math.cos(angle)*(planetRadius+20),cy+Math.sin(angle)*(planetRadius+20),phase.id === "eclipse" ? 9 : 5,angle);
+  }
+  ctx.restore();
 }
 
 function drawGateDetails(gate, start, end, color, palette, time) {
@@ -682,10 +717,7 @@ function drawHazards(time, palette) {
 function drawParticles() {
   for (const item of particles) {
     ctx.save(); ctx.globalAlpha = item.life / item.max; ctx.fillStyle = item.color; ctx.translate(item.x, item.y); ctx.rotate(item.rotation);
-    if (item.shape === "shard" || item.shape === "beetle-fin") { ctx.beginPath(); ctx.moveTo(-item.size, item.size); ctx.lineTo(0, -item.size * 1.8); ctx.lineTo(item.size, item.size); ctx.fill(); }
-    else if (item.shape === "beetle-shell") { ctx.beginPath(); ctx.arc(0, 0, item.size, 0.45, 5.7); ctx.arc(2, 0, item.size * 0.58, 5.55, 0.6, true); ctx.fill(); }
-    else if (item.shape === "beetle-eye") { ctx.beginPath(); ctx.arc(0, 0, item.size, 0, TAU); ctx.fill(); }
-    else if (item.shape === "beetle-feeler") { ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-item.size, 0); ctx.quadraticCurveTo(0, -item.size, item.size, 0); ctx.stroke(); }
+    if (item.shape === "shard") { ctx.beginPath(); ctx.moveTo(-item.size, item.size); ctx.lineTo(0, -item.size * 1.8); ctx.lineTo(item.size, item.size); ctx.fill(); }
     else if (item.shape === "paper") paperDiamond(0, 0, item.size, 0);
     else { ctx.beginPath(); ctx.arc(0, 0, item.size, 0, TAU); ctx.fill(); }
     ctx.restore();
@@ -796,7 +828,14 @@ function playerPoint() { return { x: cx + Math.cos(player.angle) * orbitRadius, 
 function playerSpeed() { return Math.min(2.45, 1.66 + state.elapsed * 0.009); }
 function normalize(angle) { return (angle % TAU + TAU) % TAU; }
 function angleDistance(a, b) { return Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b))); }
-function currentCosmetic() { return cosmetics.find((item) => item.id === state.selected) || cosmetics[0]; }
+function currentCosmetic() {
+  if (state.mode === "run" || state.mode === "crash") {
+    const phase = phaseAt(state.elapsed);
+    const index = phase.biome >= 0 ? phase.biome : Math.floor((state.elapsed - 103) / 24) % 3;
+    return cosmetics[index];
+  }
+  return cosmetics.find((item) => item.id === state.selected) || cosmetics[0];
+}
 function currentRider() { return riders.find((item) => item.id === state.selectedRider) || riders[0]; }
 function colorAlpha(hex, alpha) { const value = parseInt(hex.slice(1), 16); return `rgba(${value >> 16},${value >> 8 & 255},${value & 255},${alpha})`; }
 
