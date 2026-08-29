@@ -746,6 +746,7 @@ function drawGates(time, palette) {
 function drawGuardianAura(time, palette) {
   const phase = phaseAt(state.elapsed);
   if (!phase.guardian || state.mode !== "run") return;
+  if (phase.id === "budkeeper") { drawBudkeeper(time, palette); return; }
   const count = phase.id === "forge" ? 4 : phase.id === "eclipse" ? 2 : 8;
   ctx.save(); ctx.globalAlpha = .32; ctx.strokeStyle = palette.accent; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(cx, cy, planetRadius + 18 + Math.sin(time * 4) * 3, 0, TAU); ctx.stroke();
@@ -757,13 +758,28 @@ function drawGuardianAura(time, palette) {
   ctx.restore();
 }
 
+function drawBudkeeper(time, palette) {
+  const pulse = 1 + Math.sin(time * 4) * .04;
+  ctx.save(); ctx.translate(cx,cy); ctx.scale(pulse,pulse);
+  ctx.globalAlpha=.24; ctx.fillStyle=palette.gold;
+  for(let i=0;i<10;i+=1){ctx.save();ctx.rotate(i*TAU/10+time*.08);ctx.translate(0,-planetRadius*1.08);ctx.beginPath();ctx.ellipse(0,0,8,20,0,0,TAU);ctx.fill();ctx.restore();}
+  ctx.globalAlpha=.8; ctx.fillStyle=palette.ink; ctx.beginPath();ctx.arc(0,0,planetRadius*.2,0,TAU);ctx.fill();
+  ctx.fillStyle=palette.gold; ctx.beginPath();ctx.arc(0,0,planetRadius*.09,0,TAU);ctx.fill();
+  ctx.strokeStyle=palette.light;ctx.lineWidth=2;ctx.globalAlpha=.5;ctx.beginPath();ctx.arc(0,0,planetRadius+13,-Math.PI/2,-Math.PI/2+TAU*state.guardianPassed/3);ctx.stroke();
+  ctx.restore();
+}
+
 function drawGateDetails(gate, start, end, color, palette, time) {
   const step = gate.type === 2 ? 0.24 : 0.36;
   for (let angle = start + 0.18; angle < end - 0.12; angle += step) {
     const x = cx + Math.cos(angle) * gate.radius;
     const y = cy + Math.sin(angle) * gate.radius;
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
-    if (state.runType === "campaign" && !gate.guardian) {
+    if (gate.guardian && gate.guardianId === "budkeeper") {
+      ctx.fillStyle = angle % .72 < .36 ? palette.accent : palette.gold;
+      ctx.beginPath(); ctx.moveTo(-6,12); ctx.quadraticCurveTo(0,1,6,12); ctx.quadraticCurveTo(0,19,-6,12); ctx.fill();
+      ctx.fillStyle=palette.light;ctx.beginPath();ctx.arc(0,11,2.2,0,TAU);ctx.fill();
+    } else if (state.runType === "campaign" && !gate.guardian) {
       ctx.fillStyle = angle % .72 < .36 ? palette.mid : palette.light;
       ctx.beginPath(); ctx.ellipse(0, 8, 4, 10 + Math.sin(time * 1.6 + angle) * 1.5, angle % .72 < .36 ? .5 : -.5, 0, TAU); ctx.fill();
       ctx.strokeStyle = color; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(0,2); ctx.quadraticCurveTo(4,7,0,15); ctx.stroke();
