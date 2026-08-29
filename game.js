@@ -6,6 +6,7 @@ const ui = {
   shell: document.querySelector(".shell"), home: document.querySelector("#home"), campaign: document.querySelector("#campaign"),
   garage: document.querySelector("#garage"), settings: document.querySelector("#settings"), results: document.querySelector("#results"),
   resultScore: document.querySelector("#resultScore"), resultStats: document.querySelector("#resultStats"),
+  resultEyebrow: document.querySelector("#resultEyebrow"), resultObjectives: document.querySelector("#resultObjectives"), resultHome: document.querySelector("#resultHome"),
   record: document.querySelector("#recordText"), unlock: document.querySelector("#unlockText"),
   cosmetics: document.querySelector("#cosmetics"), riderGrid: document.querySelector("#riderGrid"),
   homeBest: document.querySelector("#homeBest"), homeStars: document.querySelector("#homeStars"), garageStars: document.querySelector("#garageStars"),
@@ -64,7 +65,7 @@ const goalSets = {
   skill: [{ label: "Thread 5 perfect gates", kind: "perfect", target: 5, reward: 20 }, { label: "Ignite fever twice", kind: "fever", target: 2, reward: 28 }, { label: "Thread 15 perfect gates", kind: "perfect", target: 15, reward: 50 }],
   journey: [{ label: "Pass 12 living gates", kind: "gate", target: 12, reward: 18 }, { label: "Defeat a guardian", kind: "guardian", target: 1, reward: 35 }, { label: "Defeat all guardians", kind: "guardian", target: 3, reward: 70 }],
 };
-const trailStyles = ["paper", "pollen", "spark", "ribbon", "echo", "crown"];
+const trailStyles = ["paper", "pollen", "spark", "ribbon", "echo", "crown", "bloom-wake"];
 const saved = loadSave();
 const goalCycle = saved.goalCycle || { survival: 0, skill: 0, journey: 0 };
 const initialGoals = saved.goals || Object.keys(goalSets).map((category) => makeGoal(category, goalCycle[category]));
@@ -282,6 +283,19 @@ function finishRun() {
   state.stats.totalMs += runMs;
   state.stats.longestMs = Math.max(state.stats.longestMs, runMs);
   updateGoals("survive", Math.floor(state.elapsed), true);
+  let campaignRating = 0;
+  if (state.runType === "campaign" && state.levelComplete) {
+    campaignRating = 1 + Number(state.runFragments === 3) + Number(state.perfects >= 3);
+    const firstClear = !state.campaign.completed.includes(state.levelId);
+    if (firstClear) { state.campaign.completed.push(state.levelId); state.runStars += 15; }
+    state.campaign.ratings[state.levelId] = Math.max(state.campaign.ratings[state.levelId] || 0, campaignRating);
+    state.campaign.fragments[state.levelId] = Math.max(state.campaign.fragments[state.levelId] || 0, state.runFragments);
+    if (!state.campaign.rewards.includes("bloom-wake")) {
+      state.campaign.rewards.push("bloom-wake");
+      if (!state.unlockedTrails.includes("bloom-wake")) state.unlockedTrails.push("bloom-wake");
+      state.runGoalRewards.push("Bloom Wake unlocked");
+    }
+  }
   state.stars += state.runStars;
   for (const cosmetic of cosmetics) {
     if (state.best >= cosmetic.score && !state.unlocked.includes(cosmetic.id)) state.unlocked.push(cosmetic.id);
@@ -289,10 +303,18 @@ function finishRun() {
   save();
   ui.resultScore.textContent = Math.floor(state.score);
   ui.resultStats.textContent = `Best flow x${Math.max(1, state.runBestStreak)} - All-time ${state.best}`;
+  ui.resultEyebrow.textContent = state.runType === "campaign" ? state.levelComplete ? "Bloom Gate opened" : "First Light interrupted" : "Orbit broken";
+  ui.resultObjectives.hidden = state.runType !== "campaign";
+  if (state.runType === "campaign") {
+    const checks = [state.levelComplete, state.runFragments === 3, state.perfects >= 3];
+    ui.resultObjectives.innerHTML = campaignLevels[0].objectives.map((objective,index)=>`<span class="${checks[index]?"done":""}">${checks[index]?"★":"☆"} ${objective}</span>`).join("");
+    ui.resultStats.textContent = state.levelComplete ? `${"★".repeat(campaignRating)}${"☆".repeat(3-campaignRating)} · Best flow x${Math.max(1,state.runBestStreak)}` : `Reached ${Math.floor(state.elapsed)} seconds`;
+  }
   ui.resultStars.textContent = `+${state.runStars} stars`;
   ui.goalRewards.textContent = state.runGoalRewards.join(" - ");
   ui.record.textContent = state.best > oldBest ? "New orbit record" : "";
   ui.unlock.textContent = state.unlocked.length > previousUnlocks ? "New biome awakened" : "";
+  ui.resultHome.textContent = state.runType === "campaign" ? "Map" : "Home";
   ui.results.hidden = false;
   ui.shell.classList.remove("playing");
   stopMusic();
@@ -870,7 +892,8 @@ function drawTrail(palette) {
     const size = Math.max(1, (1 - i / trail.length) * (state.fever > 0 ? 9 : 5));
     ctx.globalAlpha = Math.max(0, point.life) * 0.52;
     ctx.fillStyle = i % 2 ? palette.accent : palette.gold;
-    if (state.selectedTrail === "pollen") { ctx.beginPath(); ctx.arc(point.x, point.y, size * .65, 0, TAU); ctx.fill(); }
+    if (state.selectedTrail === "bloom-wake") { ctx.save();ctx.translate(point.x,point.y);ctx.rotate(player.angle+i*.15);ctx.beginPath();ctx.ellipse(0,0,size*.72,size*1.5,.45,0,TAU);ctx.fill();ctx.restore(); }
+    else if (state.selectedTrail === "pollen") { ctx.beginPath(); ctx.arc(point.x, point.y, size * .65, 0, TAU); ctx.fill(); }
     else if (state.selectedTrail === "spark") { paperDiamond(point.x, point.y, size * 1.25, player.angle + i); }
     else if (state.selectedTrail === "ribbon") { ctx.fillRect(point.x - size * 1.5, point.y - 1, size * 3, 2); }
     else if (state.selectedTrail === "echo") { ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(point.x, point.y, size, 0, TAU); ctx.stroke(); }
@@ -1067,6 +1090,9 @@ function renderCampaignMap() {
   const rating = state.campaign.ratings["first-light"] || 0;
   ui.campaignStars.textContent = `${rating}/3`;
   ui.firstLightRating.textContent = `${"★".repeat(rating)}${"☆".repeat(3-rating)}`;
+  const ember = ui.campaign.querySelector(".ember-island");
+  ember.classList.toggle("revealed", state.campaign.completed.includes("first-light"));
+  ember.querySelector("b").textContent = state.campaign.completed.includes("first-light") ? "Path revealed" : "Coming next";
 }
 
 function updateHome() {
@@ -1114,7 +1140,7 @@ function renderTrails() {
     const button = document.createElement("button");
     button.type = "button";
     button.className = `trail${state.selectedTrail === trailName ? " selected" : ""}${unlocked ? "" : " locked"}`;
-    button.style.setProperty("--trail", ["#e6e3b3","#77d5aa","#edca62","#ef6e67","#8b76c7","#f4f1de"][index]);
+    button.style.setProperty("--trail", ["#e6e3b3","#77d5aa","#edca62","#ef6e67","#8b76c7","#f4f1de","#4fae91"][index]);
     button.title = unlocked ? trailName : `${trailName}: complete ${index} goals`;
     button.setAttribute("aria-label", button.title);
     button.addEventListener("click", () => { if (!unlocked) return; state.selectedTrail = trailName; save(); renderTrails(); });
@@ -1224,7 +1250,7 @@ document.querySelector("[data-level='first-light']").addEventListener("click", (
 document.querySelector("#retry").addEventListener("click", () => startRun(state.runType, state.levelId));
 document.querySelector("#openGarage").addEventListener("click", () => showScreen("garage"));
 document.querySelector("#openSettings").addEventListener("click", () => showScreen("settings"));
-document.querySelector("#resultHome").addEventListener("click", () => showScreen("home"));
+ui.resultHome.addEventListener("click", () => showScreen(state.runType === "campaign" ? "campaign" : "home"));
 for (const button of document.querySelectorAll("[data-home]")) button.addEventListener("click", () => showScreen("home"));
 ui.sound.addEventListener("change", () => { state.muted = !ui.sound.checked; save(); });
 ui.haptics.addEventListener("change", () => { state.haptics = ui.haptics.checked; save(); vibrate(15); });
