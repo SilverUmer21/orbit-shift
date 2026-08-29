@@ -907,7 +907,12 @@ function showScreen(name) {
   hideScreens();
   ui[name].hidden = false;
   state.mode = name;
-  if (name === "home") updateHome();
+  if (name === "home") {
+    player.direction = 1;
+    player.flip = 0;
+    trail = [];
+    updateHome();
+  }
   if (name === "garage") renderGarage();
 }
 
