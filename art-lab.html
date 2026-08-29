@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orbit Shift Art Lab</title><link rel="stylesheet" href="art-lab.css"></head><body>
+<header><div><p>Orbit Shift · production renderers</p><h1>Luminous Papercut Art Lab</h1></div><a href="index.html">Game</a></header>
+<nav aria-label="Prototype type"><button class="active" data-tab="maps">Maps</button><button data-tab="planets">Living Planets</button></nav>
+<div class="tools"><label>Palette <select id="palette"><option value="bloom">Bloom</option><option value="ember">Ember</option><option value="void">Void</option></select></label><label>Phone <select id="phone"><option value="320">320</option><option value="390" selected>390</option><option value="430">430</option></select></label></div>
+<main id="maps" class="gallery"><article><h2>A · Verdant Stair</h2><canvas data-map="verdant-stair"></canvas></article><article><h2>B · Orbit Archipelago</h2><canvas data-map="orbit-archipelago"></canvas></article><article><h2>C · Guardian Spires</h2><canvas data-map="guardian-spires"></canvas></article></main>
+<main id="planets" class="gallery" hidden><article><h2>A · Bloom Crown</h2><canvas data-planet="bloom-crown"></canvas></article><article><h2>B · Terrarium Globe</h2><canvas data-planet="terrarium-globe"></canvas></article><article><h2>C · Petal Engine</h2><canvas data-planet="petal-engine"></canvas></article></main>
+<script src="art-renderers.js"></script><script src="art-lab.js"></script></body></html>

@@ -17,6 +17,7 @@ const ui = {
   goals: document.querySelector("#voyageGoals"), trails: document.querySelector("#trails"), goalRewards: document.querySelector("#goalRewards"),
   report: document.querySelector("#report"), showReport: document.querySelector("#showReport"), copyReport: document.querySelector("#copyReport"),
   campaignStars: document.querySelector("#campaignStars"), firstLightRating: document.querySelector("#firstLightRating"),
+  campaignMap: document.querySelector("#campaignMap"),
 };
 
 const TAU = Math.PI * 2;
@@ -824,38 +825,7 @@ function drawGateDetails(gate, start, end, color, palette, time) {
 
 function drawPlanet(time, palette) {
   const kick = state.mode === "crash" ? Math.sin(crashTimer * 36) * crashTimer * 8 : 0;
-  ctx.save();
-  ctx.translate(cx + kick, cy);
-  ctx.rotate(time * (state.fever > 0 ? 0.11 : 0.035));
-  ctx.fillStyle = "rgba(0,0,0,.28)";
-  blobPath(4, 0.1, planetRadius + 6, 0.035, 5, 6); ctx.fill();
-  ctx.fillStyle = palette.paper;
-  blobPath(0, 0, planetRadius, 0.045, 7); ctx.fill();
-  ctx.fillStyle = palette.mid;
-  blobPath(3, 0.7, planetRadius * 0.79, 0.12, 7); ctx.fill();
-  ctx.fillStyle = palette.ink;
-  blobPath(-4, -2, planetRadius * 0.54, 0.14, 6); ctx.fill();
-  ctx.fillStyle = palette.light;
-  blobPath(-7, -5, planetRadius * 0.31, 0.16, 5); ctx.fill();
-  if (state.runType === "campaign") {
-    ctx.strokeStyle = colorAlpha(palette.light,.34); ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(0,0,planetRadius*.68,0,TAU); ctx.stroke();
-    for (let i=0;i<7;i+=1) {
-      const angle=i*TAU/7+time*.03, r=planetRadius*.47;
-      ctx.save(); ctx.translate(Math.cos(angle)*r,Math.sin(angle)*r); ctx.rotate(angle+.6);
-      ctx.fillStyle=i%2?palette.paper:palette.mid; ctx.beginPath(); ctx.ellipse(0,0,6,15,0,0,TAU); ctx.fill();
-      ctx.fillStyle=palette.light; ctx.beginPath(); ctx.ellipse(-1,-2,2,9,0,0,TAU); ctx.fill(); ctx.restore();
-    }
-  }
-  drawBiomeMarks(time, palette);
-  ctx.save();
-  ctx.beginPath(); ctx.arc(0, 0, planetRadius, 0, TAU); ctx.clip();
-  for (const dot of grain) {
-    ctx.fillStyle = `rgba(3,9,13,${dot.alpha})`;
-    ctx.fillRect(dot.x * planetRadius, dot.y * planetRadius, 1.4, 1.4);
-  }
-  ctx.restore();
-  ctx.restore();
+  OrbitArt.drawLivingPlanet(ctx,"bloom-crown",{x:cx+kick,y:cy,radius:planetRadius,paletteId:state.selected,time:time*(state.fever>0?1.8:1)});
 }
 
 function drawBiomeMarks(time, palette) {
@@ -1155,6 +1125,11 @@ function drawHomePreview(time) {
   target.save(); target.translate(130,75+Math.sin(time*2)*3); drawGlider(target,currentRider(),currentCosmetic(),2.45,time,0,false,.25); target.restore();
 }
 
+function drawCampaignPreview(time) {
+  if (ui.campaign.hidden) return;
+  OrbitArt.drawCampaignMap(ui.campaignMap,"verdant-stair",state.selected,time);
+}
+
 function updateHud() {
   ui.score.textContent = Math.floor(state.score);
   ui.multiplier.textContent = `x${state.multiplier}`;
@@ -1251,6 +1226,7 @@ function frame(time) {
   update(delta);
   draw();
   drawHomePreview(time / 1000);
+  drawCampaignPreview(time / 1000);
   requestAnimationFrame(frame);
 }
 
