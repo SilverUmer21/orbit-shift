@@ -185,6 +185,7 @@ function startRun() {
   hideScreens();
   ui.results.hidden = true;
   ui.shell.classList.add("playing");
+  ui.shell.classList.remove("crashing");
   lastTime = performance.now();
   updateHud();
   updateJourney(true);
@@ -227,6 +228,7 @@ function beginCrash(cause = "gate") {
     return;
   }
   state.mode = "crash";
+  ui.shell.classList.add("crashing");
   state.stats.deaths[cause] = (state.stats.deaths[cause] || 0) + 1;
   crashTimer = 0.82;
   shake = state.reducedEffects ? 3 : 14;
@@ -547,45 +549,38 @@ function drawJourneyTransition(time, palette) {
 function drawCrashCurtain(palette) {
   const progress = 1 - crashTimer / .82;
   const eased = 1 - Math.pow(1 - Math.min(1, progress), 3);
-  const start = { x: width + height * .08, y: height + height * .08 };
-  const end = {
-    x: start.x - eased * (width + height * .28),
-    y: start.y - eased * (height + width * .3),
-  };
-  const controlA = { x: width * .8, y: height * .62 };
-  const controlB = { x: width * .32, y: height * .38 };
-
-  function ribbon(color, size, offset) {
-    const left = [];
-    const right = [];
-    for (let i = 0; i <= 18; i += 1) {
-      const t = i / 18;
-      const mt = 1 - t;
-      const x = mt ** 3 * start.x + 3 * mt ** 2 * t * controlA.x + 3 * mt * t ** 2 * controlB.x + t ** 3 * end.x;
-      const y = mt ** 3 * start.y + 3 * mt ** 2 * t * controlA.y + 3 * mt * t ** 2 * controlB.y + t ** 3 * end.y;
-      const dx = 3 * mt ** 2 * (controlA.x - start.x) + 6 * mt * t * (controlB.x - controlA.x) + 3 * t ** 2 * (end.x - controlB.x);
-      const dy = 3 * mt ** 2 * (controlA.y - start.y) + 6 * mt * t * (controlB.y - controlA.y) + 3 * t ** 2 * (end.y - controlB.y);
-      const length = Math.hypot(dx, dy) || 1;
-      const torn = (i % 3 - 1) * Math.min(8, size * .035);
-      const half = size * (.42 + t * .08) + torn;
-      left.push({ x: x - dy / length * half + offset, y: y + dx / length * half });
-      right.push({ x: x + dy / length * half + offset, y: y - dx / length * half });
-    }
-    ctx.fillStyle = color;
+  const pointAt = (t) => ({
+    x: width * 1.12 + (width * -.24 - width * 1.12) * t,
+    y: height * 1.08 + (height * -.08 - height * 1.08) * t - Math.sin(t * Math.PI) * height * .08,
+  });
+  const paperStar = (point, size, rotation, color, alpha = 1) => {
+    ctx.save(); ctx.translate(point.x, point.y); ctx.rotate(rotation); ctx.globalAlpha *= alpha;
+    ctx.shadowColor = color; ctx.shadowBlur = state.reducedEffects ? 3 : size * .7; ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.moveTo(left[0].x, left[0].y);
-    left.forEach((point) => ctx.lineTo(point.x, point.y));
-    right.reverse().forEach((point) => ctx.lineTo(point.x, point.y));
-    ctx.closePath();
-    ctx.fill();
+    for (let i = 0; i < 10; i += 1) {
+      const radius = i % 2 ? size * .42 : size;
+      const angle = -Math.PI / 2 + i * Math.PI / 5;
+      ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0; ctx.globalAlpha *= .48; ctx.fillStyle = palette.light;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -size); ctx.lineTo(size * .25, -size * .34); ctx.closePath(); ctx.fill();
+    ctx.restore();
   }
 
   ctx.save();
-  ctx.globalAlpha = state.reducedEffects ? eased * .42 : eased * .92;
-  const spread = height * (.12 + eased * .62);
-  ribbon(palette.paper, spread, 0);
-  ribbon("#f16f6b", spread * .72, -spread * .035);
-  ribbon(palette.gold, spread * .46, -spread * .065);
+  ctx.fillStyle = colorAlpha(palette.bg, eased * .26); ctx.fillRect(0, 0, width, height);
+  if (!state.reducedEffects) {
+    ctx.strokeStyle = colorAlpha(palette.gold, .32 * eased); ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let i = 0; i <= 14; i += 1) { const point = pointAt(eased * i / 14); i ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y); }
+    ctx.stroke();
+  }
+  for (let i = 5; i >= 1; i -= 1) {
+    const wake = eased - i * .075;
+    if (wake > 0) paperStar(pointAt(wake), 7 + (5 - i) * 2.2, wake * 5 + i, [palette.accent, palette.paper, palette.light][i % 3], Math.min(1, wake * 3));
+  }
+  paperStar(pointAt(eased), Math.min(width, height) * .075, eased * 4, palette.gold);
   ctx.restore();
 }
 
@@ -907,6 +902,7 @@ function renderCosmetics() {
 
 function showScreen(name) {
   ui.shell.classList.remove("playing");
+  ui.shell.classList.remove("crashing");
   stopMusic();
   hideScreens();
   ui[name].hidden = false;
