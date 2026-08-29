@@ -228,7 +228,7 @@ function beginCrash(cause = "gate") {
   }
   state.mode = "crash";
   state.stats.deaths[cause] = (state.stats.deaths[cause] || 0) + 1;
-  crashTimer = 0.62;
+  crashTimer = 0.82;
   shake = state.reducedEffects ? 3 : 14;
   flash = 0.8;
   const point = playerPoint();
@@ -505,6 +505,7 @@ function draw() {
   drawParticles();
   drawRings();
   drawLabels(palette);
+  if (state.mode === "crash") drawCrashCurtain(palette);
   if (tutorial > 0 && state.mode === "run") drawTutorial(time, palette);
   if (state.fever > 0) drawFever(time, palette);
   if (flash > 0) {
@@ -539,6 +540,25 @@ function drawJourneyTransition(time, palette) {
   for (let i=0;i<8;i+=1) {
     const angle=i*TAU/8+time*.25;
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(angle-.16)*height,cy+Math.sin(angle-.16)*height); ctx.lineTo(cx+Math.cos(angle+.16)*height,cy+Math.sin(angle+.16)*height); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawCrashCurtain(palette) {
+  const progress = 1 - crashTimer / .82;
+  const eased = 1 - Math.pow(1 - Math.min(1, progress), 3);
+  ctx.save();
+  ctx.globalAlpha = state.reducedEffects ? eased * .35 : eased * .72;
+  for (let i=0;i<7;i+=1) {
+    const y = (i + .5) * height / 7;
+    const reach = width * eased * (1.08 - i * .035);
+    ctx.fillStyle = [palette.paper,palette.ink,palette.accent][i%3];
+    ctx.beginPath();
+    ctx.moveTo(i%2 ? width : 0, y-height/12);
+    ctx.lineTo(i%2 ? width-reach : reach, y-height/18);
+    ctx.lineTo(i%2 ? width-reach*.9 : reach*.9, y+height/12);
+    ctx.lineTo(i%2 ? width : 0, y+height/10);
+    ctx.closePath(); ctx.fill();
   }
   ctx.restore();
 }
@@ -834,11 +854,6 @@ function playerSpeed() { return Math.min(2.45, 1.66 + state.elapsed * 0.009); }
 function normalize(angle) { return (angle % TAU + TAU) % TAU; }
 function angleDistance(a, b) { return Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b))); }
 function currentCosmetic() {
-  if (state.mode === "run" || state.mode === "crash") {
-    const phase = phaseAt(state.elapsed);
-    const index = phase.biome >= 0 ? phase.biome : Math.floor((state.elapsed - 103) / 24) % 3;
-    return cosmetics[index];
-  }
   return cosmetics.find((item) => item.id === state.selected) || cosmetics[0];
 }
 function currentRider() { return riders.find((item) => item.id === state.selectedRider) || riders[0]; }
