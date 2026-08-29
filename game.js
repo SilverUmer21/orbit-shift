@@ -50,6 +50,15 @@ const phases = [
   { id: "eclipse", name: "Eclipse Eye", start: 95, end: 103, biome: 2, guardian: true, target: 3 },
   { id: "ascension", name: "Ascension", start: 103, end: Infinity, biome: -1 },
 ];
+const firstLightPhases = [
+  { id: "first-light-teach", name: "First Light", start: 0, end: 12, biome: 0 },
+  { id: "first-light-rhythm", name: "Living Rhythm", start: 12, end: 30, biome: 0 },
+  { id: "first-light-twist", name: "Pollen Rise", start: 30, end: 48, biome: 0 },
+  { id: "budkeeper", name: "Budkeeper", start: 48, end: 65, biome: 0, guardian: true, target: 3 },
+  { id: "first-light-complete", name: "Bloom Gate", start: 65, end: Infinity, biome: 0 },
+];
+const firstLightGateTimes = [2, 8, 14, 18, 22, 26, 29, 33, 37, 42, 46, 49, 55, 61];
+const firstLightFragmentTimes = [16, 27, 40];
 const goalSets = {
   survival: [{ label: "Survive 35 seconds", kind: "survive", target: 35, reward: 18 }, { label: "Reach the Void", kind: "act", target: 3, reward: 30 }, { label: "Survive 90 seconds", kind: "survive", target: 90, reward: 45 }],
   skill: [{ label: "Thread 5 perfect gates", kind: "perfect", target: 5, reward: 20 }, { label: "Ignite fever twice", kind: "fever", target: 2, reward: 28 }, { label: "Thread 15 perfect gates", kind: "perfect", target: 15, reward: 50 }],
@@ -87,6 +96,7 @@ let orbitRadius = 0;
 let player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0 };
 let gates = [];
 let hazards = [];
+let fragments = [];
 let particles = [];
 let rings = [];
 let labels = [];
@@ -96,6 +106,9 @@ let grain = [];
 let gateCount = 0;
 let nextGate = 0;
 let nextHazard = 12;
+let campaignGateIndex = 0;
+let campaignFragmentIndex = 0;
+let campaignHazardSpawned = false;
 let tutorial = 0;
 let crashTimer = 0;
 let pinch = 0;
@@ -184,6 +197,7 @@ function startRun(runType = "endless", levelId = null) {
   player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0 };
   gates = [];
   hazards = [];
+  fragments = [];
   particles = [];
   rings = [];
   labels = [];
@@ -191,6 +205,9 @@ function startRun(runType = "endless", levelId = null) {
   gateCount = 0;
   nextGate = 0.65;
   nextHazard = 12;
+  campaignGateIndex = 0;
+  campaignFragmentIndex = 0;
+  campaignHazardSpawned = false;
   tutorial = state.tutorialSeen ? 0 : 4.5;
   crashTimer = 0;
   pinch = 0;
@@ -283,12 +300,13 @@ function finishRun() {
   updateHud();
 }
 
-function phaseAt(elapsed) { return phases.find((phase) => elapsed >= phase.start && elapsed < phase.end) || phases[phases.length - 1]; }
+function activePhases() { return state.runType === "campaign" ? firstLightPhases : phases; }
+function phaseAt(elapsed) { const list = activePhases(); return list.find((phase) => elapsed >= phase.start && elapsed < phase.end) || list[list.length - 1]; }
 
 function updateJourney(force = false) {
   const phase = phaseAt(state.elapsed);
   if (!force && phase.id === state.phaseId) return phase;
-  const previous = phases.find((item) => item.id === state.phaseId);
+  const previous = activePhases().find((item) => item.id === state.phaseId);
   if (previous?.guardian && state.guardianPassed >= previous.target) completeGuardian(previous);
   state.phaseId = phase.id;
   state.guardianPassed = 0;
@@ -370,6 +388,11 @@ function spawnGate() {
     ...plan, previousRadius: plan.radius, resolved: false, type: gateCount % 4,
     palette: gateCount % 3, pair: false, guardian: Boolean(phase.guardian), guardianId: phase.id,
   };
+  if (state.runType === "campaign") {
+    const settings = phase.id === "first-light-teach" ? [50, 1.72, 0] : phase.id === "first-light-rhythm" ? [60, 1.45, .08] : phase.id === "first-light-twist" ? [68, 1.22, .2] : [76, 1.12, .26];
+    gate.speed = settings[0]; gate.opening = settings[1]; gate.rotation = Math.max(-settings[2], Math.min(settings[2], gate.rotation));
+    gate.guardian = phase.id === "budkeeper"; gate.guardianId = phase.id;
+  }
   gates.push(gate);
   gateCount += 1;
   if ((phase.id === "forge" || state.elapsed > 103 && Math.random() < .24) && gates.filter((item) => !item.resolved).length < 3) {
@@ -379,6 +402,13 @@ function spawnGate() {
       gap: normalize(gate.gap - gate.rotation * spacing / gate.speed), resolved: false, pair: true,
     });
   }
+}
+
+function spawnFragment() {
+  const radius = orbitRadius + Math.min(width, height) * .5;
+  const speed = 64;
+  const flight = (radius - orbitRadius) / speed;
+  fragments.push({ radius, previousRadius: radius, speed, angle: normalize(player.angle + player.direction * playerSpeed() * flight), collected: false, spin: Math.random() * TAU });
 }
 
 function spawnHazard() {
@@ -403,6 +433,11 @@ function update(delta) {
 
   state.elapsed += delta;
   const phase = updateJourney();
+  if (state.runType === "campaign" && state.elapsed >= 65) {
+    state.levelComplete = true;
+    finishRun();
+    return;
+  }
   tutorial = Math.max(0, tutorial - delta);
   state.score += delta * (4 + state.multiplier * 1.45);
   state.fever = Math.max(0, state.fever - delta);
@@ -416,16 +451,22 @@ function update(delta) {
   trail = trail.slice(0, state.fever > 0 ? 26 : 14);
   for (const point of trail) point.life -= delta * 1.9;
 
-  nextGate -= delta;
-  if (nextGate <= 0) {
-    spawnGate();
-    nextGate = phase.transition ? phase.end - state.elapsed + .2 : phase.guardian ? 1.55 : gateCount < 3 ? 2.85 : Math.max(1.72, 2.52 - state.elapsed * 0.006);
+  if (state.runType === "campaign") {
+    while (firstLightGateTimes[campaignGateIndex] <= state.elapsed) { spawnGate(); campaignGateIndex += 1; }
+    while (firstLightFragmentTimes[campaignFragmentIndex] <= state.elapsed) { spawnFragment(); campaignFragmentIndex += 1; }
+  } else {
+    nextGate -= delta;
+    if (nextGate <= 0) {
+      spawnGate();
+      nextGate = phase.transition ? phase.end - state.elapsed + .2 : phase.guardian ? 1.55 : gateCount < 3 ? 2.85 : Math.max(1.72, 2.52 - state.elapsed * 0.006);
+    }
   }
   nextHazard -= delta;
   if ((phase.id === "void" || phase.id === "eclipse" || phase.id === "ascension") && nextHazard <= 0) {
     spawnHazard();
     nextHazard = 10 + Math.random() * 3;
   }
+  if (state.runType === "campaign" && state.elapsed >= 38 && !campaignHazardSpawned) { spawnHazard(); campaignHazardSpawned = true; }
 
   for (const gate of gates) {
     gate.previousRadius = gate.radius;
@@ -441,6 +482,23 @@ function update(delta) {
     if (hazard.life > 0.35 && angleDistance(player.angle, hazard.angle) < 0.135) beginCrash("hazard");
   }
   hazards = hazards.filter((hazard) => hazard.life > 0);
+
+  for (const fragment of fragments) {
+    fragment.previousRadius = fragment.radius;
+    fragment.radius -= fragment.speed * delta * worldScale;
+    fragment.spin += delta * 2.4;
+    if (!fragment.collected && fragment.previousRadius > orbitRadius && fragment.radius <= orbitRadius) {
+      fragment.collected = true;
+      if (angleDistance(player.angle, fragment.angle) < .34) {
+        state.runFragments += 1;
+        state.runStars += 3;
+        labels.push({ text: `FRAGMENT ${state.runFragments}/3`, life: 1, max: 1, y: cy - orbitRadius - 28 });
+        burst(playerPoint(), currentCosmetic().gold, 14, 130, "paper");
+        beep(720 + state.runFragments * 80, .1, "triangle");
+      }
+    }
+  }
+  fragments = fragments.filter((fragment) => fragment.radius > planetRadius - 18 && !fragment.collected);
 
   if (Math.random() < delta * (state.fever > 0 ? 42 : 13)) burst(playerPoint(), currentCosmetic().mid, 1, state.fever > 0 ? 130 : 55, "paper");
   updateEffects(delta);
@@ -512,6 +570,7 @@ function draw() {
   drawJourneyTransition(time, palette);
   drawPaperWaves(time, palette);
   drawGates(time, palette);
+  drawFragments(time, palette);
   drawGuardianAura(time, palette);
   drawPlanet(time, palette);
   drawOrbit(time, palette);
@@ -529,6 +588,16 @@ function draw() {
     ctx.fillRect(0, 0, width, height);
   }
   ctx.restore();
+}
+
+function drawFragments(time, palette) {
+  for (const fragment of fragments) {
+    const x = cx + Math.cos(fragment.angle) * fragment.radius;
+    const y = cy + Math.sin(fragment.angle) * fragment.radius;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(fragment.spin); ctx.shadowColor = palette.gold; ctx.shadowBlur = state.reducedEffects ? 3 : 12;
+    ctx.fillStyle = palette.gold; paperDiamond(0, 0, 9 + Math.sin(time * 5 + fragment.spin) * 1.2, 0);
+    ctx.fillStyle = palette.light; paperDiamond(0, 0, 4, Math.PI / 4); ctx.restore();
+  }
 }
 
 function drawBackground(time, palette) {
