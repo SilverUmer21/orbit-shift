@@ -547,19 +547,45 @@ function drawJourneyTransition(time, palette) {
 function drawCrashCurtain(palette) {
   const progress = 1 - crashTimer / .82;
   const eased = 1 - Math.pow(1 - Math.min(1, progress), 3);
-  ctx.save();
-  ctx.globalAlpha = state.reducedEffects ? eased * .35 : eased * .72;
-  for (let i=0;i<7;i+=1) {
-    const y = (i + .5) * height / 7;
-    const reach = width * eased * (1.08 - i * .035);
-    ctx.fillStyle = [palette.paper,palette.ink,palette.accent][i%3];
+  const start = { x: width + height * .08, y: height + height * .08 };
+  const end = {
+    x: start.x - eased * (width + height * .28),
+    y: start.y - eased * (height + width * .3),
+  };
+  const controlA = { x: width * .8, y: height * .62 };
+  const controlB = { x: width * .32, y: height * .38 };
+
+  function ribbon(color, size, offset) {
+    const left = [];
+    const right = [];
+    for (let i = 0; i <= 18; i += 1) {
+      const t = i / 18;
+      const mt = 1 - t;
+      const x = mt ** 3 * start.x + 3 * mt ** 2 * t * controlA.x + 3 * mt * t ** 2 * controlB.x + t ** 3 * end.x;
+      const y = mt ** 3 * start.y + 3 * mt ** 2 * t * controlA.y + 3 * mt * t ** 2 * controlB.y + t ** 3 * end.y;
+      const dx = 3 * mt ** 2 * (controlA.x - start.x) + 6 * mt * t * (controlB.x - controlA.x) + 3 * t ** 2 * (end.x - controlB.x);
+      const dy = 3 * mt ** 2 * (controlA.y - start.y) + 6 * mt * t * (controlB.y - controlA.y) + 3 * t ** 2 * (end.y - controlB.y);
+      const length = Math.hypot(dx, dy) || 1;
+      const torn = (i % 3 - 1) * Math.min(8, size * .035);
+      const half = size * (.42 + t * .08) + torn;
+      left.push({ x: x - dy / length * half + offset, y: y + dx / length * half });
+      right.push({ x: x + dy / length * half + offset, y: y - dx / length * half });
+    }
+    ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.moveTo(i%2 ? width : 0, y-height/12);
-    ctx.lineTo(i%2 ? width-reach : reach, y-height/18);
-    ctx.lineTo(i%2 ? width-reach*.9 : reach*.9, y+height/12);
-    ctx.lineTo(i%2 ? width : 0, y+height/10);
-    ctx.closePath(); ctx.fill();
+    ctx.moveTo(left[0].x, left[0].y);
+    left.forEach((point) => ctx.lineTo(point.x, point.y));
+    right.reverse().forEach((point) => ctx.lineTo(point.x, point.y));
+    ctx.closePath();
+    ctx.fill();
   }
+
+  ctx.save();
+  ctx.globalAlpha = state.reducedEffects ? eased * .42 : eased * .92;
+  const spread = height * (.12 + eased * .62);
+  ribbon(palette.paper, spread, 0);
+  ribbon("#f16f6b", spread * .72, -spread * .035);
+  ribbon(palette.gold, spread * .46, -spread * .065);
   ctx.restore();
 }
 
