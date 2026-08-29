@@ -11,6 +11,10 @@ const ui = {
   homeBest: document.querySelector("#homeBest"), homeStars: document.querySelector("#homeStars"), garageStars: document.querySelector("#garageStars"),
   resultStars: document.querySelector("#resultStars"), preview: document.querySelector("#riderPreview"),
   sound: document.querySelector("#soundToggle"), haptics: document.querySelector("#hapticsToggle"), effects: document.querySelector("#effectsToggle"),
+  shield: document.querySelector("#shield"), actLabel: document.querySelector("#actLabel"),
+  guardian: document.querySelector("#guardian"), guardianName: document.querySelector("#guardianName"), guardianBar: document.querySelector("#guardianBar"),
+  goals: document.querySelector("#voyageGoals"), trails: document.querySelector("#trails"), goalRewards: document.querySelector("#goalRewards"),
+  report: document.querySelector("#report"), showReport: document.querySelector("#showReport"), copyReport: document.querySelector("#copyReport"),
 };
 
 const TAU = Math.PI * 2;
@@ -28,13 +32,39 @@ const riders = [
   { id: "shuttle", name: "Shuttle", price: 350, shape: "shuttle" },
   { id: "ringsail", name: "Ring Sail", price: 550, shape: "ringsail" },
 ];
+const SAVE_VERSION = 2;
+const phases = [
+  { id: "bloom", name: "Bloom", start: 0, end: 25, biome: 0 },
+  { id: "petal", name: "Petal Crown", start: 25, end: 33, biome: 0, guardian: true, target: 3 },
+  { id: "drift-ember", name: "Ember Awakens", start: 33, end: 35, biome: 1, transition: true },
+  { id: "ember", name: "Ember", start: 35, end: 60, biome: 1 },
+  { id: "forge", name: "Solar Forge", start: 60, end: 68, biome: 1, guardian: true, target: 2 },
+  { id: "drift-void", name: "Void Opens", start: 68, end: 70, biome: 2, transition: true },
+  { id: "void", name: "Void", start: 70, end: 95, biome: 2 },
+  { id: "eclipse", name: "Eclipse Eye", start: 95, end: 103, biome: 2, guardian: true, target: 3 },
+  { id: "ascension", name: "Ascension", start: 103, end: Infinity, biome: -1 },
+];
+const goalSets = {
+  survival: [{ label: "Survive 35 seconds", kind: "survive", target: 35, reward: 18 }, { label: "Reach the Void", kind: "act", target: 3, reward: 30 }, { label: "Survive 90 seconds", kind: "survive", target: 90, reward: 45 }],
+  skill: [{ label: "Thread 5 perfect gates", kind: "perfect", target: 5, reward: 20 }, { label: "Ignite fever twice", kind: "fever", target: 2, reward: 28 }, { label: "Thread 15 perfect gates", kind: "perfect", target: 15, reward: 50 }],
+  journey: [{ label: "Pass 12 living gates", kind: "gate", target: 12, reward: 18 }, { label: "Defeat a guardian", kind: "guardian", target: 1, reward: 35 }, { label: "Defeat all guardians", kind: "guardian", target: 3, reward: 70 }],
+};
+const trailStyles = ["paper", "pollen", "spark", "ribbon", "echo", "crown"];
 const saved = loadSave();
+const goalCycle = saved.goalCycle || { survival: 0, skill: 0, journey: 0 };
+const initialGoals = saved.goals || Object.keys(goalSets).map((category) => makeGoal(category, goalCycle[category]));
+const initialStats = saved.stats || { sessions: 0, runs: 0, totalMs: 0, longestMs: 0, deaths: { gate: 0, hazard: 0 }, acts: [0,0,0], guardians: 0, goals: 0, dates: [] };
 const state = {
   mode: "home", score: 0, multiplier: 1, streak: 0, runBestStreak: 0, fever: 0,
   best: saved.best || 0, bestStreak: saved.bestStreak || 0,
   unlocked: saved.unlocked || ["bloom"], selected: saved.selected || "bloom",
   stars: Number(saved.stars) || 0, runStars: 0, gatesPassed: 0, perfects: 0, feverCount: 0,
   ownedRiders: saved.ownedRiders || ["manta"], selectedRider: saved.selectedRider || "manta",
+  shield: false, shieldEarned: false, invulnerable: 0, phaseId: "", guardianPassed: 0, runGoalRewards: [],
+  runActMax: 0,
+  goals: initialGoals, goalCycle, goalsCompleted: Number(saved.goalsCompleted) || 0,
+  unlockedTrails: saved.unlockedTrails || ["paper"], selectedTrail: saved.selectedTrail || "paper", relics: saved.relics || [],
+  stats: initialStats,
   muted: Boolean(saved.muted), haptics: saved.haptics !== false, reducedEffects: Boolean(saved.reducedEffects),
   tutorialSeen: Boolean(saved.tutorialSeen), elapsed: 0, paused: false,
 };
@@ -65,6 +95,13 @@ let flash = 0;
 let lastReverse = 0;
 let lastTime = performance.now();
 let audio;
+let musicTimer = 0;
+let musicStep = 0;
+
+const today = new Date().toISOString().slice(0, 10);
+state.stats.sessions += 1;
+if (!state.stats.dates.includes(today)) state.stats.dates.push(today);
+state.stats.dates = state.stats.dates.slice(-14);
 
 function loadSave() {
   try { return JSON.parse(localStorage.getItem("orbit-shift-save") || "{}"); }
@@ -73,10 +110,18 @@ function loadSave() {
 
 function save() {
   localStorage.setItem("orbit-shift-save", JSON.stringify({
+    version: SAVE_VERSION,
     best: state.best, bestStreak: state.bestStreak, unlocked: state.unlocked,
     selected: state.selected, stars: state.stars, ownedRiders: state.ownedRiders, selectedRider: state.selectedRider,
+    goals: state.goals, goalCycle: state.goalCycle, goalsCompleted: state.goalsCompleted,
+    unlockedTrails: state.unlockedTrails, selectedTrail: state.selectedTrail, relics: state.relics, stats: state.stats,
     muted: state.muted, haptics: state.haptics, reducedEffects: state.reducedEffects, tutorialSeen: state.tutorialSeen,
   }));
+}
+
+function makeGoal(category, index) {
+  const template = goalSets[category][index % goalSets[category].length];
+  return { ...template, category, progress: 0 };
 }
 
 function resize() {
@@ -113,6 +158,14 @@ function startRun() {
   state.gatesPassed = 0;
   state.perfects = 0;
   state.feverCount = 0;
+  state.shield = false;
+  state.shieldEarned = false;
+  state.invulnerable = 0;
+  state.phaseId = "";
+  state.guardianPassed = 0;
+  state.runActMax = 0;
+  state.runGoalRewards = [];
+  state.stats.runs += 1;
   state.paused = false;
   player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0 };
   gates = [];
@@ -134,6 +187,8 @@ function startRun() {
   ui.shell.classList.add("playing");
   lastTime = performance.now();
   updateHud();
+  updateJourney(true);
+  startMusic();
   beep(360, 0.07, "triangle");
   vibrate(12);
 }
@@ -155,9 +210,24 @@ function reverse() {
   vibrate(8);
 }
 
-function beginCrash() {
-  if (state.mode !== "run") return;
+function beginCrash(cause = "gate") {
+  if (state.mode !== "run" || state.invulnerable > 0) return;
+  if (state.shield) {
+    state.shield = false;
+    state.invulnerable = 1;
+    state.streak = 0;
+    state.multiplier = 1;
+    gates = gates.filter((gate) => gate.resolved || gate.radius > orbitRadius + 42);
+    hazards = [];
+    flash = .75; shake = state.reducedEffects ? 2 : 8;
+    rings.push({ radius: orbitRadius, life: .8, max: .8, color: currentCosmetic().gold, speed: 120 });
+    labels.push({ text: "SHIELD", life: 1, max: 1, y: cy - orbitRadius - 28 });
+    burst(playerPoint(), currentCosmetic().gold, 24, 210, "paper");
+    beep(180, .08, "square"); beep(720, .18, "sine"); vibrate(35); updateHud();
+    return;
+  }
   state.mode = "crash";
+  state.stats.deaths[cause] = (state.stats.deaths[cause] || 0) + 1;
   crashTimer = 0.62;
   shake = state.reducedEffects ? 3 : 14;
   flash = 0.8;
@@ -175,6 +245,10 @@ function finishRun() {
   state.mode = "results";
   state.best = Math.max(state.best, Math.floor(state.score));
   state.bestStreak = Math.max(state.bestStreak, state.runBestStreak);
+  const runMs = Math.floor(state.elapsed * 1000);
+  state.stats.totalMs += runMs;
+  state.stats.longestMs = Math.max(state.stats.longestMs, runMs);
+  updateGoals("survive", Math.floor(state.elapsed), true);
   state.stars += state.runStars;
   for (const cosmetic of cosmetics) {
     if (state.best >= cosmetic.score && !state.unlocked.includes(cosmetic.id)) state.unlocked.push(cosmetic.id);
@@ -183,42 +257,106 @@ function finishRun() {
   ui.resultScore.textContent = Math.floor(state.score);
   ui.resultStats.textContent = `Best flow x${Math.max(1, state.runBestStreak)} - All-time ${state.best}`;
   ui.resultStars.textContent = `+${state.runStars} stars`;
+  ui.goalRewards.textContent = state.runGoalRewards.join(" - ");
   ui.record.textContent = state.best > oldBest ? "New orbit record" : "";
   ui.unlock.textContent = state.unlocked.length > previousUnlocks ? "New biome awakened" : "";
   ui.results.hidden = false;
   ui.shell.classList.remove("playing");
+  stopMusic();
   renderCosmetics();
   updateHud();
+}
+
+function phaseAt(elapsed) { return phases.find((phase) => elapsed >= phase.start && elapsed < phase.end) || phases[phases.length - 1]; }
+
+function updateJourney(force = false) {
+  const phase = phaseAt(state.elapsed);
+  if (!force && phase.id === state.phaseId) return phase;
+  const previous = phases.find((item) => item.id === state.phaseId);
+  if (previous?.guardian && state.guardianPassed >= previous.target) completeGuardian(previous);
+  state.phaseId = phase.id;
+  state.guardianPassed = 0;
+  const act = phase.biome >= 0 ? phase.biome : Math.floor((state.elapsed - 103) / 24) % 3;
+  if (!phase.guardian && !phase.transition && act + 1 > state.runActMax) {
+    state.runActMax = act + 1;
+    state.stats.acts[act] = (state.stats.acts[act] || 0) + 1;
+    updateGoals("act", state.runActMax, true);
+  }
+  if (phase.transition) { gates = []; hazards = []; nextGate = phase.end - state.elapsed + .2; }
+  else nextGate = .15;
+  ui.actLabel.textContent = phase.name;
+  ui.actLabel.classList.remove("show");
+  void ui.actLabel.offsetWidth;
+  ui.actLabel.classList.add("show");
+  updateHud();
+  return phase;
+}
+
+function completeGuardian(phase) {
+  state.stats.guardians += 1;
+  state.runStars += 10;
+  updateGoals("guardian", 1);
+  const relic = phase.id;
+  if (!state.relics.includes(relic)) { state.relics.push(relic); state.runGoalRewards.push(`${phase.name} relic`); }
+  labels.push({ text: "GUARDIAN CLEARED", life: 1.4, max: 1.4, y: cy - orbitRadius - 28 });
+  beep(1040, .18, "triangle"); vibrate(28);
+}
+
+function updateGoals(kind, amount, absolute = false) {
+  for (let i = 0; i < state.goals.length; i += 1) {
+    const goal = state.goals[i];
+    if (goal.kind !== kind) continue;
+    goal.progress = absolute ? Math.max(goal.progress, amount) : goal.progress + amount;
+    if (goal.progress < goal.target) continue;
+    state.stars += goal.reward;
+    state.goalsCompleted += 1;
+    state.stats.goals += 1;
+    state.runGoalRewards.push(`${goal.label} +${goal.reward} stars`);
+    const trailName = trailStyles[Math.min(state.goalsCompleted, trailStyles.length - 1)];
+    if (!state.unlockedTrails.includes(trailName)) { state.unlockedTrails.push(trailName); state.runGoalRewards.push(`${trailName} trail unlocked`); }
+    state.goalCycle[goal.category] = (state.goalCycle[goal.category] || 0) + 1;
+    state.goals[i] = makeGoal(goal.category, state.goalCycle[goal.category]);
+    beep(880, .13, "triangle");
+  }
 }
 
 function buildGatePlan(snapshot, random = Math.random) {
   const earlySpeeds = [52, 59, 66];
   const earlyOpenings = [1.66, 1.5, 1.38];
-  const speed = snapshot.index < 3 ? earlySpeeds[snapshot.index] : Math.min(108, 68 + snapshot.elapsed * 0.68);
+  const phase = snapshot.phase || phaseAt(snapshot.elapsed);
+  let speed = snapshot.index < 3 ? earlySpeeds[snapshot.index] : Math.min(108, 68 + snapshot.elapsed * 0.42);
+  if (phase.id === "ember" || phase.id === "forge") speed *= 1.08;
+  if (phase.id === "void" || phase.id === "eclipse") speed *= .96;
+  if (phase.guardian) speed = Math.max(speed, phase.id === "forge" ? 98 : 90);
   const radius = snapshot.orbitRadius + snapshot.shortSide * 0.56;
   const flight = (radius - snapshot.orbitRadius) / speed;
   const wantsTurn = snapshot.index === 0 || (snapshot.index > 1 && random() < 0.64);
   const turnAt = wantsTurn ? 0.38 + random() * Math.min(0.75, flight * 0.42) : flight;
-  const rotationLimit = snapshot.index < 3 ? 0.12 : Math.min(0.54, 0.16 + snapshot.elapsed * 0.006);
+  let rotationLimit = snapshot.index < 3 ? 0.12 : Math.min(0.54, 0.16 + snapshot.elapsed * 0.004);
+  if (phase.id === "ember" || phase.id === "forge") rotationLimit *= 1.25;
+  if (phase.id === "void" || phase.id === "eclipse") rotationLimit *= .72;
   const rotation = (random() - 0.5) * 2 * rotationLimit;
-  const opening = snapshot.index < 3 ? earlyOpenings[snapshot.index] : Math.max(0.84, 1.34 - snapshot.elapsed * 0.0075);
+  let opening = snapshot.index < 3 ? earlyOpenings[snapshot.index] : Math.max(0.88, 1.34 - snapshot.elapsed * 0.0046);
+  if (phase.guardian) opening = phase.id === "forge" ? 1.04 : 1.12;
   const travel = wantsTurn ? 2 * turnAt - flight : flight;
   const target = normalize(snapshot.angle + snapshot.direction * snapshot.angularSpeed * travel + (random() - 0.5) * 0.12);
   return { radius, speed, flight, gap: normalize(target - rotation * flight), target, rotation, opening, wantsTurn };
 }
 
 function spawnGate() {
+  const phase = phaseAt(state.elapsed);
+  if (phase.transition) return;
   const plan = buildGatePlan({
     index: gateCount, elapsed: state.elapsed, angle: player.angle, direction: player.direction,
-    angularSpeed: playerSpeed(), orbitRadius, shortSide: Math.min(width, height),
+    angularSpeed: playerSpeed(), orbitRadius, shortSide: Math.min(width, height), phase,
   });
   const gate = {
     ...plan, previousRadius: plan.radius, resolved: false, type: gateCount % 4,
-    palette: gateCount % 3, pair: false,
+    palette: gateCount % 3, pair: false, guardian: Boolean(phase.guardian), guardianId: phase.id,
   };
   gates.push(gate);
   gateCount += 1;
-  if (state.elapsed > 30 && gates.filter((item) => !item.resolved).length < 3 && Math.random() < 0.18) {
+  if ((phase.id === "forge" || state.elapsed > 103 && Math.random() < .24) && gates.filter((item) => !item.resolved).length < 3) {
     const spacing = 58;
     gates.push({
       ...gate, radius: gate.radius + spacing, previousRadius: gate.radius + spacing,
