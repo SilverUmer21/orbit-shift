@@ -685,7 +685,12 @@ function drawTrail(palette) {
     const size = Math.max(1, (1 - i / trail.length) * (state.fever > 0 ? 9 : 5));
     ctx.globalAlpha = Math.max(0, point.life) * 0.52;
     ctx.fillStyle = i % 2 ? palette.accent : palette.gold;
-    paperDiamond(point.x, point.y, size, player.angle);
+    if (state.selectedTrail === "pollen") { ctx.beginPath(); ctx.arc(point.x, point.y, size * .65, 0, TAU); ctx.fill(); }
+    else if (state.selectedTrail === "spark") { paperDiamond(point.x, point.y, size * 1.25, player.angle + i); }
+    else if (state.selectedTrail === "ribbon") { ctx.fillRect(point.x - size * 1.5, point.y - 1, size * 3, 2); }
+    else if (state.selectedTrail === "echo") { ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(point.x, point.y, size, 0, TAU); ctx.stroke(); }
+    else if (state.selectedTrail === "crown") { paperDiamond(point.x, point.y, size, player.angle); paperDiamond(point.x, point.y, size * .55, player.angle + Math.PI / 2); }
+    else paperDiamond(point.x, point.y, size, player.angle);
   }
   ctx.restore();
 }
@@ -876,6 +881,11 @@ function updateHome() {
   ui.sound.checked = !state.muted;
   ui.haptics.checked = state.haptics;
   ui.effects.checked = state.reducedEffects;
+  renderGoals();
+}
+
+function renderGoals() {
+  ui.goals.innerHTML = state.goals.map((goal) => `<div class="voyage-goal"><b>${goal.label}</b><span>${Math.min(goal.progress,goal.target)}/${goal.target}</span><i style="--progress:${Math.min(100,goal.progress/goal.target*100)}%"></i></div>`).join("");
 }
 
 function renderGarage() {
@@ -900,6 +910,22 @@ function renderGarage() {
     ui.riderGrid.append(card);
   }
   renderCosmetics();
+  renderTrails();
+}
+
+function renderTrails() {
+  ui.trails.innerHTML = "";
+  for (const [index, trailName] of trailStyles.entries()) {
+    const unlocked = state.unlockedTrails.includes(trailName);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `trail${state.selectedTrail === trailName ? " selected" : ""}${unlocked ? "" : " locked"}`;
+    button.style.setProperty("--trail", ["#e6e3b3","#77d5aa","#edca62","#ef6e67","#8b76c7","#f4f1de"][index]);
+    button.title = unlocked ? trailName : `${trailName}: complete ${index} goals`;
+    button.setAttribute("aria-label", button.title);
+    button.addEventListener("click", () => { if (!unlocked) return; state.selectedTrail = trailName; save(); renderTrails(); });
+    ui.trails.append(button);
+  }
 }
 
 function drawHomePreview(time) {
@@ -914,6 +940,17 @@ function updateHud() {
   ui.multiplier.textContent = `x${state.multiplier}`;
   ui.best.textContent = state.best;
   ui.fever.style.width = `${(state.fever > 0 ? state.fever / 6 : Math.min(1, state.streak / 5)) * 100}%`;
+  ui.shield.classList.toggle("ready", state.shield && state.mode === "run");
+  const phase = phaseAt(state.elapsed);
+  ui.guardian.classList.toggle("active", Boolean(phase.guardian && state.mode === "run"));
+  ui.guardianName.textContent = phase.name;
+  ui.guardianBar.style.setProperty("--guardian", `${phase.guardian ? Math.min(100,state.guardianPassed/phase.target*100) : 0}%`);
+}
+
+function reportText() {
+  const stats = state.stats;
+  const minutes = Math.round(stats.totalMs / 6000) / 10;
+  return `ORBIT SHIFT PLAYTEST\nSessions: ${stats.sessions}\nReturn days: ${stats.dates.length}\nRuns: ${stats.runs}\nPlay time: ${minutes} min\nLongest run: ${Math.round(stats.longestMs/1000)} sec\nReached Bloom/Ember/Void: ${stats.acts.join(" / ")}\nGuardians cleared: ${stats.guardians}\nGoals completed: ${stats.goals}\nDeaths gate/hazard: ${stats.deaths.gate} / ${stats.deaths.hazard}`;
 }
 
 function vibrate(duration) { if (state.haptics && navigator.vibrate) navigator.vibrate(duration); }
@@ -963,6 +1000,11 @@ for (const button of document.querySelectorAll("[data-home]")) button.addEventLi
 ui.sound.addEventListener("change", () => { state.muted = !ui.sound.checked; save(); });
 ui.haptics.addEventListener("change", () => { state.haptics = ui.haptics.checked; save(); vibrate(15); });
 ui.effects.addEventListener("change", () => { state.reducedEffects = ui.effects.checked; save(); });
+ui.showReport.addEventListener("click", () => { ui.report.textContent = reportText(); ui.report.hidden = !ui.report.hidden; ui.copyReport.hidden = ui.report.hidden; });
+ui.copyReport.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(reportText()); ui.copyReport.textContent = "Copied"; setTimeout(() => { ui.copyReport.textContent = "Copy summary"; }, 1200); }
+  catch { ui.copyReport.textContent = "Copy unavailable"; }
+});
 window.addEventListener("keydown", (event) => {
   if (event.repeat) return;
   if (["Space", "ArrowLeft", "ArrowRight"].includes(event.code)) {
@@ -981,4 +1023,5 @@ renderCosmetics();
 updateHud();
 updateHome();
 runSelfChecks();
+save();
 requestAnimationFrame(frame);
