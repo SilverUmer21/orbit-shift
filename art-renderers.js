@@ -136,6 +136,43 @@
     });
   };
 
+  function planetShadow(ctx,x,y,radius,palette) {
+    ctx.save();ctx.translate(x,y);ctx.fillStyle="rgba(0,0,0,.36)";ctx.beginPath();ctx.ellipse(7,10,radius*1.05,radius*.96,0,0,TAU);ctx.fill();
+    ctx.strokeStyle=alpha(palette.accent,.18);ctx.lineWidth=radius*.14;ctx.beginPath();ctx.arc(0,0,radius*1.11,0,TAU);ctx.stroke();ctx.restore();
+  }
+
+  planetRenderers["bloom-crown"] = function(ctx,x,y,radius,palette,time){
+    planetShadow(ctx,x,y,radius,palette);ctx.save();ctx.translate(x,y);ctx.rotate(time*.035);
+    blob(ctx,0,0,radius,9,.045,palette.paper);blob(ctx,-radius*.04,-radius*.04,radius*.84,8,.075,palette.mid,.2);blob(ctx,radius*.03,radius*.03,radius*.59,7,.06,palette.ink,-.1);
+    ctx.strokeStyle=alpha(palette.light,.58);ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,radius*.69,0,TAU);ctx.stroke();
+    for(let i=0;i<12;i+=1){const angle=i*TAU/12+time*.08,r=radius*(.7+(i%2)*.08);leaf(ctx,Math.cos(angle)*r,Math.sin(angle)*r,radius*.075,radius*.27,angle+Math.PI/2,i%3===0?palette.accent:i%2?palette.dark:palette.light,palette.ink);}
+    for(let i=0;i<6;i+=1){const angle=i*TAU/6-time*.025,r=radius*.46;ctx.save();ctx.translate(Math.cos(angle)*r,Math.sin(angle)*r);ctx.rotate(angle);ctx.fillStyle=i%2?palette.gold:palette.light;for(let p=0;p<5;p+=1){ctx.rotate(TAU/5);ctx.beginPath();ctx.ellipse(0,-radius*.085,radius*.04,radius*.1,0,0,TAU);ctx.fill();}ctx.restore();}
+    blob(ctx,0,0,radius*.25,7,.08,palette.light,time*.08);ctx.fillStyle=palette.gold;ctx.beginPath();ctx.arc(0,0,radius*(.08+Math.sin(time*3)*.008),0,TAU);ctx.fill();
+    ctx.save();ctx.beginPath();ctx.arc(0,0,radius*.96,0,TAU);ctx.clip();ctx.translate(-radius,-radius);paperGrain(ctx,radius*2,radius*2,palette.ink,.07);ctx.restore();ctx.restore();
+  };
+
+  planetRenderers["terrarium-globe"] = function(ctx,x,y,radius,palette,time){
+    planetShadow(ctx,x,y,radius,palette);ctx.save();ctx.translate(x,y);ctx.rotate(time*.025);
+    blob(ctx,0,0,radius,10,.025,palette.deep);ctx.save();ctx.beginPath();ctx.arc(0,0,radius*.94,0,TAU);ctx.clip();
+    polygon(ctx,[[-radius,-radius*.1],[-radius*.25,-radius],[radius*.1,-radius*.15],[-radius*.15,radius*.3]],palette.paper);
+    polygon(ctx,[[radius*.1,-radius*.15],[radius*.78,-radius*.7],[radius,radius*.1],[radius*.22,radius*.45]],palette.mid);
+    polygon(ctx,[[-radius,radius*.08],[-radius*.15,radius*.3],[radius*.22,radius*.45],[radius*.54,radius],[ -radius*.5,radius]],palette.dark);
+    polygon(ctx,[[-radius*.25,-radius],[radius*.78,-radius*.7],[radius*.1,-radius*.15]],palette.light);
+    ctx.strokeStyle=alpha(palette.light,.32);ctx.lineWidth=1.5;for(let i=-2;i<=2;i+=1){ctx.beginPath();ctx.arc(0,i*radius*.18,radius*(.82-Math.abs(i)*.1),0,TAU);ctx.stroke();}
+    ctx.restore();
+    [[-.48,-.25,.18],[.46,-.12,.14],[.12,.48,.12],[-.35,.4,.1]].forEach((item,index)=>crystal(ctx,item[0]*radius,item[1]*radius,item[2]*radius,index%2?palette.accent:palette.gold,palette.light,time*.08+index));
+    for(let i=0;i<8;i+=1){const a=i*TAU/8;leaf(ctx,Math.cos(a)*radius*.69,Math.sin(a)*radius*.69,radius*.055,radius*.18,a+Math.PI/2,palette.paper,palette.light);}
+    ctx.strokeStyle=alpha(palette.accent,.42);ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,radius*1.02,-1.1,1.9);ctx.stroke();ctx.restore();
+  };
+
+  planetRenderers["petal-engine"] = function(ctx,x,y,radius,palette,time){
+    planetShadow(ctx,x,y,radius,palette);ctx.save();ctx.translate(x,y);
+    blob(ctx,0,0,radius,12,.035,palette.ink,time*.02);blob(ctx,0,0,radius*.82,12,.03,palette.paper,-time*.035);
+    for(let ring=0;ring<3;ring+=1){ctx.save();ctx.rotate((ring%2?1:-1)*time*(.08+ring*.03));const count=8+ring*2,r=radius*(.69-ring*.17);for(let i=0;i<count;i+=1){const a=i*TAU/count;ctx.save();ctx.rotate(a);ctx.translate(0,-r);ctx.fillStyle=[palette.light,palette.accent,palette.gold][(i+ring)%3];ctx.beginPath();ctx.moveTo(0,-radius*.13);ctx.quadraticCurveTo(radius*.1,0,0,radius*.14);ctx.quadraticCurveTo(-radius*.1,0,0,-radius*.13);ctx.fill();ctx.restore();}ctx.restore();}
+    ctx.fillStyle=palette.deep;ctx.beginPath();ctx.arc(0,0,radius*.27,0,TAU);ctx.fill();ctx.strokeStyle=palette.light;ctx.lineWidth=radius*.045;ctx.beginPath();ctx.arc(0,0,radius*.2,0,TAU);ctx.stroke();
+    star(ctx,0,0,radius*(.12+Math.sin(time*3)*.01),palette.gold,time*.2);ctx.restore();
+  };
+
   function drawCampaignMap(canvas, rendererId, paletteId, time) {
     const frame = prepare(canvas); const palette = palettes[paletteId] || palettes.bloom;
     frame.ctx.clearRect(0, 0, frame.width, frame.height);
