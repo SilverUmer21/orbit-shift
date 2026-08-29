@@ -1227,10 +1227,22 @@ function runSelfChecks() {
   }
   for (let i=1;i<phases.length;i+=1) console.assert(phases[i-1].end === phases[i].start, "Journey phases must be contiguous");
   console.assert(phaseAt(25).id === "petal" && phaseAt(34).transition && phaseAt(103).id === "ascension", "Journey boundaries must select the intended phases");
+  const previousRunType = state.runType;
+  state.runType = "campaign";
+  for (let i=1;i<firstLightPhases.length;i+=1) console.assert(firstLightPhases[i-1].end === firstLightPhases[i].start, "First Light phases must be contiguous");
+  console.assert(phaseAt(0).id === "first-light-teach" && phaseAt(48).id === "budkeeper" && phaseAt(65).id === "first-light-complete", "First Light boundaries must select the intended beats");
+  console.assert(firstLightGateTimes.length === 14 && firstLightFragmentTimes.join() === "16,27,40", "First Light authored schedule must remain complete");
+  for (const [index, elapsed] of firstLightGateTimes.entries()) {
+    const phase = phaseAt(elapsed);
+    const plan = buildGatePlan({ index, elapsed, angle: random()*TAU, direction: random()>.5?1:-1, angularSpeed:2, orbitRadius:150, shortSide:390, phase }, random);
+    console.assert(angleDistance(normalize(plan.gap+plan.rotation*plan.flight),plan.target)<.0001,"First Light gate must remain reachable");
+  }
+  state.runType = previousRunType;
   console.assert(angleDistance(0.05, TAU - 0.05) < 0.11, "Wrapped angle distance must stay small");
   console.assert(riders[0].id === "manta" && riders[0].price === 0, "Manta must remain the free default");
   console.assert(riders.slice(1).map((rider) => rider.price).join() === "40,100,200,350,550", "Garage prices must remain ordered");
-  console.assert(trailStyles.length === 6 && state.goals.length === 3, "Retention progression must expose six trails and three goals");
+  console.assert(trailStyles.length === 7 && state.goals.length === 3, "Progression must expose seven trails and three goals");
+  console.assert(SAVE_VERSION === 3 && state.campaign && campaignLevels.length === 1, "Campaign save migration must remain available");
 }
 
 function frame(time) {
@@ -1264,7 +1276,10 @@ window.addEventListener("keydown", (event) => {
   if (event.repeat) return;
   if (["Space", "ArrowLeft", "ArrowRight"].includes(event.code)) {
     event.preventDefault();
-    if (state.mode === "run") reverse(); else if (state.mode === "home" || state.mode === "results") startRun();
+    if (state.mode === "run") reverse();
+    else if (state.mode === "home") showScreen("campaign");
+    else if (state.mode === "campaign") startRun("campaign", "first-light");
+    else if (state.mode === "results") startRun(state.runType, state.levelId);
   }
 });
 document.addEventListener("visibilitychange", () => {
