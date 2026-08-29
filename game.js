@@ -3,7 +3,7 @@ const ctx = canvas.getContext("2d");
 const ui = {
   score: document.querySelector("#score"), multiplier: document.querySelector("#multiplier"),
   best: document.querySelector("#best"), fever: document.querySelector("#feverBar"),
-  shell: document.querySelector(".shell"), home: document.querySelector("#home"),
+  shell: document.querySelector(".shell"), home: document.querySelector("#home"), campaign: document.querySelector("#campaign"),
   garage: document.querySelector("#garage"), settings: document.querySelector("#settings"), results: document.querySelector("#results"),
   resultScore: document.querySelector("#resultScore"), resultStats: document.querySelector("#resultStats"),
   record: document.querySelector("#recordText"), unlock: document.querySelector("#unlockText"),
@@ -15,6 +15,7 @@ const ui = {
   guardian: document.querySelector("#guardian"), guardianName: document.querySelector("#guardianName"), guardianBar: document.querySelector("#guardianBar"),
   goals: document.querySelector("#voyageGoals"), trails: document.querySelector("#trails"), goalRewards: document.querySelector("#goalRewards"),
   report: document.querySelector("#report"), showReport: document.querySelector("#showReport"), copyReport: document.querySelector("#copyReport"),
+  campaignStars: document.querySelector("#campaignStars"), firstLightRating: document.querySelector("#firstLightRating"),
 };
 
 const TAU = Math.PI * 2;
@@ -155,8 +156,12 @@ function resize() {
   })).filter((dot) => dot.x * dot.x + dot.y * dot.y < 0.72);
 }
 
-function startRun() {
+function startRun(runType = "endless", levelId = null) {
   state.mode = "run";
+  state.runType = runType;
+  state.levelId = levelId;
+  state.levelComplete = false;
+  state.runFragments = 0;
   state.score = 0;
   state.multiplier = 1;
   state.streak = 0;
@@ -923,9 +928,16 @@ function showScreen(name) {
     updateHome();
   }
   if (name === "garage") renderGarage();
+  if (name === "campaign") renderCampaignMap();
 }
 
-function hideScreens() { for (const screen of [ui.home, ui.garage, ui.settings, ui.results]) screen.hidden = true; }
+function hideScreens() { for (const screen of [ui.home, ui.campaign, ui.garage, ui.settings, ui.results]) screen.hidden = true; }
+
+function renderCampaignMap() {
+  const rating = state.campaign.ratings["first-light"] || 0;
+  ui.campaignStars.textContent = `${rating}/3`;
+  ui.firstLightRating.textContent = `${"★".repeat(rating)}${"☆".repeat(3-rating)}`;
+}
 
 function updateHome() {
   ui.homeBest.textContent = state.best;
@@ -1076,8 +1088,10 @@ function frame(time) {
 
 window.addEventListener("resize", resize);
 canvas.addEventListener("pointerdown", reverse);
-document.querySelector("#play").addEventListener("click", startRun);
-document.querySelector("#retry").addEventListener("click", startRun);
+document.querySelector("#play").addEventListener("click", () => showScreen("campaign"));
+document.querySelector("#ascension").addEventListener("click", () => startRun("endless"));
+document.querySelector("[data-level='first-light']").addEventListener("click", () => startRun("campaign", "first-light"));
+document.querySelector("#retry").addEventListener("click", () => startRun(state.runType, state.levelId));
 document.querySelector("#openGarage").addEventListener("click", () => showScreen("garage"));
 document.querySelector("#openSettings").addEventListener("click", () => showScreen("settings"));
 document.querySelector("#resultHome").addEventListener("click", () => showScreen("home"));

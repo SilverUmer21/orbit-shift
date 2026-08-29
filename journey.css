@@ -26,5 +26,16 @@
 .goal-rewards { max-width: 260px; color: #7bdcb5; font-size: 11px; font-weight: 900; text-transform: uppercase; }
 .results { background: rgba(3,9,13,.48); -webkit-backdrop-filter: blur(7px) saturate(.8); backdrop-filter: blur(7px) saturate(.8); }
 .shell.crashing #game { filter: blur(2.5px) brightness(.76); transition: filter .65s ease-out; }
+.campaign { overflow: hidden; background: rgba(3,9,13,.94); }
+.campaign>header { display: grid; grid-template-columns: 46px minmax(0,1fr) auto; align-items: center; gap: 12px; }
+.campaign>header h2 { font-size: 28px; }
+.campaign>header>strong { color: #f2cf63; }
+.island-path { height: calc(100% - 125px); display: grid; align-content: space-evenly; justify-items: center; position: relative; }
+.island-path::before { content:""; position:absolute; top:15%; bottom:15%; left:50%; width:5px; background:repeating-linear-gradient(#7bdcb5 0 12px,transparent 12px 23px); opacity:.35; transform:translateX(-50%); }
+.island { position:relative; z-index:1; width:min(290px,78vw); min-height:118px; display:grid; grid-template-columns:105px 1fr; align-items:center; padding:8px 16px; text-align:left; border:0; background:transparent; box-shadow:none; }
+.island i { width:100px; height:76px; display:block; background:#4fae91; clip-path:polygon(8% 20%,50% 0,93% 22%,79% 72%,50% 100%,19% 72%); filter:drop-shadow(0 9px 0 #102a32); }
+.island i::after { content:""; display:block; width:58px; height:35px; margin:13px auto; border-radius:50%; background:#77d5aa; box-shadow:inset 0 -8px 0 #12343a; }
+.island span>* { display:block; font-style:normal; }.island small{color:#7bdcb5;font-weight:900;text-transform:uppercase}.island b{margin:4px 0;color:#f4f1de;font-size:18px}.island em{color:#f2cf63;letter-spacing:2px}
+.ember-island i{background:#ba4f4c}.void-island i{background:#5753a6}.island.locked{opacity:.42;filter:grayscale(.35)}.ascension{position:absolute;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%)}
 @keyframes actReveal { 0% { opacity: 0; transform: translate(-50%,12px) scale(.9); } 18%,65% { opacity: 1; transform: translate(-50%,0) scale(1); } 100% { opacity: 0; } }
 @media (max-height: 600px) { .home { gap: 4px; } .home h1 { font-size: 42px; } .rider-preview { max-height: 80px; } .voyage-goal { padding: 4px 7px; } .rider-grid { height: calc(100% - 175px); } }
