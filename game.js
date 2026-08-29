@@ -32,7 +32,12 @@ const riders = [
   { id: "shuttle", name: "Shuttle", price: 350, shape: "shuttle" },
   { id: "ringsail", name: "Ring Sail", price: 550, shape: "ringsail" },
 ];
-const SAVE_VERSION = 2;
+const SAVE_VERSION = 3;
+const campaignLevels = [{
+  id: "first-light", name: "First Light", biome: "bloom", duration: 65,
+  objectives: ["Reach the Bloom Gate", "Collect 3 orbit fragments", "Thread 3 perfect gates"],
+  reward: "bloom-wake",
+}];
 const phases = [
   { id: "bloom", name: "Bloom", start: 0, end: 25, biome: 0 },
   { id: "petal", name: "Petal Crown", start: 25, end: 33, biome: 0, guardian: true, target: 3 },
@@ -54,6 +59,7 @@ const saved = loadSave();
 const goalCycle = saved.goalCycle || { survival: 0, skill: 0, journey: 0 };
 const initialGoals = saved.goals || Object.keys(goalSets).map((category) => makeGoal(category, goalCycle[category]));
 const initialStats = saved.stats || { sessions: 0, runs: 0, totalMs: 0, longestMs: 0, deaths: { gate: 0, hazard: 0 }, acts: [0,0,0], guardians: 0, goals: 0, dates: [] };
+const initialCampaign = saved.campaign || { completed: [], ratings: {}, fragments: {}, rewards: [] };
 const state = {
   mode: "home", score: 0, multiplier: 1, streak: 0, runBestStreak: 0, fever: 0,
   best: saved.best || 0, bestStreak: saved.bestStreak || 0,
@@ -67,6 +73,8 @@ const state = {
   stats: initialStats,
   muted: Boolean(saved.muted), haptics: saved.haptics !== false, reducedEffects: Boolean(saved.reducedEffects),
   tutorialSeen: Boolean(saved.tutorialSeen), elapsed: 0, paused: false,
+  runType: "endless", levelId: null, levelComplete: false, runFragments: 0,
+  campaign: initialCampaign,
 };
 
 let width = 0;
@@ -116,6 +124,7 @@ function save() {
     goals: state.goals, goalCycle: state.goalCycle, goalsCompleted: state.goalsCompleted,
     unlockedTrails: state.unlockedTrails, selectedTrail: state.selectedTrail, relics: state.relics, stats: state.stats,
     muted: state.muted, haptics: state.haptics, reducedEffects: state.reducedEffects, tutorialSeen: state.tutorialSeen,
+    campaign: state.campaign,
   }));
 }
 
