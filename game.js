@@ -866,6 +866,7 @@ function renderCosmetics() {
 
 function showScreen(name) {
   ui.shell.classList.remove("playing");
+  stopMusic();
   hideScreens();
   ui[name].hidden = false;
   state.mode = name;
@@ -958,26 +959,59 @@ function vibrate(duration) { if (state.haptics && navigator.vibrate) navigator.v
 function beep(frequency, duration, type) {
   if (state.muted) return;
   try {
-    audio ||= new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audio.createOscillator();
-    const gain = audio.createGain();
-    oscillator.type = type; oscillator.frequency.value = frequency;
-    gain.gain.setValueAtTime(0.04, audio.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + duration);
-    oscillator.connect(gain).connect(audio.destination); oscillator.start(); oscillator.stop(audio.currentTime + duration);
+    ensureAudio();
+    tone(frequency, duration, type, .04);
   } catch { /* Sound is optional. */ }
+}
+
+function ensureAudio() { audio ||= new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === "suspended") audio.resume(); }
+
+function tone(frequency, duration, type = "sine", volume = .012) {
+  if (!audio || state.muted) return;
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+  oscillator.type = type; oscillator.frequency.value = frequency;
+  gain.gain.setValueAtTime(volume, audio.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.0001, audio.currentTime + duration);
+  oscillator.connect(gain).connect(audio.destination); oscillator.start(); oscillator.stop(audio.currentTime + duration);
+}
+
+function startMusic() {
+  if (state.muted) return;
+  try { ensureAudio(); } catch { return; }
+  stopMusic(); musicStep = 0;
+  musicTimer = setInterval(musicTick, 250);
+}
+
+function stopMusic() { if (musicTimer) clearInterval(musicTimer); musicTimer = 0; }
+
+function musicTick() {
+  if (state.mode !== "run" || state.paused || state.muted) return;
+  const phase = phaseAt(state.elapsed);
+  const biome = phase.biome >= 0 ? phase.biome : Math.floor((state.elapsed - 103) / 24) % 3;
+  const root = [220,164.81,138.59][biome];
+  const notes = [[1,1.25,1.5,2],[1,1.2,1.5,1.8],[1,1.125,1.5,1.6875]][biome];
+  if (musicStep % 4 === 0) tone(root/2,.38,biome === 1 ? "sawtooth" : "sine",.009);
+  if (state.multiplier > 1 && musicStep % 2 === 0) tone(root*notes[(musicStep/2)%4|0],.16,"triangle",.008);
+  if (phase.guardian && musicStep % 2 === 1) tone(root*.75,.08,"square",.007);
+  if (state.fever > 0) tone(root*2*notes[musicStep%4],.1,"triangle",.007);
+  musicStep += 1;
 }
 
 function runSelfChecks() {
   let seed = 19;
   const random = () => (seed = seed * 16807 % 2147483647) / 2147483647;
-  for (let i = 0; i < 300; i += 1) {
-    const plan = buildGatePlan({ index: i % 12, elapsed: i % 61, angle: random() * TAU, direction: random() > 0.5 ? 1 : -1, angularSpeed: 2, orbitRadius: 150, shortSide: 390 }, random);
+  for (let i = 0; i < 600; i += 1) {
+    const elapsed = i % 121;
+    const plan = buildGatePlan({ index: i % 12, elapsed, angle: random() * TAU, direction: random() > 0.5 ? 1 : -1, angularSpeed: 2, orbitRadius: 150, shortSide: 390, phase: phaseAt(elapsed) }, random);
     console.assert(angleDistance(normalize(plan.gap + plan.rotation * plan.flight), plan.target) < 0.0001, "Gate opening must resolve to its reachable target");
   }
+  for (let i=1;i<phases.length;i+=1) console.assert(phases[i-1].end === phases[i].start, "Journey phases must be contiguous");
+  console.assert(phaseAt(25).id === "petal" && phaseAt(34).transition && phaseAt(103).id === "ascension", "Journey boundaries must select the intended phases");
   console.assert(angleDistance(0.05, TAU - 0.05) < 0.11, "Wrapped angle distance must stay small");
   console.assert(riders[0].id === "manta" && riders[0].price === 0, "Manta must remain the free default");
   console.assert(riders.slice(1).map((rider) => rider.price).join() === "40,100,200,350,550", "Garage prices must remain ordered");
+  console.assert(trailStyles.length === 6 && state.goals.length === 3, "Retention progression must expose six trails and three goals");
 }
 
 function frame(time) {
@@ -1014,7 +1048,8 @@ window.addEventListener("keydown", (event) => {
 });
 document.addEventListener("visibilitychange", () => {
   state.paused = document.hidden;
-  if (!document.hidden) lastTime = performance.now();
+  if (document.hidden) audio?.suspend();
+  else { lastTime = performance.now(); if (!state.muted) audio?.resume(); }
 });
 document.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
 
