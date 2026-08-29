@@ -1,6 +1,8 @@
 # Orbit Shift
 
-A dependency-free mobile Canvas game with authored Luminous Papercut worlds and a six-ship Cosmic Glider collection. Tap to reverse around a living planet, pass through contracting gates, chain perfect dodges, and trigger fever mode.
+A dependency-free mobile Canvas arcade journey with authored Luminous Papercut worlds and a six-ship Cosmic Glider collection. Tap to reverse around a living planet, pass through contracting gates, chain perfect dodges, earn a flow shield, and trigger fever mode.
+
+Runs travel continuously through Bloom, the Petal Crown, Ember, the Solar Forge, Void, and the Eclipse Eye before entering endless Ascension. Three local Voyage Goals rotate as they are completed and unlock trail cosmetics without daily timers or accounts.
 
 ## Play locally
 
@@ -34,8 +36,9 @@ For a phone test:
 - Home: play, open the garage, or change settings.
 - Garage: spend run-earned stars to unlock and equip gliders; choose any unlocked biome independently.
 - Settings: sound, supported-device haptics, and reduced effects.
+- Playtest report: view and copy local run/retention statistics from Settings; nothing is uploaded automatically.
 
-Stars are awarded for passed gates, perfect dodges, and fever activations. Scores, stars, owned gliders, selected glider, unlocked biomes, tutorial completion, and preferences are stored locally under `orbit-shift-save`. Existing Orbit Shift saves migrate automatically and the old Neon Subway save remains untouched.
+Stars are awarded for passed gates, perfect dodges, fever activations, guardian clears, and Voyage Goals. Scores, goals, trails, relics, playtest statistics, ships, biomes, and preferences are stored locally under the versioned `orbit-shift-save`. Existing Orbit Shift saves migrate automatically and the old Neon Subway save remains untouched.
 
 ## Android direction
 
