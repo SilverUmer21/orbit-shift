@@ -33,8 +33,9 @@
 .island-path { height: calc(100% - 125px); display: grid; align-content: space-evenly; justify-items: center; position: relative; }
 .island-path::before { content:""; position:absolute; top:15%; bottom:15%; left:50%; width:5px; background:repeating-linear-gradient(#7bdcb5 0 12px,transparent 12px 23px); opacity:.35; transform:translateX(-50%); }
 .island { position:relative; z-index:1; width:min(290px,78vw); min-height:118px; display:grid; grid-template-columns:105px 1fr; align-items:center; padding:8px 16px; text-align:left; border:0; background:transparent; box-shadow:none; }
-.island i { width:100px; height:76px; display:block; background:#4fae91; clip-path:polygon(8% 20%,50% 0,93% 22%,79% 72%,50% 100%,19% 72%); filter:drop-shadow(0 9px 0 #102a32); }
-.island i::after { content:""; display:block; width:58px; height:35px; margin:13px auto; border-radius:50%; background:#77d5aa; box-shadow:inset 0 -8px 0 #12343a; }
+.island i { position:relative; width:100px; height:76px; display:block; background:#4fae91; clip-path:polygon(8% 20%,27% 8%,50% 0,74% 9%,93% 22%,84% 57%,68% 74%,50% 100%,32% 75%,17% 58%); filter:drop-shadow(0 9px 0 #102a32) drop-shadow(0 15px 10px rgba(0,0,0,.35)); }
+.island i::before { content:""; position:absolute; inset:7px 12px 25px; border-radius:48%; background:#77d5aa; box-shadow:inset 0 -8px 0 #12343a,0 0 0 5px rgba(230,227,179,.12); }
+.island i::after { content:""; position:absolute; left:29px; top:14px; width:42px; height:26px; background:#e6e3b3; clip-path:polygon(50% 0,63% 34%,100% 38%,70% 59%,79% 100%,50% 72%,21% 100%,30% 59%,0 38%,37% 34%); filter:drop-shadow(2px 3px 0 rgba(18,52,58,.35)); }
 .island span>* { display:block; font-style:normal; }.island small{color:#7bdcb5;font-weight:900;text-transform:uppercase}.island b{margin:4px 0;color:#f4f1de;font-size:18px}.island em{color:#f2cf63;letter-spacing:2px}
 .ember-island i{background:#ba4f4c}.void-island i{background:#5753a6}.island.locked{opacity:.42;filter:grayscale(.35)}.ascension{position:absolute;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%)}
 @keyframes actReveal { 0% { opacity: 0; transform: translate(-50%,12px) scale(.9); } 18%,65% { opacity: 1; transform: translate(-50%,0) scale(1); } 100% { opacity: 0; } }

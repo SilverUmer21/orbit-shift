@@ -567,6 +567,7 @@ function draw() {
   ctx.save();
   ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
   drawBackground(time, palette);
+  if (state.runType === "campaign") drawBloomScenery(time, palette);
   drawJourneyTransition(time, palette);
   drawPaperWaves(time, palette);
   drawGates(time, palette);
@@ -615,6 +616,36 @@ function drawBackground(time, palette) {
     ctx.save(); ctx.translate(star.x, star.y); ctx.rotate(Math.PI / 4); ctx.fillRect(-star.size / 2, -star.size / 2, star.size, star.size); ctx.restore();
   }
   ctx.globalAlpha = 1;
+}
+
+function drawBloomScenery(time, palette) {
+  ctx.save();
+  for (let layer = 0; layer < 3; layer += 1) {
+    ctx.globalAlpha = .09 + layer * .035;
+    ctx.strokeStyle = [palette.ink, palette.paper, palette.mid][layer];
+    ctx.lineWidth = 18 - layer * 5;
+    ctx.beginPath();
+    ctx.moveTo(-20, height * (.18 + layer * .12));
+    ctx.quadraticCurveTo(width * .16, height * (.28 + layer * .05), width * .09, height * (.52 + layer * .08));
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(width + 20, height * (.12 + layer * .14));
+    ctx.quadraticCurveTo(width * .82, height * (.25 + layer * .08), width * .92, height * (.5 + layer * .1));
+    ctx.stroke();
+  }
+  ctx.globalAlpha = .24;
+  for (let i = 0; i < 14; i += 1) {
+    const side = i % 2 ? 1 : -1;
+    const x = side < 0 ? 8 + (i % 3) * 8 : width - 8 - (i % 3) * 8;
+    const y = height * (.12 + i * .055);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(side * (.55 + Math.sin(time * .7 + i) * .08));
+    ctx.fillStyle = i % 3 ? palette.paper : palette.accent;
+    ctx.beginPath(); ctx.ellipse(0, 0, 8 + i % 4, 20 + i % 5, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = palette.light; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0,-14); ctx.lineTo(0,14); ctx.stroke(); ctx.restore();
+  }
+  ctx.globalAlpha = .055; ctx.fillStyle = palette.light;
+  for (let y = 7; y < height; y += 19) for (let x = (y % 38) + 5; x < width; x += 31) ctx.fillRect(x, y, 1.2, .8);
+  ctx.restore();
 }
 
 function drawJourneyTransition(time, palette) {
@@ -732,7 +763,11 @@ function drawGateDetails(gate, start, end, color, palette, time) {
     const x = cx + Math.cos(angle) * gate.radius;
     const y = cy + Math.sin(angle) * gate.radius;
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
-    if (gate.type === 0) {
+    if (state.runType === "campaign" && !gate.guardian) {
+      ctx.fillStyle = angle % .72 < .36 ? palette.mid : palette.light;
+      ctx.beginPath(); ctx.ellipse(0, 8, 4, 10 + Math.sin(time * 1.6 + angle) * 1.5, angle % .72 < .36 ? .5 : -.5, 0, TAU); ctx.fill();
+      ctx.strokeStyle = color; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(0,2); ctx.quadraticCurveTo(4,7,0,15); ctx.stroke();
+    } else if (gate.type === 0) {
       ctx.fillStyle = angle % 0.72 < 0.36 ? palette.mid : palette.light;
       ctx.beginPath(); ctx.ellipse(0, 8, 3.5, 8, angle % 0.72 < 0.36 ? 0.45 : -0.45, 0, TAU); ctx.fill();
     } else if (gate.type === 1) {
@@ -764,6 +799,16 @@ function drawPlanet(time, palette) {
   blobPath(-4, -2, planetRadius * 0.54, 0.14, 6); ctx.fill();
   ctx.fillStyle = palette.light;
   blobPath(-7, -5, planetRadius * 0.31, 0.16, 5); ctx.fill();
+  if (state.runType === "campaign") {
+    ctx.strokeStyle = colorAlpha(palette.light,.34); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(0,0,planetRadius*.68,0,TAU); ctx.stroke();
+    for (let i=0;i<7;i+=1) {
+      const angle=i*TAU/7+time*.03, r=planetRadius*.47;
+      ctx.save(); ctx.translate(Math.cos(angle)*r,Math.sin(angle)*r); ctx.rotate(angle+.6);
+      ctx.fillStyle=i%2?palette.paper:palette.mid; ctx.beginPath(); ctx.ellipse(0,0,6,15,0,0,TAU); ctx.fill();
+      ctx.fillStyle=palette.light; ctx.beginPath(); ctx.ellipse(-1,-2,2,9,0,0,TAU); ctx.fill(); ctx.restore();
+    }
+  }
   drawBiomeMarks(time, palette);
   ctx.save();
   ctx.beginPath(); ctx.arc(0, 0, planetRadius, 0, TAU); ctx.clip();
