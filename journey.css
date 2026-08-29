@@ -1,0 +1,28 @@
+.home { grid-template-rows: auto minmax(80px, 1fr) auto auto auto auto; gap: 8px; }
+.voyage-goals { width: min(100%, 330px); display: grid; gap: 4px; }
+.voyage-goal { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; padding: 6px 9px; text-align: left; background: rgba(13,37,43,.78); border-left: 3px solid #7bdcb5; font-size: 10px; }
+.voyage-goal b { font-size: 10px; }
+.voyage-goal span { color: #f2cf63; font-weight: 900; }
+.voyage-goal i { grid-column: 1/-1; height: 3px; background: #17363c; }
+.voyage-goal i::after { content: ""; display: block; width: var(--progress); height: 100%; background: #7bdcb5; }
+.shield { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 57px); left: 16px; z-index: 2; display: none; color: #f2cf63; font-size: 22px; text-shadow: 0 0 10px #f2cf63; }
+.shield.ready { display: block; }
+.act-label { position: absolute; top: 18%; left: 50%; z-index: 2; transform: translateX(-50%); color: #f4f1de; font-size: 26px; font-weight: 900; text-align: center; text-shadow: 3px 3px 0 #102a32; opacity: 0; pointer-events: none; }
+.act-label.show { animation: actReveal 2.2s ease-out; }
+.guardian { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 72px); left: 50%; z-index: 2; display: none; width: min(220px, 64vw); transform: translateX(-50%); text-align: center; }
+.guardian.active { display: block; }
+.guardian span { display: block; margin-bottom: 4px; color: #ff796f; font-size: 9px; font-weight: 900; text-transform: uppercase; }
+.guardian i { display: block; height: 5px; background: #321c28; border: 1px solid rgba(244,241,222,.2); }
+.guardian i::after { content: ""; display: block; width: var(--guardian); height: 100%; background: #ff796f; }
+.garage-options { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding-top: 10px; border-top: 1px solid rgba(244,241,222,.14); }
+.rider-grid { height: calc(100% - 205px); }
+.trails { display: flex; gap: 6px; margin-top: 8px; }
+.trail { min-width: 28px; width: 28px; height: 28px; padding: 0; border: 2px solid rgba(244,241,222,.2); background: var(--trail); box-shadow: none; }
+.trail.selected { border-color: #f2cf63; }
+.trail.locked { filter: grayscale(1); opacity: .35; }
+.settings { overflow-y: auto; touch-action: pan-y; }
+.report-button { width: 100%; margin-top: 12px; }
+.settings pre { white-space: pre-wrap; margin: 12px 0; padding: 12px; background: #061319; color: #b8d9cf; font: 11px/1.5 monospace; }
+.goal-rewards { max-width: 260px; color: #7bdcb5; font-size: 11px; font-weight: 900; text-transform: uppercase; }
+@keyframes actReveal { 0% { opacity: 0; transform: translate(-50%,12px) scale(.9); } 18%,65% { opacity: 1; transform: translate(-50%,0) scale(1); } 100% { opacity: 0; } }
+@media (max-height: 600px) { .home { gap: 4px; } .home h1 { font-size: 42px; } .rider-preview { max-height: 80px; } .voyage-goal { padding: 4px 7px; } .rider-grid { height: calc(100% - 175px); } }
