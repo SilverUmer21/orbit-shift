@@ -33,8 +33,8 @@
 .campaign>header>strong { color: #f2cf63; }
 .island-path { position:absolute; top:88px; right:0; bottom:74px; left:0; }
 #campaignMap{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.island { position:absolute; z-index:1; width:min(250px,66vw); min-height:110px; display:block; padding:22px 8px 8px 108px; text-align:left; border:0; background:transparent; box-shadow:none; }
-.bloom-island{left:2%;top:10%}.ember-island{left:32%;top:39%}.void-island{left:3%;top:68%}
+.island { position:absolute; left:0; z-index:1; width:100%; min-height:110px; display:block; padding:0; text-align:left; border:0; background:transparent; box-shadow:none; }
+.island span{position:absolute;top:28px}.bloom-island,.void-island{left:0}.bloom-island span,.void-island span{left:52%}.ember-island span{right:54%;text-align:right}.bloom-island{top:10%}.ember-island{top:39%}.void-island{top:68%}
 .island span>* { display:block; font-style:normal; }.island small{color:#7bdcb5;font-weight:900;text-transform:uppercase}.island b{margin:4px 0;color:#f4f1de;font-size:18px}.island em{color:#f2cf63;letter-spacing:2px}
 .island.locked{opacity:.55}.island.revealed{opacity:.82}.ascension{position:absolute;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%)}.ascension:active{transform:translate(-50%,2px)}
 @keyframes actReveal { 0% { opacity: 0; transform: translate(-50%,12px) scale(.9); } 18%,65% { opacity: 1; transform: translate(-50%,0) scale(1); } 100% { opacity: 0; } }

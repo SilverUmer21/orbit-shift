@@ -110,7 +110,7 @@
 
   mapRenderers["verdant-stair"] = function (ctx,width,height,palette,time) {
     mapBackdrop(ctx,width,height);
-    const b=palettes.bloom,e=palettes.ember,v=palettes.void;
+    const b=palette,e=palettes.ember,v=palettes.void;
     foldBridge(ctx,[[width*.35,height*.3],[width*.62,height*.39],[width*.45,height*.48],[width*.65,height*.58]],b.accent,b.light);
     foldBridge(ctx,[[width*.62,height*.59],[width*.39,height*.67],[width*.55,height*.75],[width*.38,height*.82]],v.accent,v.light);
     floatingIsland(ctx,width*.31,height*.23,Math.min(width*.19,68),b,"star",time,false);
@@ -119,7 +119,7 @@
   };
 
   mapRenderers["orbit-archipelago"] = function (ctx,width,height,palette,time) {
-    mapBackdrop(ctx,width,height); const b=palettes.bloom,e=palettes.ember,v=palettes.void;
+    mapBackdrop(ctx,width,height); const b=palette,e=palettes.ember,v=palettes.void;
     ctx.save();ctx.translate(width/2,height*.5);ctx.rotate(time*.025);ctx.strokeStyle=alpha(b.accent,.35);ctx.lineWidth=2;ctx.setLineDash([4,10]);ctx.beginPath();ctx.ellipse(0,0,width*.36,height*.34,0,0,TAU);ctx.stroke();ctx.restore();
     floatingIsland(ctx,width*.5,height*.49,Math.min(width*.25,88),b,"star",time,false);
     floatingIsland(ctx,width*.23,height*.24,Math.min(width*.12,46),e,"crystal",time,true);
@@ -128,8 +128,8 @@
   };
 
   mapRenderers["guardian-spires"] = function (ctx,width,height,palette,time) {
-    mapBackdrop(ctx,width,height); const list=[palettes.bloom,palettes.ember,palettes.void];
-    foldBridge(ctx,[[width*.5,height*.3],[width*.42,height*.38],[width*.58,height*.46],[width*.5,height*.54],[width*.42,height*.62],[width*.5,height*.7]],palettes.void.accent,palettes.bloom.light);
+    mapBackdrop(ctx,width,height); const list=[palette,palettes.ember,palettes.void];
+    foldBridge(ctx,[[width*.5,height*.3],[width*.42,height*.38],[width*.58,height*.46],[width*.5,height*.54],[width*.42,height*.62],[width*.5,height*.7]],palettes.void.accent,palette.light);
     [height*.2,height*.48,height*.76].forEach((y,index)=>{
       floatingIsland(ctx,width*.5,y,Math.min(width*.2,72),list[index],index===0?"star":index===1?"crystal":"eye",time,index>0);
       ctx.save();ctx.translate(width*.5,y-38);polygon(ctx,[[-13,22],[0,-22],[13,22]],list[index].light,{color:list[index].accent,blur:8});polygon(ctx,[[-6,18],[0,-14],[2,18]],list[index].accent);ctx.restore();

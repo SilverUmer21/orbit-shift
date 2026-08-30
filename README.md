@@ -16,6 +16,8 @@ python -m http.server 3000 --bind 0.0.0.0
 
 Open `http://127.0.0.1:3000/` on the computer.
 
+Open `http://127.0.0.1:3000/art-lab.html` to compare the three live campaign maps and three living planets. These previews use the same Canvas renderers as the game; choose a map and planet by their A, B, or C labels before production selection changes.
+
 For a phone test:
 
 1. Connect the computer and phone to the same Wi-Fi.
