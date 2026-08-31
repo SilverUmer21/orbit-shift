@@ -36,12 +36,29 @@ const riders = [
   { id: "shuttle", name: "Shuttle", price: 350, shape: "shuttle" },
   { id: "ringsail", name: "Ring Sail", price: 550, shape: "ringsail" },
 ];
-const SAVE_VERSION = 3;
-const campaignLevels = [{
-  id: "first-light", name: "First Light", biome: "bloom", duration: 65,
-  objectives: ["Reach the Bloom Gate", "Collect 3 orbit fragments", "Thread 3 perfect gates"],
-  reward: "bloom-wake",
-}];
+const SAVE_VERSION = 4;
+const campaignLevels = [
+  {
+    id:"first-light",name:"First Light",duration:45,story:"A sleeping seed searches for its first rhythm.",perfectTarget:2,orientationBias:.8,warningStrength:1,
+    gateTimes:[2,8,14,19,24,30,36,42],fragmentTimes:[16,27,38],hazardTimes:[],
+    phases:[{id:"first-light-teach",name:"First Light",start:0,end:12,biome:0},{id:"first-light-rhythm",name:"Living Rhythm",start:12,end:45,biome:0},{id:"first-light-complete",name:"Seed Awakened",start:45,end:Infinity,biome:0}],
+  },
+  {
+    id:"pollen-path",name:"Pollen Path",duration:55,story:"Carry the island's light through the waking canopy.",perfectTarget:3,orientationBias:.65,warningStrength:.72,
+    gateTimes:[2,7,12,17,22,27,32,37,42,47,52],fragmentTimes:[14,29,44],hazardTimes:[],
+    phases:[{id:"pollen-awakens",name:"Pollen Awakens",start:0,end:15,biome:0},{id:"pollen-path",name:"Pollen Path",start:15,end:55,biome:0},{id:"pollen-complete",name:"Canopy Lit",start:55,end:Infinity,biome:0}],
+  },
+  {
+    id:"tangled-orbit",name:"Tangled Orbit",duration:65,story:"Untangle the old vines without breaking their flow.",perfectTarget:4,orientationBias:.5,warningStrength:.42,
+    gateTimes:[2,7,12,17,22,27,32,37,42,47,52,57,62],fragmentTimes:[15,31,49],hazardTimes:[38],
+    phases:[{id:"tangle-roots",name:"Tangled Roots",start:0,end:20,biome:0},{id:"vine-current",name:"Vine Current",start:20,end:65,biome:0},{id:"tangle-complete",name:"Roots Restored",start:65,end:Infinity,biome:0}],
+  },
+  {
+    id:"crown-of-petals",name:"Crown of Petals",duration:75,story:"Awaken the Budkeeper and return the Bloom Crown.",perfectTarget:5,orientationBias:.5,warningStrength:.18,
+    gateTimes:[2,7,12,17,22,27,32,37,42,47,51,57,63,69,73],fragmentTimes:[18,37,48],hazardTimes:[35],
+    phases:[{id:"petal-ascent",name:"Petal Ascent",start:0,end:50,biome:0},{id:"budkeeper",name:"Budkeeper",start:50,end:75,biome:0,guardian:true,target:3},{id:"crown-complete",name:"Bloom Crown",start:75,end:Infinity,biome:0}],
+  },
+].map(level=>({...level,biome:"bloom",objectives:["Restore the Bloom rhythm","Collect 3 orbit fragments",`Thread ${level.perfectTarget} perfect gates`]}));
 const phases = [
   { id: "bloom", name: "Bloom", start: 0, end: 25, biome: 0 },
   { id: "petal", name: "Petal Crown", start: 25, end: 33, biome: 0, guardian: true, target: 3 },
@@ -53,15 +70,7 @@ const phases = [
   { id: "eclipse", name: "Eclipse Eye", start: 95, end: 103, biome: 2, guardian: true, target: 3 },
   { id: "ascension", name: "Ascension", start: 103, end: Infinity, biome: -1 },
 ];
-const firstLightPhases = [
-  { id: "first-light-teach", name: "First Light", start: 0, end: 12, biome: 0 },
-  { id: "first-light-rhythm", name: "Living Rhythm", start: 12, end: 30, biome: 0 },
-  { id: "first-light-twist", name: "Pollen Rise", start: 30, end: 48, biome: 0 },
-  { id: "budkeeper", name: "Budkeeper", start: 48, end: 65, biome: 0, guardian: true, target: 3 },
-  { id: "first-light-complete", name: "Bloom Gate", start: 65, end: Infinity, biome: 0 },
-];
-const firstLightGateTimes = [2, 8, 14, 18, 22, 26, 29, 33, 37, 42, 46, 49, 55, 61];
-const firstLightFragmentTimes = [16, 27, 40];
+const firstLightPhases=campaignLevels[0].phases,firstLightGateTimes=campaignLevels[0].gateTimes,firstLightFragmentTimes=campaignLevels[0].fragmentTimes;
 const goalSets = {
   survival: [{ label: "Survive 35 seconds", kind: "survive", target: 35, reward: 18 }, { label: "Reach the Void", kind: "act", target: 3, reward: 30 }, { label: "Survive 90 seconds", kind: "survive", target: 90, reward: 45 }],
   skill: [{ label: "Thread 5 perfect gates", kind: "perfect", target: 5, reward: 20 }, { label: "Ignite fever twice", kind: "fever", target: 2, reward: 28 }, { label: "Thread 15 perfect gates", kind: "perfect", target: 15, reward: 50 }],
@@ -72,7 +81,8 @@ const saved = loadSave();
 const goalCycle = saved.goalCycle || { survival: 0, skill: 0, journey: 0 };
 const initialGoals = saved.goals || Object.keys(goalSets).map((category) => makeGoal(category, goalCycle[category]));
 const initialStats = saved.stats || { sessions: 0, runs: 0, totalMs: 0, longestMs: 0, deaths: { gate: 0, hazard: 0 }, acts: [0,0,0], guardians: 0, goals: 0, dates: [] };
-const initialCampaign = saved.campaign || { completed: [], ratings: {}, fragments: {}, rewards: [] };
+const savedCampaign=saved.campaign||{},completedCampaign=Array.isArray(savedCampaign.completed)?savedCampaign.completed:[];
+const initialCampaign={completed:completedCampaign,ratings:savedCampaign.ratings||{},fragments:savedCampaign.fragments||{},rewards:savedCampaign.rewards||[],unlockedLevel:Math.max(Number(savedCampaign.unlockedLevel)||1,completedCampaign.includes("first-light")?2:1),restoration:Math.max(Number(savedCampaign.restoration)||0,completedCampaign.length)};
 const state = {
   mode: "home", score: 0, multiplier: 1, streak: 0, runBestStreak: 0, fever: 0,
   best: saved.best || 0, bestStreak: saved.bestStreak || 0,
@@ -1212,8 +1222,8 @@ function runSelfChecks() {
   const previousRunType = state.runType;
   state.runType = "campaign";
   for (let i=1;i<firstLightPhases.length;i+=1) console.assert(firstLightPhases[i-1].end === firstLightPhases[i].start, "First Light phases must be contiguous");
-  console.assert(phaseAt(0).id === "first-light-teach" && phaseAt(48).id === "budkeeper" && phaseAt(65).id === "first-light-complete", "First Light boundaries must select the intended beats");
-  console.assert(firstLightGateTimes.length === 14 && firstLightFragmentTimes.join() === "16,27,40", "First Light authored schedule must remain complete");
+  console.assert(phaseAt(0).id === "first-light-teach" && phaseAt(12).id === "first-light-rhythm" && phaseAt(45).id === "first-light-complete", "First Light boundaries must select the intended beats");
+  console.assert(firstLightGateTimes.length === 8 && firstLightFragmentTimes.join() === "16,27,38", "First Light authored schedule must remain complete");
   for (const [index, elapsed] of firstLightGateTimes.entries()) {
     const phase = phaseAt(elapsed);
     const plan = buildGatePlan({ index, elapsed, angle: random()*TAU, direction: random()>.5?1:-1, angularSpeed:2, orbitRadius:150, shortSide:390, phase }, random);
@@ -1224,7 +1234,7 @@ function runSelfChecks() {
   console.assert(riders[0].id === "manta" && riders[0].price === 0, "Manta must remain the free default");
   console.assert(riders.slice(1).map((rider) => rider.price).join() === "40,100,200,350,550", "Garage prices must remain ordered");
   console.assert(trailStyles.length === 7 && state.goals.length === 3, "Progression must expose seven trails and three goals");
-  console.assert(SAVE_VERSION === 3 && state.campaign && campaignLevels.length === 1, "Campaign save migration must remain available");
+  console.assert(SAVE_VERSION === 4 && state.campaign && campaignLevels.length === 4, "Campaign save migration must remain available");
 }
 
 function frame(time) {
