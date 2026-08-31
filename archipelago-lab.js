@@ -15,6 +15,8 @@ const bloomTexture=await Assets.load("assets/archipelago/bloom-island.svg");
 const bloom=new Sprite(bloomTexture);bloom.anchor.set(.5);islands.addChild(bloom);
 const emberTexture=await Assets.load("assets/archipelago/ember-island.svg");
 const ember=new Sprite(emberTexture);ember.anchor.set(.5);ember.alpha=.68;islands.addChild(ember);
+const voidTexture=await Assets.load("assets/archipelago/void-island.svg");
+const voidIsland=new Sprite(voidTexture);voidIsland.anchor.set(.5);voidIsland.alpha=.64;islands.addChild(voidIsland);
 
 const stars=[];
 for(let i=0;i<42;i+=1){
@@ -34,6 +36,7 @@ function layout(width,height){
   backdropArt.position.set(width/2,height/2);backdropArt.width=width;backdropArt.height=height;
   const scale=Math.min(width/430,height/932);bloom.scale.set(scale*.86);bloom.baseX=width*.34;bloom.baseY=height*.26;
   ember.scale.set(scale*.72);ember.baseX=width*.68;ember.baseY=height*.52;
+  voidIsland.scale.set(scale*.7);voidIsland.baseX=width*.34;voidIsland.baseY=height*.76;
   stars.forEach((star,index)=>{star.position.set((index*83%997)/997*width,(index*137%991)/991*height);});
 }
 phone.addEventListener("change",resize);resize();
@@ -49,6 +52,7 @@ app.ticker.add(ticker=>{
 function animateScene(time){
   bloom.position.set(bloom.baseX+Math.sin(time*.42)*3,bloom.baseY+Math.sin(time*.67)*5);bloom.rotation=Math.sin(time*.31)*.012;
   ember.position.set(ember.baseX+Math.sin(time*.36+2)*4,ember.baseY+Math.sin(time*.58+1)*4);ember.rotation=Math.sin(time*.28+2)*.014;
+  voidIsland.position.set(voidIsland.baseX+Math.sin(time*.33+4)*3,voidIsland.baseY+Math.sin(time*.53+4)*5);voidIsland.rotation=Math.sin(time*.24+4)*.012;
 }
 
 window.archipelagoLab={app,world,backdrop,bridges,islands,atmosphere,Assets,BlurFilter,Container,Graphics,Sprite,layout};
