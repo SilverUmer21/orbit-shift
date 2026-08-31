@@ -122,7 +122,7 @@ let nextGate = 0;
 let nextHazard = 12;
 let campaignGateIndex = 0;
 let campaignFragmentIndex = 0;
-let campaignHazardSpawned = false;
+let campaignHazardIndex = 0;
 let recoveryGate = false;
 let tutorial = 0;
 let crashTimer = 0;
@@ -222,7 +222,7 @@ function startRun(runType = "endless", levelId = null) {
   nextHazard = 12;
   campaignGateIndex = 0;
   campaignFragmentIndex = 0;
-  campaignHazardSpawned = false;
+  campaignHazardIndex = 0;
   recoveryGate = false;
   tutorial = state.tutorialSeen ? 0 : 4.5;
   crashTimer = 0;
@@ -300,15 +300,25 @@ function finishRun() {
   updateGoals("survive", Math.floor(state.elapsed), true);
   let campaignRating = 0;
   if (state.runType === "campaign" && state.levelComplete) {
-    campaignRating = 1 + Number(state.runFragments === 3) + Number(state.perfects >= 3);
+    const level=currentCampaignLevel();
+    campaignRating = 1 + Number(state.runFragments === 3) + Number(state.perfects >= level.perfectTarget);
     const firstClear = !state.campaign.completed.includes(state.levelId);
-    if (firstClear) { state.campaign.completed.push(state.levelId); state.runStars += 15; }
+    if (firstClear) {
+      state.campaign.completed.push(state.levelId); state.runStars += 15;
+      const levelIndex=campaignLevels.findIndex(item=>item.id===state.levelId);
+      state.campaign.unlockedLevel=Math.max(state.campaign.unlockedLevel,Math.min(campaignLevels.length,levelIndex+2));
+      state.campaign.restoration=Math.max(state.campaign.restoration,levelIndex+1);
+    }
     state.campaign.ratings[state.levelId] = Math.max(state.campaign.ratings[state.levelId] || 0, campaignRating);
     state.campaign.fragments[state.levelId] = Math.max(state.campaign.fragments[state.levelId] || 0, state.runFragments);
     if (!state.campaign.rewards.includes("bloom-wake")) {
       state.campaign.rewards.push("bloom-wake");
       if (!state.unlockedTrails.includes("bloom-wake")) state.unlockedTrails.push("bloom-wake");
       state.runGoalRewards.push("Bloom Wake unlocked");
+    }
+    if (state.levelId === "crown-of-petals" && !state.campaign.rewards.includes("bloom-crown")) {
+      state.campaign.rewards.push("bloom-crown"); state.runGoalRewards.push("Bloom constellation restored");
+      if(!state.relics.includes("bloom-crown")) state.relics.push("bloom-crown");
     }
   }
   state.stars += state.runStars;
@@ -318,18 +328,19 @@ function finishRun() {
   save();
   ui.resultScore.textContent = Math.floor(state.score);
   ui.resultStats.textContent = `Best flow x${Math.max(1, state.runBestStreak)} - All-time ${state.best}`;
-  ui.resultEyebrow.textContent = state.runType === "campaign" ? state.levelComplete ? "Bloom Gate opened" : "First Light interrupted" : "Orbit broken";
+  ui.resultEyebrow.textContent = state.runType === "campaign" ? state.levelComplete ? `${currentCampaignLevel().name} restored` : `${currentCampaignLevel().name} interrupted` : "Orbit broken";
   ui.resultObjectives.hidden = state.runType !== "campaign";
   if (state.runType === "campaign") {
-    const checks = [state.levelComplete, state.runFragments === 3, state.perfects >= 3];
-    ui.resultObjectives.innerHTML = campaignLevels[0].objectives.map((objective,index)=>`<span class="${checks[index]?"done":""}">${checks[index]?"★":"☆"} ${objective}</span>`).join("");
+    const level=currentCampaignLevel();
+    const checks = [state.levelComplete, state.runFragments === 3, state.perfects >= level.perfectTarget];
+    ui.resultObjectives.innerHTML = level.objectives.map((objective,index)=>`<span class="${checks[index]?"done":""}">${checks[index]?"★":"☆"} ${objective}</span>`).join("");
     ui.resultStats.textContent = state.levelComplete ? `${"★".repeat(campaignRating)}${"☆".repeat(3-campaignRating)} · Best flow x${Math.max(1,state.runBestStreak)}` : `Reached ${Math.floor(state.elapsed)} seconds`;
   }
   ui.resultStars.textContent = `+${state.runStars} stars`;
   ui.goalRewards.textContent = state.runGoalRewards.join(" - ");
   ui.record.textContent = state.best > oldBest ? "New orbit record" : "";
   ui.unlock.textContent = state.unlocked.length > previousUnlocks ? "New biome awakened" : "";
-  ui.resultHome.textContent = state.runType === "campaign" ? "Map" : "Home";
+  ui.resultHome.textContent = state.runType === "campaign" ? "Chapter" : "Home";
   ui.results.hidden = false;
   ui.shell.classList.remove("playing");
   stopMusic();
@@ -441,14 +452,17 @@ function spawnGate() {
     sideOpening:isSideOpening(plan.target),warningStrength:level?.warningStrength || 0,recovery:forceEasy,
   };
   if (state.runType === "campaign") {
-    const settings = phase.id === "first-light-teach" ? [50, 1.72, 0] : phase.id === "first-light-rhythm" ? [60, 1.45, .08] : phase.id === "first-light-twist" ? [68, 1.22, .2] : [76, 1.12, .26];
+    const levelIndex=campaignLevels.indexOf(level);
+    const settings=[[50,1.72,.04],[56,1.52,.1],[63,1.34,.2],[69,1.22,.28]][levelIndex];
+    if(phase.guardian){settings[0]=72;settings[1]=1.18;settings[2]=.24;}
     gate.speed = settings[0]; gate.opening = settings[1]; gate.rotation = Math.max(-settings[2], Math.min(settings[2], gate.rotation));
     gate.guardian = phase.id === "budkeeper"; gate.guardianId = phase.id;
   }
   gates.push(gate);
   recoveryGate = !gate.guardian && gate.sideOpening && !forceEasy;
   gateCount += 1;
-  if ((phase.id === "forge" || state.elapsed > 103 && Math.random() < .24) && gates.filter((item) => !item.resolved).length < 3) {
+  const campaignPair=state.runType==="campaign"&&state.levelId==="crown-of-petals"&&!phase.guardian&&gateCount>5&&gateCount%5===0;
+  if ((phase.id === "forge" || campaignPair || state.elapsed > 103 && Math.random() < .24) && gates.filter((item) => !item.resolved).length < 3) {
     const spacing = 58;
     gates.push({
       ...gate, radius: gate.radius + spacing, previousRadius: gate.radius + spacing,
@@ -486,7 +500,7 @@ function update(delta) {
 
   state.elapsed += delta;
   const phase = updateJourney();
-  if (state.runType === "campaign" && state.elapsed >= 65) {
+  if (state.runType === "campaign" && state.elapsed >= currentCampaignLevel().duration) {
     state.levelComplete = true;
     finishRun();
     return;
@@ -505,8 +519,10 @@ function update(delta) {
   for (const point of trail) point.life -= delta * 1.9;
 
   if (state.runType === "campaign") {
-    while (firstLightGateTimes[campaignGateIndex] <= state.elapsed) { spawnGate(); campaignGateIndex += 1; }
-    while (firstLightFragmentTimes[campaignFragmentIndex] <= state.elapsed) { spawnFragment(); campaignFragmentIndex += 1; }
+    const level=currentCampaignLevel();
+    while (level.gateTimes[campaignGateIndex] <= state.elapsed) { spawnGate(); campaignGateIndex += 1; }
+    while (level.fragmentTimes[campaignFragmentIndex] <= state.elapsed) { spawnFragment(); campaignFragmentIndex += 1; }
+    while (level.hazardTimes[campaignHazardIndex] <= state.elapsed) { spawnHazard(); campaignHazardIndex += 1; }
   } else {
     nextGate -= delta;
     if (nextGate <= 0) {
@@ -519,7 +535,6 @@ function update(delta) {
     spawnHazard();
     nextHazard = 10 + Math.random() * 3;
   }
-  if (state.runType === "campaign" && state.elapsed >= 38 && !campaignHazardSpawned) { spawnHazard(); campaignHazardSpawned = true; }
 
   for (const gate of gates) {
     gate.previousRadius = gate.radius;
@@ -1221,7 +1236,8 @@ function updateHud() {
   ui.shield.classList.toggle("ready", state.shield && state.mode === "run");
   ui.campaignRun.classList.toggle("active", state.runType === "campaign" && state.mode === "run");
   ui.fragmentCount.textContent = `${Math.min(3,state.runFragments)}/3`;
-  ui.perfectCount.textContent = `${Math.min(3,state.perfects)}/3`;
+  const perfectTarget=state.runType==="campaign"?currentCampaignLevel().perfectTarget:3;
+  ui.perfectCount.textContent = `${Math.min(perfectTarget,state.perfects)}/${perfectTarget}`;
   const phase = phaseAt(state.elapsed);
   ui.guardian.classList.toggle("active", Boolean(phase.guardian && state.mode === "run"));
   ui.guardianName.textContent = phase.name;
