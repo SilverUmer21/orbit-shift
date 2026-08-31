@@ -14,7 +14,7 @@ export async function createArchipelagoMap(mount,{pointerTarget=mount,completed=
   const ember=new Sprite(emberTexture);ember.anchor.set(.5);islands.addChild(ember);
   const voidIsland=new Sprite(voidTexture);voidIsland.anchor.set(.5);islands.addChild(voidIsland);
   const bridgeGlow=new Graphics(),bridgeCore=new Graphics();bridges.addChild(bridgeGlow,bridgeCore);bridgeGlow.filters=[new BlurFilter({strength:6,quality:3})];
-  const selectionRing=new Graphics();atmosphere.addChild(selectionRing);
+  const selectionRing=new Graphics();bridges.addChild(selectionRing);
   const satellites=[];
   for(let i=0;i<11;i+=1){const shard=new Graphics().poly([0,-7,5,1,0,8,-4,1]).fill({color:[0x79dcb7,0xf1ca63,0x9f92dc][i%3],alpha:.72});shard.orbit=i<4?0:i<8?1:2;shard.phase=i*1.73;atmosphere.addChild(shard);satellites.push(shard);}
   const motes=[];
