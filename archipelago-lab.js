@@ -18,6 +18,15 @@ const ember=new Sprite(emberTexture);ember.anchor.set(.5);ember.alpha=.68;island
 const voidTexture=await Assets.load("assets/archipelago/void-island.svg");
 const voidIsland=new Sprite(voidTexture);voidIsland.anchor.set(.5);voidIsland.alpha=.64;islands.addChild(voidIsland);
 
+const bridgeGlow=new Graphics(),bridgeCore=new Graphics();bridges.addChild(bridgeGlow,bridgeCore);bridgeGlow.filters=[new BlurFilter({strength:6,quality:3})];
+const satellites=[];
+for(let i=0;i<11;i+=1){
+  const shard=new Graphics().poly([0,-7,5,1,0,8,-4,1]).fill({color:[0x79dcb7,0xf1ca63,0x9f92dc][i%3],alpha:.72});
+  shard.orbit=i<4?0:i<8?1:2;shard.phase=i*1.73;atmosphere.addChild(shard);satellites.push(shard);
+}
+const motes=[];
+for(let i=0;i<28;i+=1){const mote=new Graphics().circle(0,0,1+i%2).fill({color:i%3?0x75d8b4:0xf2c961,alpha:.45});mote.seed=i*7.13;atmosphere.addChild(mote);motes.push(mote);}
+
 const stars=[];
 for(let i=0;i<42;i+=1){
   const dot=new Graphics().circle(0,0,1+(i%3)*.45).fill({color:i%5?0x7ad8bd:0xf3cd67,alpha:.18+(i%4)*.08});
@@ -37,6 +46,9 @@ function layout(width,height){
   const scale=Math.min(width/430,height/932);bloom.scale.set(scale*.86);bloom.baseX=width*.34;bloom.baseY=height*.26;
   ember.scale.set(scale*.72);ember.baseX=width*.68;ember.baseY=height*.52;
   voidIsland.scale.set(scale*.7);voidIsland.baseX=width*.34;voidIsland.baseY=height*.76;
+  bridgeGlow.clear().moveTo(width*.36,height*.31).bezierCurveTo(width*.66,height*.34,width*.8,height*.4,width*.68,height*.48).bezierCurveTo(width*.52,height*.58,width*.2,height*.61,width*.34,height*.71).stroke({color:0x6fd6b3,width:9*scale,alpha:.2});
+  bridgeCore.clear().moveTo(width*.36,height*.31).bezierCurveTo(width*.66,height*.34,width*.8,height*.4,width*.68,height*.48).bezierCurveTo(width*.52,height*.58,width*.2,height*.61,width*.34,height*.71).stroke({color:0xd9e7b4,width:2*scale,alpha:.55});
+  motes.forEach((mote,index)=>{mote.baseX=(index*137%977)/977*width;mote.baseY=(index*211%971)/971*height;});
   stars.forEach((star,index)=>{star.position.set((index*83%997)/997*width,(index*137%991)/991*height);});
 }
 phone.addEventListener("change",resize);resize();
@@ -53,6 +65,10 @@ function animateScene(time){
   bloom.position.set(bloom.baseX+Math.sin(time*.42)*3,bloom.baseY+Math.sin(time*.67)*5);bloom.rotation=Math.sin(time*.31)*.012;
   ember.position.set(ember.baseX+Math.sin(time*.36+2)*4,ember.baseY+Math.sin(time*.58+1)*4);ember.rotation=Math.sin(time*.28+2)*.014;
   voidIsland.position.set(voidIsland.baseX+Math.sin(time*.33+4)*3,voidIsland.baseY+Math.sin(time*.53+4)*5);voidIsland.rotation=Math.sin(time*.24+4)*.012;
+  const centers=[[bloom.x,bloom.y,76],[ember.x,ember.y,57],[voidIsland.x,voidIsland.y,56]];
+  satellites.forEach(shard=>{const center=centers[shard.orbit],angle=time*(.12+shard.orbit*.025)+shard.phase;shard.position.set(center[0]+Math.cos(angle)*center[2],center[1]+Math.sin(angle)*center[2]*.55);shard.rotation=angle+.5;});
+  motes.forEach(mote=>{mote.x=mote.baseX+Math.sin(time*.22+mote.seed)*5;mote.y=(mote.baseY-time*(4+mote.seed%3)+app.screen.height)%app.screen.height;mote.alpha=.2+Math.sin(time*.7+mote.seed)*.14;});
+  bridgeCore.alpha=.42+Math.sin(time*1.4)*.14;
 }
 
 window.archipelagoLab={app,world,backdrop,bridges,islands,atmosphere,Assets,BlurFilter,Container,Graphics,Sprite,layout};
