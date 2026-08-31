@@ -1231,9 +1231,10 @@ function drawHomePreview(time) {
 
 function drawBloomChapterPreview(time) {
   if (ui.bloomChapter.hidden || !window.OrbitArt) return;
-  window.OrbitArt.drawPlanetPreview(ui.bloomChapterArt,"bloom-crown","bloom",time);
-  const target=ui.bloomChapterArt.getContext("2d"),w=ui.bloomChapterArt.clientWidth,h=ui.bloomChapterArt.clientHeight,stage=state.campaign.restoration;
-  target.save();target.translate(w/2,h*.5);target.lineWidth=2;
+  const frame=window.OrbitArt.helpers.prepare(ui.bloomChapterArt),target=frame.ctx,w=frame.width,h=frame.height,stage=state.campaign.restoration,palette=window.OrbitArt.palettes.bloom;
+  target.fillStyle=palette.bg;target.fillRect(0,0,w,h);window.OrbitArt.helpers.paperGrain(target,w,h,palette.light,.04);
+  window.OrbitArt.drawLivingPlanet(target,"bloom-crown",{x:w/2,y:h*.72,radius:Math.min(w*.25,h*.15),paletteId:"bloom",time});
+  target.save();target.translate(w/2,h*.72);target.lineWidth=2;
   for(let ring=0;ring<stage;ring+=1){target.strokeStyle=colorAlpha(ring%2?"#edca62":"#77d5aa",.22+ring*.05);target.beginPath();target.ellipse(0,0,w*(.29+ring*.035),h*(.15+ring*.017),time*.015*(ring%2?1:-1),0,TAU);target.stroke();}
   if(stage>=4){target.fillStyle="#edca62";for(let i=0;i<7;i+=1){const angle=i*TAU/7+time*.04,x=Math.cos(angle)*w*.4,y=Math.sin(angle)*h*.21;target.beginPath();target.moveTo(x,y-5);target.lineTo(x+4,y);target.lineTo(x,y+5);target.lineTo(x-4,y);target.closePath();target.fill();}}
   target.restore();
@@ -1308,6 +1309,8 @@ function musicTick() {
 function runSelfChecks() {
   let seed = 19;
   const random = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+  const previousRunType = state.runType,previousLevelId=state.levelId;
+  state.runType="endless";
   for (let i = 0; i < 600; i += 1) {
     const elapsed = i % 121;
     const plan = buildGatePlan({ index: i % 12, elapsed, angle: random() * TAU, direction: random() > 0.5 ? 1 : -1, angularSpeed: 2, orbitRadius: 150, shortSide: 390, phase: phaseAt(elapsed) }, random);
@@ -1315,17 +1318,21 @@ function runSelfChecks() {
   }
   for (let i=1;i<phases.length;i+=1) console.assert(phases[i-1].end === phases[i].start, "Journey phases must be contiguous");
   console.assert(phaseAt(25).id === "petal" && phaseAt(34).transition && phaseAt(103).id === "ascension", "Journey boundaries must select the intended phases");
-  const previousRunType = state.runType;
   state.runType = "campaign";
-  for (let i=1;i<firstLightPhases.length;i+=1) console.assert(firstLightPhases[i-1].end === firstLightPhases[i].start, "First Light phases must be contiguous");
-  console.assert(phaseAt(0).id === "first-light-teach" && phaseAt(12).id === "first-light-rhythm" && phaseAt(45).id === "first-light-complete", "First Light boundaries must select the intended beats");
-  console.assert(firstLightGateTimes.length === 8 && firstLightFragmentTimes.join() === "16,27,38", "First Light authored schedule must remain complete");
-  for (const [index, elapsed] of firstLightGateTimes.entries()) {
-    const phase = phaseAt(elapsed);
-    const plan = buildGatePlan({ index, elapsed, angle: random()*TAU, direction: random()>.5?1:-1, angularSpeed:2, orbitRadius:150, shortSide:390, phase }, random);
-    console.assert(angleDistance(normalize(plan.gap+plan.rotation*plan.flight),plan.target)<.0001,"First Light gate must remain reachable");
+  for(const level of campaignLevels){
+    state.levelId=level.id;
+    for(let i=1;i<level.phases.length;i+=1) console.assert(level.phases[i-1].end===level.phases[i].start,`${level.name} phases must be contiguous`);
+    let easy=0;
+    for(const [index,elapsed] of level.gateTimes.entries()){
+      const phase=phaseAt(elapsed),plan=buildGatePlan({index,elapsed,angle:random()*TAU,direction:random()>.5?1:-1,angularSpeed:2,orbitRadius:150,shortSide:390,phase,orientationBias:level.orientationBias},random);
+      easy+=Number(!isSideOpening(plan.target));
+      console.assert(angleDistance(normalize(plan.gap+plan.rotation*plan.flight),plan.target)<.0001,`${level.name} gate must remain reachable`);
+    }
+    console.assert(easy/level.gateTimes.length>=level.orientationBias-.22,`${level.name} opening distribution must retain its easy-sector bias`);
   }
-  state.runType = previousRunType;
+  const recovery=buildGatePlan({index:8,elapsed:50,angle:random()*TAU,direction:1,angularSpeed:2,orbitRadius:150,shortSide:390,phase:campaignLevels[2].phases[1],forceEasy:true,orientationBias:.5},random);
+  console.assert(!isSideOpening(recovery.target)&&recovery.opening>=1.58,"Recovery gates must be wide top/bottom openings");
+  state.runType = previousRunType;state.levelId=previousLevelId;
   console.assert(angleDistance(0.05, TAU - 0.05) < 0.11, "Wrapped angle distance must stay small");
   console.assert(riders[0].id === "manta" && riders[0].price === 0, "Manta must remain the free default");
   console.assert(riders.slice(1).map((rider) => rider.price).join() === "40,100,200,350,550", "Garage prices must remain ordered");

@@ -2,9 +2,9 @@
 
 A dependency-free mobile Canvas arcade journey with authored Luminous Papercut worlds and a six-ship Cosmic Glider collection. Tap to reverse around a living planet, pass through contracting gates, chain perfect dodges, earn a flow shield, and trigger fever mode.
 
-Version 1 adds a Cosmic Islands campaign map and the first authored level, **First Light**. Its 65-second Bloom journey teaches reversal, introduces orbit fragments and pollen hazards, and ends with the three-ring Budkeeper guardian. The original continuous journey remains available as Ascension.
+Version 1 adds a four-level Bloom chapter to the Cosmic Islands campaign. **First Light**, **Pollen Path**, **Tangled Orbit**, and **Crown of Petals** grow from a 45-second introduction into a 75-second Budkeeper finale. The island visibly restores after each clear, while the original continuous journey remains available as Ascension.
 
-This vertical slice lives on `codex/version-1` for playtest review. Expand it only after First Light's pacing, objectives, and visual direction are approved.
+This chapter build lives on `codex/version-1` for playtest review. Ember and Void remain locked until Bloom pacing and guidance are approved.
 
 ## Play locally
 
@@ -40,12 +40,12 @@ For a phone test:
 - Mobile or mouse: tap the game to reverse direction.
 - Keyboard: Space, Left Arrow, or Right Arrow.
 - Home: open Cosmic Islands, the garage, or settings.
-- Cosmic Islands: play First Light or launch the existing Ascension endless journey.
+- Cosmic Islands: open the four-level Bloom chapter or launch the existing Ascension journey.
 - Garage: spend run-earned stars to unlock and equip gliders; choose any unlocked biome independently.
 - Settings: sound, supported-device haptics, and reduced effects.
 - Playtest report: view and copy local run/retention statistics from Settings; nothing is uploaded automatically.
 
-First Light awards up to three campaign stars for finishing, collecting all fragments, and landing three perfect dodges. Its first clear unlocks Bloom Wake. Campaign ratings join scores, goals, trails, relics, statistics, ships, biomes, and preferences in the versioned `orbit-shift-save`; existing saves migrate automatically.
+Each Bloom level awards up to three campaign stars for finishing, collecting all fragments, and meeting its perfect-dodge target. Precision side openings use coral safe-gap beacons that fade through the chapter, while difficult side gates are followed by a wider recovery gate. First Light unlocks Bloom Wake and Crown of Petals restores the Bloom constellation. Campaign ratings join scores, goals, trails, relics, statistics, ships, biomes, and preferences in the versioned `orbit-shift-save`; existing First Light saves migrate automatically.
 
 ## Android direction
 
