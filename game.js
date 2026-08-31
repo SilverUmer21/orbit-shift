@@ -123,6 +123,7 @@ let nextHazard = 12;
 let campaignGateIndex = 0;
 let campaignFragmentIndex = 0;
 let campaignHazardSpawned = false;
+let recoveryGate = false;
 let tutorial = 0;
 let crashTimer = 0;
 let pinch = 0;
@@ -222,6 +223,7 @@ function startRun(runType = "endless", levelId = null) {
   campaignGateIndex = 0;
   campaignFragmentIndex = 0;
   campaignHazardSpawned = false;
+  recoveryGate = false;
   tutorial = state.tutorialSeen ? 0 : 4.5;
   crashTimer = 0;
   pinch = 0;
@@ -335,7 +337,8 @@ function finishRun() {
   updateHud();
 }
 
-function activePhases() { return state.runType === "campaign" ? firstLightPhases : phases; }
+function currentCampaignLevel() { return campaignLevels.find(level=>level.id===state.levelId) || campaignLevels[0]; }
+function activePhases() { return state.runType === "campaign" ? currentCampaignLevel().phases : phases; }
 function phaseAt(elapsed) { const list = activePhases(); return list.find((phase) => elapsed >= phase.start && elapsed < phase.end) || list[list.length - 1]; }
 
 function updateJourney(force = false) {
@@ -399,29 +402,43 @@ function buildGatePlan(snapshot, random = Math.random) {
   if (phase.guardian) speed = Math.max(speed, phase.id === "forge" ? 98 : 90);
   const radius = snapshot.orbitRadius + snapshot.shortSide * 0.56;
   const flight = (radius - snapshot.orbitRadius) / speed;
-  const wantsTurn = snapshot.index === 0 || (snapshot.index > 1 && random() < 0.64);
-  const turnAt = wantsTurn ? 0.38 + random() * Math.min(0.75, flight * 0.42) : flight;
   let rotationLimit = snapshot.index < 3 ? 0.12 : Math.min(0.54, 0.16 + snapshot.elapsed * 0.004);
   if (phase.id === "ember" || phase.id === "forge") rotationLimit *= 1.25;
   if (phase.id === "void" || phase.id === "eclipse") rotationLimit *= .72;
   const rotation = (random() - 0.5) * 2 * rotationLimit;
   let opening = snapshot.index < 3 ? earlyOpenings[snapshot.index] : Math.max(0.88, 1.34 - snapshot.elapsed * 0.0046);
   if (phase.guardian) opening = phase.id === "forge" ? 1.04 : 1.12;
-  const travel = wantsTurn ? 2 * turnAt - flight : flight;
-  const target = normalize(snapshot.angle + snapshot.direction * snapshot.angularSpeed * travel + (random() - 0.5) * 0.12);
-  return { radius, speed, flight, gap: normalize(target - rotation * flight), target, rotation, opening, wantsTurn };
+  const wantsEasy = snapshot.forceEasy || random() < (snapshot.orientationBias ?? .5);
+  let candidate;
+  for (let attempt=0;attempt<8;attempt+=1) {
+    const wantsTurn = snapshot.index === 0 || (snapshot.index > 1 && random() < 0.64);
+    const turnAt = wantsTurn ? 0.18 + random() * Math.max(.16,Math.min(flight-.08,flight*.88)) : flight;
+    const travel = wantsTurn ? 2 * turnAt - flight : flight;
+    const target = normalize(snapshot.angle + snapshot.direction * snapshot.angularSpeed * travel + (random() - 0.5) * 0.1);
+    candidate={target,wantsTurn};
+    if (isSideOpening(target) !== wantsEasy) break;
+  }
+  if (snapshot.forceEasy) opening=Math.max(opening,1.58);
+  return { radius, speed:snapshot.forceEasy?speed*.92:speed, flight, gap: normalize(candidate.target - rotation * flight), target:candidate.target, rotation, opening, wantsTurn:candidate.wantsTurn };
 }
+
+function isSideOpening(angle) { return Math.abs(Math.cos(angle)) > Math.abs(Math.sin(angle)); }
+function endlessOrientationBias(elapsed) { return elapsed < 30 ? .8 : elapsed < 90 ? .8-(elapsed-30)/200 : .5; }
 
 function spawnGate() {
   const phase = phaseAt(state.elapsed);
   if (phase.transition) return;
+  const level = state.runType === "campaign" ? currentCampaignLevel() : null;
+  const forceEasy = recoveryGate && !phase.guardian;
   const plan = buildGatePlan({
     index: gateCount, elapsed: state.elapsed, angle: player.angle, direction: player.direction,
-    angularSpeed: playerSpeed(), orbitRadius, shortSide: Math.min(width, height), phase,
+    angularSpeed: playerSpeed(), orbitRadius, shortSide: Math.min(width, height), phase, forceEasy,
+    orientationBias:level?.orientationBias ?? endlessOrientationBias(state.elapsed),
   });
   const gate = {
     ...plan, previousRadius: plan.radius, resolved: false, type: gateCount % 4,
     palette: gateCount % 3, pair: false, guardian: Boolean(phase.guardian), guardianId: phase.id,
+    sideOpening:isSideOpening(plan.target),warningStrength:level?.warningStrength || 0,recovery:forceEasy,
   };
   if (state.runType === "campaign") {
     const settings = phase.id === "first-light-teach" ? [50, 1.72, 0] : phase.id === "first-light-rhythm" ? [60, 1.45, .08] : phase.id === "first-light-twist" ? [68, 1.22, .2] : [76, 1.12, .26];
@@ -429,6 +446,7 @@ function spawnGate() {
     gate.guardian = phase.id === "budkeeper"; gate.guardianId = phase.id;
   }
   gates.push(gate);
+  recoveryGate = !gate.guardian && gate.sideOpening && !forceEasy;
   gateCount += 1;
   if ((phase.id === "forge" || state.elapsed > 103 && Math.random() < .24) && gates.filter((item) => !item.resolved).length < 3) {
     const spacing = 58;
