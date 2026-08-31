@@ -19,6 +19,7 @@ const voidTexture=await Assets.load("assets/archipelago/void-island.svg");
 const voidIsland=new Sprite(voidTexture);voidIsland.anchor.set(.5);voidIsland.alpha=.64;islands.addChild(voidIsland);
 
 const bridgeGlow=new Graphics(),bridgeCore=new Graphics();bridges.addChild(bridgeGlow,bridgeCore);bridgeGlow.filters=[new BlurFilter({strength:6,quality:3})];
+const selectionRing=new Graphics();atmosphere.addChild(selectionRing);
 const satellites=[];
 for(let i=0;i<11;i+=1){
   const shard=new Graphics().poly([0,-7,5,1,0,8,-4,1]).fill({color:[0x79dcb7,0xf1ca63,0x9f92dc][i%3],alpha:.72});
@@ -48,6 +49,7 @@ function layout(width,height){
   voidIsland.scale.set(scale*.7);voidIsland.baseX=width*.34;voidIsland.baseY=height*.76;
   bridgeGlow.clear().moveTo(width*.36,height*.31).bezierCurveTo(width*.66,height*.34,width*.8,height*.4,width*.68,height*.48).bezierCurveTo(width*.52,height*.58,width*.2,height*.61,width*.34,height*.71).stroke({color:0x6fd6b3,width:9*scale,alpha:.2});
   bridgeCore.clear().moveTo(width*.36,height*.31).bezierCurveTo(width*.66,height*.34,width*.8,height*.4,width*.68,height*.48).bezierCurveTo(width*.52,height*.58,width*.2,height*.61,width*.34,height*.71).stroke({color:0xd9e7b4,width:2*scale,alpha:.55});
+  selectionRing.clear().ellipse(0,0,92*scale,54*scale).stroke({color:0xf2cf63,width:2*scale,alpha:.7});selectionRing.position.set(bloom.baseX,bloom.baseY);
   motes.forEach((mote,index)=>{mote.baseX=(index*137%977)/977*width;mote.baseY=(index*211%971)/971*height;});
   stars.forEach((star,index)=>{star.position.set((index*83%997)/997*width,(index*137%991)/991*height);});
 }
@@ -69,6 +71,10 @@ function animateScene(time){
   satellites.forEach(shard=>{const center=centers[shard.orbit],angle=time*(.12+shard.orbit*.025)+shard.phase;shard.position.set(center[0]+Math.cos(angle)*center[2],center[1]+Math.sin(angle)*center[2]*.55);shard.rotation=angle+.5;});
   motes.forEach(mote=>{mote.x=mote.baseX+Math.sin(time*.22+mote.seed)*5;mote.y=(mote.baseY-time*(4+mote.seed%3)+app.screen.height)%app.screen.height;mote.alpha=.2+Math.sin(time*.7+mote.seed)*.14;});
   bridgeCore.alpha=.42+Math.sin(time*1.4)*.14;
+  selectionRing.scale.set(1+Math.sin(time*1.8)*.035);selectionRing.alpha=.45+Math.sin(time*1.8)*.2;
 }
+
+document.querySelector(".level-bloom").addEventListener("click",()=>{document.querySelector("#labStatus").textContent="First Light selected - route ready for production integration.";selectionRing.scale.set(1.16);});
+document.querySelector(".ascension").addEventListener("click",()=>{document.querySelector("#labStatus").textContent="Ascension remains the existing endless journey.";});
 
 window.archipelagoLab={app,world,backdrop,bridges,islands,atmosphere,Assets,BlurFilter,Container,Graphics,Sprite,layout};
