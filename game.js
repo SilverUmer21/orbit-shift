@@ -1052,6 +1052,7 @@ function showScreen(name) {
   }
   if (name === "garage") renderGarage();
   if (name === "campaign") renderCampaignMap();
+  window.OrbitArchipelago?.setActive(name === "campaign");
 }
 
 function hideScreens() { for (const screen of [ui.home, ui.campaign, ui.garage, ui.settings, ui.results]) screen.hidden = true; }
@@ -1061,8 +1062,9 @@ function renderCampaignMap() {
   ui.campaignStars.textContent = `${rating}/3`;
   ui.firstLightRating.textContent = `${"★".repeat(rating)}${"☆".repeat(3-rating)}`;
   const ember = ui.campaign.querySelector(".ember-island");
-  ember.classList.toggle("revealed", state.campaign.completed.includes("first-light"));
-  ember.querySelector("b").textContent = state.campaign.completed.includes("first-light") ? "Path revealed" : "Coming next";
+  const completed = state.campaign.completed.includes("first-light");
+  ember.classList.toggle("revealed", completed);
+  window.OrbitArchipelago?.setCompleted(completed);
 }
 
 function updateHome() {
@@ -1123,11 +1125,6 @@ function drawHomePreview(time) {
   const target = ui.preview.getContext("2d");
   target.clearRect(0,0,ui.preview.width,ui.preview.height);
   target.save(); target.translate(130,75+Math.sin(time*2)*3); drawGlider(target,currentRider(),currentCosmetic(),2.45,time,0,false,.25); target.restore();
-}
-
-function drawCampaignPreview(time) {
-  if (ui.campaign.hidden) return;
-  OrbitArt.drawCampaignMap(ui.campaignMap,"verdant-stair",state.selected,time);
 }
 
 function updateHud() {
@@ -1226,7 +1223,6 @@ function frame(time) {
   update(delta);
   draw();
   drawHomePreview(time / 1000);
-  drawCampaignPreview(time / 1000);
   requestAnimationFrame(frame);
 }
 
