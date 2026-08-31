@@ -3,7 +3,7 @@ const ctx = canvas.getContext("2d");
 const ui = {
   score: document.querySelector("#score"), multiplier: document.querySelector("#multiplier"),
   best: document.querySelector("#best"), fever: document.querySelector("#feverBar"),
-  shell: document.querySelector(".shell"), home: document.querySelector("#home"), campaign: document.querySelector("#campaign"),
+  shell: document.querySelector(".shell"), home: document.querySelector("#home"), campaign: document.querySelector("#campaign"), bloomChapter: document.querySelector("#bloomChapter"),
   garage: document.querySelector("#garage"), settings: document.querySelector("#settings"), results: document.querySelector("#results"),
   resultScore: document.querySelector("#resultScore"), resultStats: document.querySelector("#resultStats"),
   resultEyebrow: document.querySelector("#resultEyebrow"), resultObjectives: document.querySelector("#resultObjectives"), resultHome: document.querySelector("#resultHome"),
@@ -18,7 +18,8 @@ const ui = {
   goals: document.querySelector("#voyageGoals"), trails: document.querySelector("#trails"), goalRewards: document.querySelector("#goalRewards"),
   report: document.querySelector("#report"), showReport: document.querySelector("#showReport"), copyReport: document.querySelector("#copyReport"),
   campaignStars: document.querySelector("#campaignStars"), firstLightRating: document.querySelector("#firstLightRating"),
-  campaignMap: document.querySelector("#campaignMap"),
+  campaignMap: document.querySelector("#campaignMap"), bloomProgress: document.querySelector("#bloomProgress"),
+  bloomLevels: document.querySelector("#bloomLevels"), bloomStory: document.querySelector("#bloomStory"), bloomChapterArt: document.querySelector("#bloomChapterArt"),
 };
 
 const TAU = Math.PI * 2;
@@ -1068,20 +1069,45 @@ function showScreen(name) {
     void ui.campaign.offsetWidth;
     ui.campaign.classList.add("arriving");
   }
+  if (name === "bloomChapter") renderBloomChapter();
   window.OrbitArchipelago?.setActive(name === "campaign");
 }
 
-function hideScreens() { for (const screen of [ui.home, ui.campaign, ui.garage, ui.settings, ui.results]) screen.hidden = true; }
+function hideScreens() { for (const screen of [ui.home, ui.campaign, ui.bloomChapter, ui.garage, ui.settings, ui.results]) screen.hidden = true; }
 
 function renderCampaignMap() {
-  const rating = state.campaign.ratings["first-light"] || 0;
-  ui.campaignStars.textContent = `${rating}/3`;
-  ui.firstLightRating.textContent = `${"★".repeat(rating)}${"☆".repeat(3-rating)}`;
+  const rating = campaignLevels.reduce((total,level)=>total+(state.campaign.ratings[level.id]||0),0);
+  ui.campaignStars.textContent = `${rating}/12`;
+  ui.firstLightRating.textContent = `${state.campaign.completed.length}/4 restored`;
   const ember = ui.campaign.querySelector(".ember-island");
   const completed = state.campaign.completed.includes("first-light");
   ember.classList.toggle("revealed", completed);
   ember.querySelector("em").textContent = completed ? "Path revealed" : "Locked";
   window.OrbitArchipelago?.setCompleted(completed);
+}
+
+function renderBloomChapter() {
+  const rating = campaignLevels.reduce((total,level)=>total+(state.campaign.ratings[level.id]||0),0);
+  ui.bloomProgress.textContent = `${rating}/12`;
+  ui.bloomStory.textContent = state.campaign.restoration >= 4 ? "The Bloom Crown shines in rhythm again." : campaignLevels[Math.min(state.campaign.unlockedLevel-1,3)].story;
+  ui.bloomLevels.innerHTML = "";
+  campaignLevels.forEach((level,index) => {
+    const unlocked = index < state.campaign.unlockedLevel;
+    const stars = state.campaign.ratings[level.id] || 0;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `chapter-level${unlocked ? "" : " locked"}${stars ? " completed" : ""}`;
+    button.disabled = !unlocked;
+    button.innerHTML = `<span>${String(index+1).padStart(2,"0")}</span><div><small>${level.duration} sec voyage</small><b>${level.name}</b><em>${unlocked ? `${"★".repeat(stars)}${"☆".repeat(3-stars)}` : "Locked"}</em></div>`;
+    button.addEventListener("click",()=>launchCampaignLevel(level.id,button));
+    ui.bloomLevels.append(button);
+  });
+}
+
+function launchCampaignLevel(levelId,button) {
+  if (button?.disabled) return;
+  button?.classList.add("launching");
+  setTimeout(()=>{ button?.classList.remove("launching"); startRun("campaign",levelId); },180);
 }
 
 function updateHome() {
@@ -1250,18 +1276,13 @@ window.addEventListener("resize", resize);
 canvas.addEventListener("pointerdown", reverse);
 document.querySelector("#play").addEventListener("click", () => showScreen("campaign"));
 document.querySelector("#ascension").addEventListener("click", () => startRun("endless"));
-document.querySelector("[data-level='first-light']").addEventListener("click", event => {
-  const button = event.currentTarget;
-  if (button.classList.contains("launching")) return;
-  button.classList.add("launching");
-  window.OrbitArchipelago?.pulse();
-  setTimeout(() => { button.classList.remove("launching"); startRun("campaign", "first-light"); }, 180);
-});
+document.querySelector("[data-chapter='bloom']").addEventListener("click", () => { window.OrbitArchipelago?.pulse(); showScreen("bloomChapter"); });
 document.querySelector("#retry").addEventListener("click", () => startRun(state.runType, state.levelId));
 document.querySelector("#openGarage").addEventListener("click", () => showScreen("garage"));
 document.querySelector("#openSettings").addEventListener("click", () => showScreen("settings"));
-ui.resultHome.addEventListener("click", () => showScreen(state.runType === "campaign" ? "campaign" : "home"));
+ui.resultHome.addEventListener("click", () => showScreen(state.runType === "campaign" ? "bloomChapter" : "home"));
 for (const button of document.querySelectorAll("[data-home]")) button.addEventListener("click", () => showScreen("home"));
+for (const button of document.querySelectorAll("[data-campaign]")) button.addEventListener("click", () => showScreen("campaign"));
 ui.sound.addEventListener("change", () => { state.muted = !ui.sound.checked; save(); });
 ui.haptics.addEventListener("change", () => { state.haptics = ui.haptics.checked; save(); vibrate(15); });
 ui.effects.addEventListener("change", () => { state.reducedEffects = ui.effects.checked; save(); });
@@ -1276,7 +1297,8 @@ window.addEventListener("keydown", (event) => {
     event.preventDefault();
     if (state.mode === "run") reverse();
     else if (state.mode === "home") showScreen("campaign");
-    else if (state.mode === "campaign") startRun("campaign", "first-light");
+    else if (state.mode === "campaign") showScreen("bloomChapter");
+    else if (state.mode === "bloomChapter") startRun("campaign", campaignLevels[Math.min(state.campaign.unlockedLevel-1,3)].id);
     else if (state.mode === "results") startRun(state.runType, state.levelId);
   }
 });
