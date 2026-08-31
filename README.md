@@ -18,6 +18,8 @@ Open `http://127.0.0.1:3000/` on the computer.
 
 Open `http://127.0.0.1:3000/art-lab.html` to compare the three live campaign maps and three living planets. These previews use the same Canvas renderers as the game; choose a map and planet by their A, B, or C labels before production selection changes.
 
+Open `http://127.0.0.1:3000/archipelago-lab.html` for the production Orbit Archipelago study. It uses authored SVG island assets and PixiJS motion while remaining isolated from the campaign until approval.
+
 For a phone test:
 
 1. Connect the computer and phone to the same Wi-Fi.

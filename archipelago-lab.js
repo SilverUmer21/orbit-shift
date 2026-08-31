@@ -40,7 +40,7 @@ frame.addEventListener("pointerleave",()=>{pointer.x=0;pointer.y=0;});
 
 function resize(){
   const [width,height]=sizes[phone.value];frame.style.setProperty("--w",`${width}px`);frame.style.setProperty("--h",`${height}px`);
-  requestAnimationFrame(()=>layout(app.screen.width,app.screen.height));
+  app.renderer.resize(width,height);layout(width,height);
 }
 function layout(width,height){
   backdropArt.position.set(width/2,height/2);backdropArt.width=width;backdropArt.height=height;
