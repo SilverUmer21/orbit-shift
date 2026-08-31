@@ -13,6 +13,7 @@ const ui = {
   resultStars: document.querySelector("#resultStars"), preview: document.querySelector("#riderPreview"),
   sound: document.querySelector("#soundToggle"), haptics: document.querySelector("#hapticsToggle"), effects: document.querySelector("#effectsToggle"),
   shield: document.querySelector("#shield"), actLabel: document.querySelector("#actLabel"),
+  campaignRun: document.querySelector("#campaignRun"), fragmentCount: document.querySelector("#fragmentCount"), perfectCount: document.querySelector("#perfectCount"),
   guardian: document.querySelector("#guardian"), guardianName: document.querySelector("#guardianName"), guardianBar: document.querySelector("#guardianBar"),
   goals: document.querySelector("#voyageGoals"), trails: document.querySelector("#trails"), goalRewards: document.querySelector("#goalRewards"),
   report: document.querySelector("#report"), showReport: document.querySelector("#showReport"), copyReport: document.querySelector("#copyReport"),
@@ -1139,6 +1140,9 @@ function updateHud() {
   ui.best.textContent = state.best;
   ui.fever.style.width = `${(state.fever > 0 ? state.fever / 6 : Math.min(1, state.streak / 5)) * 100}%`;
   ui.shield.classList.toggle("ready", state.shield && state.mode === "run");
+  ui.campaignRun.classList.toggle("active", state.runType === "campaign" && state.mode === "run");
+  ui.fragmentCount.textContent = `${Math.min(3,state.runFragments)}/3`;
+  ui.perfectCount.textContent = `${Math.min(3,state.perfects)}/3`;
   const phase = phaseAt(state.elapsed);
   ui.guardian.classList.toggle("active", Boolean(phase.guardian && state.mode === "run"));
   ui.guardianName.textContent = phase.name;

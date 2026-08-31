@@ -7,6 +7,7 @@
 .voyage-goal i::after { content: ""; display: block; width: var(--progress); height: 100%; background: #7bdcb5; }
 .shield { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 57px); left: 16px; z-index: 2; display: none; color: #f2cf63; font-size: 22px; text-shadow: 0 0 10px #f2cf63; }
 .shield.ready { display: block; }
+.campaign-run{position:absolute;top:calc(env(safe-area-inset-top,0px) + 58px);right:12px;z-index:2;display:none;gap:3px;min-width:92px;text-align:right;pointer-events:none}.campaign-run.active{display:grid}.campaign-run span{color:#80d9b7;font-size:8px;font-weight:900;text-transform:uppercase}.campaign-run b{display:inline-block;min-width:23px;color:#f2cf63;font-size:10px}
 .act-label { position: absolute; top: 18%; left: 50%; z-index: 2; transform: translateX(-50%); color: #f4f1de; font-size: 26px; font-weight: 900; text-align: center; text-shadow: 3px 3px 0 #102a32; opacity: 0; pointer-events: none; }
 .act-label.show { animation: actReveal 2.2s ease-out; }
 .guardian { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 72px); left: 50%; z-index: 2; display: none; width: min(220px, 64vw); transform: translateX(-50%); text-align: center; }
