@@ -6,7 +6,7 @@
 - Runtime: layered SVG art rendered by PixiJS 8.19; DOM owns labels and touch targets.
 - Motion: slow independent island drift, satellite orbit, bridge shimmer, pollen/ember/star particles, and pointer parallax.
 - Interaction: Bloom is playable; Ember and Void are visibly locked. Ascension remains a separate action.
-- Approval boundary: this lab does not replace the production campaign map.
+- Integration: the lab and production campaign share the same renderer and assets.
 
 ## Manifest
 

@@ -16,9 +16,9 @@ python -m http.server 3000 --bind 0.0.0.0
 
 Open `http://127.0.0.1:3000/` on the computer.
 
-Open `http://127.0.0.1:3000/art-lab.html` to compare the three live campaign maps and three living planets. These previews use the same Canvas renderers as the game; choose a map and planet by their A, B, or C labels before production selection changes.
+Open `http://127.0.0.1:3000/art-lab.html` to compare the earlier code-native campaign maps and living planets.
 
-Open `http://127.0.0.1:3000/archipelago-lab.html` for the production Orbit Archipelago study. It uses authored SVG island assets and PixiJS motion while remaining isolated from the campaign until approval.
+Open `http://127.0.0.1:3000/archipelago-lab.html` to inspect the production Orbit Archipelago renderer in isolation. The campaign uses this same shared renderer, authored SVG assets, and locally vendored PixiJS runtime.
 
 For a phone test:
 

@@ -1,4 +1,4 @@
-import {Application,Assets,BlurFilter,Container,Graphics,Sprite} from "https://cdn.jsdelivr.net/npm/pixi.js@8.19.0/dist/pixi.min.mjs";
+import {Application,Assets,BlurFilter,Container,Graphics,Sprite} from "./vendor/pixi.min.mjs";
 
 const asset=name=>new URL(`assets/archipelago/${name}`,import.meta.url).href;
 
