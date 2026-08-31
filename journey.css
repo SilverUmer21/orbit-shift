@@ -1,9 +1,10 @@
 .home { grid-template-rows: auto minmax(80px, 1fr) auto auto auto auto; gap: 8px; }
-.voyage-goals { width: min(100%, 330px); display: grid; gap: 4px; }
-.voyage-goal { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; padding: 6px 9px; text-align: left; background: rgba(13,37,43,.78); border-left: 3px solid #7bdcb5; font-size: 10px; }
+.voyage-goals { width: min(100%, 330px); display: grid; gap: 5px; }
+.voyage-goal { display: grid; grid-template-columns: 16px 1fr auto; align-items:center; gap: 4px 8px; padding: 7px 9px; text-align: left; background: rgba(13,37,43,.68); border: 1px solid rgba(123,220,181,.16); box-shadow: 0 3px 0 rgba(4,16,19,.35); font-size: 10px; }
+.voyage-goal::before{content:"";width:9px;height:9px;justify-self:center;background:#7bdcb5;transform:rotate(45deg);box-shadow:2px 2px 0 #17363c}.voyage-goal:nth-child(2)::before{background:#f2cf63}.voyage-goal:nth-child(3)::before{background:#ef7a6f}
 .voyage-goal b { font-size: 10px; }
 .voyage-goal span { color: #f2cf63; font-weight: 900; }
-.voyage-goal i { grid-column: 1/-1; height: 3px; background: #17363c; }
+.voyage-goal i { grid-column: 2/-1; height: 2px; background: #17363c; }
 .voyage-goal i::after { content: ""; display: block; width: var(--progress); height: 100%; background: #7bdcb5; }
 .shield { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 57px); left: 16px; z-index: 2; display: none; color: #f2cf63; font-size: 22px; text-shadow: 0 0 10px #f2cf63; }
 .shield.ready { display: block; }
