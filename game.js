@@ -1051,7 +1051,12 @@ function showScreen(name) {
     updateHome();
   }
   if (name === "garage") renderGarage();
-  if (name === "campaign") renderCampaignMap();
+  if (name === "campaign") {
+    renderCampaignMap();
+    ui.campaign.classList.remove("arriving");
+    void ui.campaign.offsetWidth;
+    ui.campaign.classList.add("arriving");
+  }
   window.OrbitArchipelago?.setActive(name === "campaign");
 }
 
@@ -1064,6 +1069,7 @@ function renderCampaignMap() {
   const ember = ui.campaign.querySelector(".ember-island");
   const completed = state.campaign.completed.includes("first-light");
   ember.classList.toggle("revealed", completed);
+  ember.querySelector("em").textContent = completed ? "Path revealed" : "Locked";
   window.OrbitArchipelago?.setCompleted(completed);
 }
 
@@ -1230,7 +1236,13 @@ window.addEventListener("resize", resize);
 canvas.addEventListener("pointerdown", reverse);
 document.querySelector("#play").addEventListener("click", () => showScreen("campaign"));
 document.querySelector("#ascension").addEventListener("click", () => startRun("endless"));
-document.querySelector("[data-level='first-light']").addEventListener("click", () => startRun("campaign", "first-light"));
+document.querySelector("[data-level='first-light']").addEventListener("click", event => {
+  const button = event.currentTarget;
+  if (button.classList.contains("launching")) return;
+  button.classList.add("launching");
+  window.OrbitArchipelago?.pulse();
+  setTimeout(() => { button.classList.remove("launching"); startRun("campaign", "first-light"); }, 180);
+});
 document.querySelector("#retry").addEventListener("click", () => startRun(state.runType, state.levelId));
 document.querySelector("#openGarage").addEventListener("click", () => showScreen("garage"));
 document.querySelector("#openSettings").addEventListener("click", () => showScreen("settings"));
