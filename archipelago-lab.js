@@ -11,6 +11,8 @@ world.addChild(backdrop,bridges,islands,atmosphere);app.stage.addChild(world);
 
 const backdropTexture=await Assets.load("assets/archipelago/backdrop.svg");
 const backdropArt=new Sprite(backdropTexture);backdropArt.anchor.set(.5);backdrop.addChild(backdropArt);
+const bloomTexture=await Assets.load("assets/archipelago/bloom-island.svg");
+const bloom=new Sprite(bloomTexture);bloom.anchor.set(.5);islands.addChild(bloom);
 
 const stars=[];
 for(let i=0;i<42;i+=1){
@@ -28,6 +30,7 @@ function resize(){
 }
 function layout(width,height){
   backdropArt.position.set(width/2,height/2);backdropArt.width=width;backdropArt.height=height;
+  const scale=Math.min(width/430,height/932);bloom.scale.set(scale*.86);bloom.baseX=width*.34;bloom.baseY=height*.26;
   stars.forEach((star,index)=>{star.position.set((index*83%997)/997*width,(index*137%991)/991*height);});
 }
 phone.addEventListener("change",resize);resize();
@@ -40,6 +43,6 @@ app.ticker.add(ticker=>{
   animateScene(elapsed,ticker.deltaTime);
 });
 
-function animateScene(){}
+function animateScene(time){bloom.position.set(bloom.baseX+Math.sin(time*.42)*3,bloom.baseY+Math.sin(time*.67)*5);bloom.rotation=Math.sin(time*.31)*.012;}
 
 window.archipelagoLab={app,world,backdrop,bridges,islands,atmosphere,Assets,BlurFilter,Container,Graphics,Sprite,layout};

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="280" height="280" viewBox="0 0 280 280">
+ <defs>
+  <linearGradient id="rock" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#275b59"/><stop offset="1" stop-color="#102b35"/></linearGradient>
+  <linearGradient id="grass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#82e0b5"/><stop offset="1" stop-color="#42aa92"/></linearGradient>
+  <filter id="shadow"><feGaussianBlur stdDeviation="6"/></filter>
+  <filter id="grain"><feTurbulence baseFrequency=".55" numOctaves="2" seed="4"/><feComposite in="SourceGraphic" operator="in"/><feBlend mode="multiply" in2="SourceGraphic"/></filter>
+ </defs>
+ <ellipse cx="141" cy="228" rx="85" ry="17" fill="#02090d" opacity=".45" filter="url(#shadow)"/>
+ <path d="M48 96 232 91l-25 88-65 73-68-72Z" fill="url(#rock)"/>
+ <path d="m55 110 39 70 18-77 31 139 14-139 29 78 40-76-22 75-62 72-68-72Z" fill="#173945"/>
+ <path d="m74 117 29 63 10-68 29 130 16-128 25 66 24-66-17 67-48 55-49-57Z" fill="#2f6260" opacity=".7"/>
+ <path d="M43 90q25-46 94-50 75-5 105 45-12 57-99 61-81 3-100-56Z" fill="#173a3d"/>
+ <path d="M49 82q32-42 91-42 62 0 96 42-16 48-95 51-76 2-92-51Z" fill="url(#grass)"/>
+ <path d="M64 78q39-29 78-27 43 1 76 27-27 35-77 37-48 0-77-37Z" fill="#a5ebbd"/>
+ <path d="M85 80q29-19 58-18 31 1 54 18-17 21-55 23-37 0-57-23Z" fill="#52bda0"/>
+ <g fill="#f2e8af" stroke="#173a3d" stroke-width="3">
+  <path d="M142 41v58M113 53l30 47 29-48M96 74l47 27 48-27" fill="none" stroke-linecap="round"/>
+  <path d="m142 53 10 20 23 3-17 16 4 23-20-11-21 11 4-23-17-16 23-3Z"/>
+ </g>
+ <g fill="#f6cf63" stroke="#2a7267" stroke-width="2">
+  <circle cx="83" cy="71" r="6"/><circle cx="203" cy="87" r="5"/><circle cx="181" cy="111" r="4"/><circle cx="105" cy="112" r="4"/>
+ </g>
+ <g fill="#f16f6a"><path d="m70 96 7-13 8 12-7 11Z"/><path d="m210 66 7-12 7 11-7 11Z"/><path d="m170 48 6-11 7 10-7 10Z"/></g>
+ <g fill="#287a6e"><path d="M53 80q-21-17-30 8 21 14 30-8Z"/><path d="M226 96q24-14 30 12-22 11-30-12Z"/><path d="M84 48Q70 21 55 43q10 20 29 5Z"/></g>
+ <path d="M48 82q34-40 92-42 66 1 97 43" fill="none" stroke="#d8f0bd" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+ <path d="M45 91q25-47 96-51 73 0 100 47-13 54-99 58-79 1-97-54Z" fill="#fff" opacity=".06" filter="url(#grain)"/>
+</svg>
