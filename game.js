@@ -785,6 +785,7 @@ function drawGates(time, palette) {
     ctx.lineWidth = gate.guardian ? 11 : gate.type === 3 ? 9 : 7;
     ctx.beginPath(); ctx.arc(cx, cy, gate.radius, start, end); ctx.stroke();
     drawGateDetails(gate, start, end, color, palette, time);
+    drawSideGuidance(gate,time,palette,alpha);
     for (const side of [-1, 1]) {
       const angle = gate.gap + side * half;
       const x = cx + Math.cos(angle) * gate.radius;
@@ -794,6 +795,30 @@ function drawGates(time, palette) {
     }
     ctx.restore();
   }
+}
+
+function drawSideGuidance(gate,time,palette,gateAlpha) {
+  if (!gate.sideOpening || gate.warningStrength <= 0 || gate.guardian) return;
+  const strength=gate.warningStrength;
+  const approach=Math.max(0,Math.min(1,1-(gate.radius-orbitRadius)/(Math.min(width,height)*.56)));
+  const pulse=state.reducedEffects ? 1 : .82+Math.sin(time*7+gate.radius*.04)*.18;
+  ctx.save();
+  ctx.globalAlpha=Math.min(1,gateAlpha)*strength*(.5+approach*.5)*pulse;
+  ctx.fillStyle=palette.accent;
+  ctx.strokeStyle=colorAlpha(palette.accent,.7);
+  ctx.lineWidth=2;
+  if(!state.reducedEffects){ctx.shadowColor=palette.accent;ctx.shadowBlur=10+strength*10;}
+  for(const side of [-1,1]){
+    const angle=gate.gap+side*gate.opening*.5;
+    const x=cx+Math.cos(angle)*gate.radius,y=cy+Math.sin(angle)*gate.radius;
+    ctx.save();ctx.translate(x,y);ctx.rotate(angle+Math.PI/2);
+    ctx.beginPath();ctx.moveTo(-side*13,-7);ctx.lineTo(side*2,0);ctx.lineTo(-side*13,7);ctx.lineTo(-side*8,0);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+    const inner=gate.radius-10-approach*6;
+    ctx.beginPath();ctx.moveTo(cx+Math.cos(angle)*gate.radius,cy+Math.sin(angle)*gate.radius);ctx.lineTo(cx+Math.cos(angle-side*.12)*inner,cy+Math.sin(angle-side*.12)*inner);ctx.stroke();
+  }
+  const centerX=cx+Math.cos(gate.gap)*gate.radius,centerY=cy+Math.sin(gate.gap)*gate.radius;
+  ctx.fillStyle=palette.gold;ctx.globalAlpha*=.82;paperDiamond(centerX,centerY,3+strength*2,gate.gap);
+  ctx.restore();
 }
 
 function drawGuardianAura(time, palette) {
