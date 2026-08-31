@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="430" height="932" viewBox="0 0 430 932">
+ <defs>
+  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#07151b"/><stop offset=".58" stop-color="#0b2327"/><stop offset="1" stop-color="#10252a"/></linearGradient>
+  <radialGradient id="aurora"><stop stop-color="#67dcb8" stop-opacity=".18"/><stop offset="1" stop-color="#67dcb8" stop-opacity="0"/></radialGradient>
+  <filter id="grain"><feTurbulence baseFrequency=".75" numOctaves="3" seed="8"/><feColorMatrix values="0 0 0 0 .82 0 0 0 0 .88 0 0 0 0 .74 0 0 0 .055 0"/></filter>
+ </defs>
+ <path fill="url(#sky)" d="M0 0h430v932H0z"/>
+ <ellipse fill="url(#aurora)" cx="215" cy="344" rx="215" ry="328"/>
+ <g opacity=".22" fill="#3f7770">
+  <path d="M-48 213Q64 147 146 191t172-18q91-57 160 12v71q-80-54-165 0t-174 3Q46 211-48 291Z"/>
+  <path d="M-34 687q91-68 181-11t176-9q85-63 143-10v96q-63-48-148 3t-172 0Q54 702-34 775Z"/>
+ </g>
+ <g opacity=".36" fill="#d7e8bb">
+  <circle cx="50" cy="132" r="1.4"/><circle cx="368" cy="183" r="1.2"/><circle cx="102" cy="392" r="1"/><circle cx="326" cy="522" r="1.4"/><circle cx="67" cy="751" r="1.2"/><circle cx="375" cy="817" r="1"/>
+ </g>
+ <g opacity=".2" fill="#72cfb0">
+  <path d="m24 510 10-16 9 17-10 20z"/><path d="m398 369 8-13 8 14-9 16z"/><path d="m45 844 7-11 8 12-8 14z"/><path d="m372 664 7-12 8 13-8 15z"/>
+ </g>
+ <path d="M0 890q77-48 145-17t132-2q74-35 153 8v53H0Z" fill="#071317" opacity=".78"/>
+ <path d="M0 0h430v932H0z" filter="url(#grain)" opacity=".55"/>
+</svg>

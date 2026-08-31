@@ -9,6 +9,9 @@ mount.appendChild(app.canvas);
 const world=new Container(),backdrop=new Container({isRenderGroup:true}),bridges=new Container(),islands=new Container(),atmosphere=new Container();
 world.addChild(backdrop,bridges,islands,atmosphere);app.stage.addChild(world);
 
+const backdropTexture=await Assets.load("assets/archipelago/backdrop.svg");
+const backdropArt=new Sprite(backdropTexture);backdropArt.anchor.set(.5);backdrop.addChild(backdropArt);
+
 const stars=[];
 for(let i=0;i<42;i+=1){
   const dot=new Graphics().circle(0,0,1+(i%3)*.45).fill({color:i%5?0x7ad8bd:0xf3cd67,alpha:.18+(i%4)*.08});
@@ -24,6 +27,7 @@ function resize(){
   requestAnimationFrame(()=>layout(app.screen.width,app.screen.height));
 }
 function layout(width,height){
+  backdropArt.position.set(width/2,height/2);backdropArt.width=width;backdropArt.height=height;
   stars.forEach((star,index)=>{star.position.set((index*83%997)/997*width,(index*137%991)/991*height);});
 }
 phone.addEventListener("change",resize);resize();
