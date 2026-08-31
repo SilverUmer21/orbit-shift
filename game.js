@@ -1142,6 +1142,7 @@ function renderCampaignMap() {
   ember.classList.toggle("revealed", completed);
   ember.querySelector("em").textContent = completed ? "Path revealed" : "Locked";
   window.OrbitArchipelago?.setCompleted(completed);
+  window.OrbitArchipelago?.setRestoration(state.campaign.restoration);
 }
 
 function renderBloomChapter() {
@@ -1226,6 +1227,16 @@ function drawHomePreview(time) {
   const target = ui.preview.getContext("2d");
   target.clearRect(0,0,ui.preview.width,ui.preview.height);
   target.save(); target.translate(130,75+Math.sin(time*2)*3); drawGlider(target,currentRider(),currentCosmetic(),2.45,time,0,false,.25); target.restore();
+}
+
+function drawBloomChapterPreview(time) {
+  if (ui.bloomChapter.hidden || !window.OrbitArt) return;
+  window.OrbitArt.drawPlanetPreview(ui.bloomChapterArt,"bloom-crown","bloom",time);
+  const target=ui.bloomChapterArt.getContext("2d"),w=ui.bloomChapterArt.clientWidth,h=ui.bloomChapterArt.clientHeight,stage=state.campaign.restoration;
+  target.save();target.translate(w/2,h*.5);target.lineWidth=2;
+  for(let ring=0;ring<stage;ring+=1){target.strokeStyle=colorAlpha(ring%2?"#edca62":"#77d5aa",.22+ring*.05);target.beginPath();target.ellipse(0,0,w*(.29+ring*.035),h*(.15+ring*.017),time*.015*(ring%2?1:-1),0,TAU);target.stroke();}
+  if(stage>=4){target.fillStyle="#edca62";for(let i=0;i<7;i+=1){const angle=i*TAU/7+time*.04,x=Math.cos(angle)*w*.4,y=Math.sin(angle)*h*.21;target.beginPath();target.moveTo(x,y-5);target.lineTo(x+4,y);target.lineTo(x,y+5);target.lineTo(x-4,y);target.closePath();target.fill();}}
+  target.restore();
 }
 
 function updateHud() {
@@ -1328,6 +1339,7 @@ function frame(time) {
   update(delta);
   draw();
   drawHomePreview(time / 1000);
+  drawBloomChapterPreview(time / 1000);
   requestAnimationFrame(frame);
 }
 

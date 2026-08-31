@@ -5,6 +5,7 @@ const ready=createArchipelagoMap(mount,{pointerTarget:screen}).then(map=>{map.se
 window.OrbitArchipelago={
   ready,
   setCompleted:value=>ready.then(map=>map.setCompleted(value)),
+  setRestoration:value=>ready.then(map=>map.setRestoration(value)),
   pulse:()=>ready.then(map=>map.pulse()),
   setActive:value=>ready.then(map=>map.setActive(value))
 };
