@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Orbit Archipelago Production Lab</title>
+  <link rel="stylesheet" href="archipelago-lab.css">
+</head>
+<body>
+  <header class="lab-header">
+    <div><small>Production map study</small><h1>Orbit Archipelago</h1></div>
+    <div class="lab-tools">
+      <label>Phone<select id="phone"><option value="320">320 × 568</option><option value="390" selected>390 × 844</option><option value="430">430 × 932</option></select></label>
+      <a href="art-lab.html">Back to Art Lab</a>
+    </div>
+  </header>
+  <main>
+    <section id="phoneFrame" class="phone-frame" aria-label="Animated Orbit Archipelago map">
+      <div id="pixiMount" class="pixi-mount"></div>
+      <div class="map-title"><small>Constellation I</small><strong>Cosmic Islands</strong><span>0/3</span></div>
+      <button class="level level-bloom" data-level="bloom"><span>Bloom 1</span><strong>First Light</strong><em>☆☆☆</em></button>
+      <button class="level level-ember" disabled><span>Ember</span><strong>Solar Forge</strong><em>Locked</em></button>
+      <button class="level level-void" disabled><span>Void</span><strong>Eclipse Eye</strong><em>Locked</em></button>
+      <button class="ascension">Ascension</button>
+    </section>
+  </main>
+  <script type="module" src="archipelago-lab.js"></script>
+</body>
+</html>
