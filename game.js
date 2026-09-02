@@ -126,7 +126,6 @@ let campaignHazardIndex = 0;
 let recoveryGate = false;
 let tutorial = 0;
 let crashTimer = 0;
-let pinch = 0;
 let shake = 0;
 let flash = 0;
 let lastReverse = 0;
@@ -185,6 +184,7 @@ function resize() {
 }
 
 function startRun(runType = "endless", levelId = null) {
+  window.OrbitArchipelago?.setActive(false);
   state.mode = "run";
   state.runType = runType;
   state.levelId = levelId;
@@ -226,7 +226,6 @@ function startRun(runType = "endless", levelId = null) {
   recoveryGate = false;
   tutorial = state.tutorialSeen ? 0 : 4.5;
   crashTimer = 0;
-  pinch = 0;
   shake = 0;
   flash = 0;
   hideScreens();
@@ -429,7 +428,14 @@ function buildGatePlan(snapshot, random = Math.random) {
     candidate={target,wantsTurn};
     if (isSideOpening(target) !== wantsEasy) break;
   }
-  if (snapshot.forceEasy) opening=Math.max(opening,1.58);
+  if (snapshot.forceEasy) {
+    opening=Math.max(opening,1.58);
+    // Random retries can miss the easy sectors; choose a reachable pole as fallback.
+    if (isSideOpening(candidate.target)) {
+      const pole = [Math.PI/2,Math.PI*1.5].sort((a,b)=>angleDistance(a,snapshot.angle)-angleDistance(b,snapshot.angle))[0];
+      if (angleDistance(pole,snapshot.angle) <= snapshot.angularSpeed*flight) candidate={target:pole,wantsTurn:true};
+    }
+  }
   return { radius, speed:snapshot.forceEasy?speed*.92:speed, flight, gap: normalize(candidate.target - rotation * flight), target:candidate.target, rotation, opening, wantsTurn:candidate.wantsTurn };
 }
 
@@ -509,9 +515,8 @@ function update(delta) {
   state.score += delta * (4 + state.multiplier * 1.45);
   state.fever = Math.max(0, state.fever - delta);
   state.invulnerable = Math.max(0, state.invulnerable - delta);
-  pinch = Math.max(0, pinch - delta);
-  const worldScale = (state.fever > 0 ? 0.8 : 1) * (pinch > 0 ? 0.42 : 1);
-  player.angle = normalize(player.angle + player.direction * playerSpeed() * delta * (pinch > 0 ? 0.65 : 1));
+  const worldScale = state.fever > 0 ? 0.8 : 1;
+  player.angle = normalize(player.angle + player.direction * playerSpeed() * delta);
   player.flip = Math.max(0, player.flip - delta * 7);
   player.glow = Math.max(0, player.glow - delta * 2.8);
   trail.unshift({ ...playerPoint(), life: 1 });
@@ -590,7 +595,6 @@ function resolveGate(gate) {
     state.runBestStreak = Math.max(state.runBestStreak, state.streak);
     state.multiplier = 1 + Math.min(4, state.streak);
     state.score += 28 * state.multiplier;
-    pinch = 0.095;
     player.glow = 1;
     rings.push({ radius: orbitRadius, life: 0.65, max: 0.65, color: currentCosmetic().gold, speed: 72 });
     labels.push({ text: state.streak >= 5 ? "FEVER" : "PERFECT", life: 0.8, max: 0.8, y: cy - orbitRadius - 28 });
@@ -1341,9 +1345,11 @@ function runSelfChecks() {
 }
 
 function frame(time) {
-  const delta = Math.min(0.033, (time - lastTime) / 1000 || 0);
+  const delta = Math.max(0, Math.min(0.1, (time - lastTime) / 1000 || 0));
   lastTime = time;
-  update(delta);
+  // Catch up slower frames in small collision-safe steps, without a long resume jump.
+  const steps = Math.max(1, Math.ceil(delta * 60));
+  for (let step = 0; step < steps; step += 1) update(delta / steps);
   draw();
   drawHomePreview(time / 1000);
   drawBloomChapterPreview(time / 1000);
