@@ -59,7 +59,7 @@ const campaignLevels = [
     gateTimes:[2,7,12,17,22,27,32,37,42,47,51,57,63,69,73],fragmentTimes:[18,37,48],hazardTimes:[35],
     phases:[{id:"petal-ascent",name:"Petal Ascent",start:0,end:50,biome:0},{id:"budkeeper",name:"Budkeeper",start:50,end:75,biome:0,guardian:true,target:3},{id:"crown-complete",name:"Bloom Crown",start:75,end:Infinity,biome:0}],
   },
-].map(level=>({...level,fragmentTimes:[.12,.24,.37,.5,.64,.78].map(fraction=>Math.round(level.duration*fraction)),biome:"bloom",objectives:["Restore the Bloom rhythm","Collect 3 orbit fragments",`Thread ${level.perfectTarget} perfect gates`]}));
+].map((level,index)=>({...level,perfectTarget:[2,2,3,3][index],perfectGates:[[3,5,7],[3,6,9],[3,6,9,12],[3,6,9]][index],fragmentTimes:[.12,.24,.37,.5,.64,.78].map(fraction=>Math.round(level.duration*fraction)),biome:"bloom",objectives:["Restore the Bloom rhythm","Collect 3 orbit fragments",`Thread ${[2,2,3,3][index]} perfect gates`]}));
 const phases = [
   { id: "bloom", name: "Bloom", start: 0, end: 25, biome: 0 },
   { id: "petal", name: "Petal Crown", start: 25, end: 33, biome: 0, guardian: true, target: 3 },
@@ -118,6 +118,7 @@ let trail = [];
 let stars = [];
 let grain = [];
 let gateCount = 0;
+let eligibleGateCount = 0;
 let nextGate = 0;
 let nextHazard = 12;
 let campaignGateIndex = 0;
@@ -218,6 +219,7 @@ function startRun(runType = "endless", levelId = null) {
   labels = [];
   trail = [];
   gateCount = 0;
+  eligibleGateCount = 0;
   nextGate = 0.65;
   nextHazard = 12;
   campaignGateIndex = 0;
@@ -468,7 +470,12 @@ function spawnGate() {
   recoveryGate = !gate.guardian && gate.sideOpening && !forceEasy;
   gateCount += 1;
   const campaignPair=state.runType==="campaign"&&state.levelId==="crown-of-petals"&&!phase.guardian&&gateCount>5&&gateCount%5===0;
-  if ((phase.id === "forge" || campaignPair || state.elapsed > 103 && Math.random() < .24) && gates.filter((item) => !item.resolved).length < 3) {
+  const paired=(phase.id === "forge" || campaignPair || state.elapsed > 103 && Math.random() < .24) && gates.filter((item) => !item.resolved).length < 3;
+  if(!gate.guardian&&!paired){
+    eligibleGateCount+=1;
+    gate.generous=level ? level.perfectGates.includes(gateCount) : eligibleGateCount%3===0;
+  }
+  if (paired) {
     const spacing = 58;
     gates.push({
       ...gate, radius: gate.radius + spacing, previousRadius: gate.radius + spacing,
@@ -593,6 +600,8 @@ function updateFragments(delta,worldScale,previousPlayer) {
   fragments = fragments.filter((fragment) => fragment.collected ? fragment.snapLife>0 : fragment.radius > orbitRadius-pickupRadius-10);
 }
 
+function perfectWindow(gate) { return gate.generous && !gate.guardian && !gate.pair ? .24 : .145; }
+
 function resolveGate(gate) {
   gate.resolved = true;
   const distance = angleDistance(player.angle, gate.gap);
@@ -602,7 +611,7 @@ function resolveGate(gate) {
   state.runStars += 1;
   updateGoals("gate", 1);
   if (gate.guardian && gate.guardianId === state.phaseId) state.guardianPassed += 1;
-  if (clearance < 0.145) {
+  if (clearance < perfectWindow(gate)) {
     state.perfects += 1;
     state.runStars += 2;
     updateGoals("perfect", 1);
@@ -820,6 +829,7 @@ function drawGates(time, palette) {
     ctx.lineWidth = gate.guardian ? 11 : gate.type === 3 ? 9 : 7;
     ctx.beginPath(); ctx.arc(cx, cy, gate.radius, start, end); ctx.stroke();
     drawGateDetails(gate, start, end, color, palette, time);
+    if(gate.generous) drawPerfectPetals(gate,palette);
     drawSideGuidance(gate,time,palette,alpha);
     for (const side of [-1, 1]) {
       const angle = gate.gap + side * half;
@@ -830,6 +840,16 @@ function drawGates(time, palette) {
     }
     ctx.restore();
   }
+}
+
+function drawPerfectPetals(gate,palette) {
+  ctx.save();ctx.fillStyle=palette.gold;
+  for(const side of [-1,1]) for(let petal=0;petal<3;petal+=1){
+    const angle=gate.gap+side*(gate.opening/2-.105-.24*(petal+.5)/3);
+    ctx.save();ctx.translate(cx+Math.cos(angle)*gate.radius,cy+Math.sin(angle)*gate.radius);ctx.rotate(angle);
+    ctx.beginPath();ctx.ellipse(0,0,5,2.5,.35*side,0,TAU);ctx.fill();ctx.restore();
+  }
+  ctx.restore();
 }
 
 function drawSideGuidance(gate,time,palette,gateAlpha) {
