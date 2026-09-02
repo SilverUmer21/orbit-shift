@@ -41,25 +41,25 @@ const SAVE_VERSION = 4;
 const campaignLevels = [
   {
     id:"first-light",name:"First Light",duration:45,story:"A sleeping seed searches for its first rhythm.",perfectTarget:2,orientationBias:.8,warningStrength:1,
-    gateTimes:[2,8,14,19,24,30,36,42],fragmentTimes:[16,27,38],hazardTimes:[],
+    gateTimes:[2,8,14,19,24,30,36,42],hazardTimes:[],
     phases:[{id:"first-light-teach",name:"First Light",start:0,end:12,biome:0},{id:"first-light-rhythm",name:"Living Rhythm",start:12,end:45,biome:0},{id:"first-light-complete",name:"Seed Awakened",start:45,end:Infinity,biome:0}],
   },
   {
-    id:"pollen-path",name:"Pollen Path",duration:55,story:"Carry the island's light through the waking canopy.",perfectTarget:3,orientationBias:.65,warningStrength:.72,
-    gateTimes:[2,7,12,17,22,27,32,37,42,47,52],fragmentTimes:[14,29,44],hazardTimes:[],
+    id:"pollen-path",name:"Pollen Path",duration:55,story:"Carry the island's light through the waking canopy.",perfectTarget:2,orientationBias:.65,warningStrength:.72,
+    gateTimes:[2,7,12,17,22,27,32,37,42,47,52],hazardTimes:[],
     phases:[{id:"pollen-awakens",name:"Pollen Awakens",start:0,end:15,biome:0},{id:"pollen-path",name:"Pollen Path",start:15,end:55,biome:0},{id:"pollen-complete",name:"Canopy Lit",start:55,end:Infinity,biome:0}],
   },
   {
-    id:"tangled-orbit",name:"Tangled Orbit",duration:65,story:"Untangle the old vines without breaking their flow.",perfectTarget:4,orientationBias:.5,warningStrength:.42,
-    gateTimes:[2,7,12,17,22,27,32,37,42,47,52,57,62],fragmentTimes:[15,31,49],hazardTimes:[38],
+    id:"tangled-orbit",name:"Tangled Orbit",duration:65,story:"Untangle the old vines without breaking their flow.",perfectTarget:3,orientationBias:.5,warningStrength:.42,
+    gateTimes:[2,7,12,17,22,27,32,37,42,47,52,57,62],hazardTimes:[38],
     phases:[{id:"tangle-roots",name:"Tangled Roots",start:0,end:20,biome:0},{id:"vine-current",name:"Vine Current",start:20,end:65,biome:0},{id:"tangle-complete",name:"Roots Restored",start:65,end:Infinity,biome:0}],
   },
   {
-    id:"crown-of-petals",name:"Crown of Petals",duration:75,story:"Awaken the Budkeeper and return the Bloom Crown.",perfectTarget:5,orientationBias:.5,warningStrength:.18,
-    gateTimes:[2,7,12,17,22,27,32,37,42,47,51,57,63,69,73],fragmentTimes:[18,37,48],hazardTimes:[35],
+    id:"crown-of-petals",name:"Crown of Petals",duration:75,story:"Awaken the Budkeeper and return the Bloom Crown.",perfectTarget:3,orientationBias:.5,warningStrength:.18,
+    gateTimes:[2,7,12,17,22,27,32,37,42,47,51,57,63,69,73],hazardTimes:[35],
     phases:[{id:"petal-ascent",name:"Petal Ascent",start:0,end:50,biome:0},{id:"budkeeper",name:"Budkeeper",start:50,end:75,biome:0,guardian:true,target:3},{id:"crown-complete",name:"Bloom Crown",start:75,end:Infinity,biome:0}],
   },
-].map((level,index)=>({...level,perfectTarget:[2,2,3,3][index],perfectGates:[[3,5,7],[3,6,9],[3,6,9,12],[3,6,9]][index],fragmentTimes:[.12,.24,.37,.5,.64,.78].map(fraction=>Math.round(level.duration*fraction)),biome:"bloom",objectives:["Restore the Bloom rhythm","Collect 3 orbit fragments",`Thread ${[2,2,3,3][index]} perfect gates`]}));
+].map((level,index)=>({...level,perfectGates:[[3,5,7],[3,6,9],[3,6,9,12],[3,6,9]][index],fragmentTimes:[.12,.24,.37,.5,.64,.78].map(fraction=>Math.round(level.duration*fraction)),biome:"bloom",objectives:["Restore the Bloom rhythm","Collect 3 orbit fragments",`Thread ${level.perfectTarget} perfect gates`]}));
 const phases = [
   { id: "bloom", name: "Bloom", start: 0, end: 25, biome: 0 },
   { id: "petal", name: "Petal Crown", start: 25, end: 33, biome: 0, guardian: true, target: 3 },
@@ -71,7 +71,6 @@ const phases = [
   { id: "eclipse", name: "Eclipse Eye", start: 95, end: 103, biome: 2, guardian: true, target: 3 },
   { id: "ascension", name: "Ascension", start: 103, end: Infinity, biome: -1 },
 ];
-const firstLightPhases=campaignLevels[0].phases,firstLightGateTimes=campaignLevels[0].gateTimes,firstLightFragmentTimes=campaignLevels[0].fragmentTimes;
 const goalSets = {
   survival: [{ label: "Survive 35 seconds", kind: "survive", target: 35, reward: 18 }, { label: "Reach the Void", kind: "act", target: 3, reward: 30 }, { label: "Survive 90 seconds", kind: "survive", target: 90, reward: 45 }],
   skill: [{ label: "Thread 5 perfect gates", kind: "perfect", target: 5, reward: 20 }, { label: "Ignite fever twice", kind: "fever", target: 2, reward: 28 }, { label: "Thread 15 perfect gates", kind: "perfect", target: 15, reward: 50 }],
@@ -434,6 +433,7 @@ function routeIsSafe(snapshot,turns,horizon) {
   return true;
 }
 function findRoute(snapshot,horizon,targetTime,wantsEasy,random=Math.random) {
+  horizon=Math.max(horizon,...(snapshot.hazards||[]).map(h=>h.life));
   const base=(snapshot.turns||[]).filter(t=>t>0&&t<horizon),candidates=[base,[]];
   const phase=random();
   for(let i=0;i<48;i+=1){const turn=.1+(horizon-.2)*((i+phase)/48);candidates.push([turn]);if(base.length&&turn>base[base.length-1]+.1)candidates.push([...base,turn]);}
@@ -502,7 +502,7 @@ function spawnGate() {
   if(!plan)return false;
   plannedTurns=plan.turns.map(t=>t+state.elapsed);
   const gate = {
-    ...plan, previousRadius: plan.radius, resolved: false, fresh:true, type: gateCount % 4,
+    ...plan, previousRadius: plan.radius, resolved: false, type: gateCount % 4,
     palette: gateCount % 3, pair: false, guardian: Boolean(phase.guardian), guardianId: phase.id,
     sideOpening:isSideOpening(plan.target),warningStrength:level?.warningStrength || 0,recovery:forceEasy,
   };
@@ -531,14 +531,14 @@ function spawnFragment() {
   const route=findRoute(snapshot,horizon,flight,undefined);
   if(!route)return false;
   plannedTurns=route.turns.map(t=>t+state.elapsed);
-  fragments.push({ radius, previousRadius: radius, speed, angle:route.target, collected:false,fresh:true,spin:Math.random()*TAU });
+  fragments.push({ radius, previousRadius: radius, speed, angle:route.target, collected:false,spin:Math.random()*TAU });
   return true;
 }
 
 function spawnHazard() {
   const gateSoon = gates.some((gate) => !gate.resolved && (gate.radius - orbitRadius) / gate.speed < 2.2);
   if (gateSoon) return false;
-  const hazard={angle:normalize(player.angle+Math.PI),speed:-player.direction*.65,life:5.2,age:0,fresh:true,phase:Math.random()*TAU};
+  const hazard={angle:normalize(player.angle+Math.PI),speed:-player.direction*.65,life:5.2,age:0,phase:Math.random()*TAU};
   const snapshot=planningSnapshot();snapshot.hazards.push({...hazard,arm:.85});
   const horizon=Math.max(hazard.life,...snapshot.constraints.map(g=>g.time));
   let route=null;
@@ -591,6 +591,36 @@ function update(delta) {
   trail = trail.slice(0, state.fever > 0 ? 26 : 14);
   for (const point of trail) point.life -= delta * 1.9;
 
+  for (const gate of gates) {
+    gate.previousRadius = gate.radius;
+    const gapBefore=gate.gap;
+    gate.radius -= gate.speed * delta * worldScale;
+    gate.gap = normalize(gate.gap + gate.rotation * delta * worldScale);
+    if (!gate.resolved && gate.previousRadius > orbitRadius && gate.radius <= orbitRadius) {
+      const travel=(gate.previousRadius-orbitRadius)/gate.speed,crossing=crossingTime(travel,oldFever);
+      resolveGate(gate,normalize(previousAngle+player.direction*orbitalTravel(state.elapsed-delta,crossing)),normalize(gapBefore+gate.rotation*travel));
+      if(state.mode!=="run")return;
+    }
+  }
+  gates = gates.filter((gate) => gate.radius > planetRadius - 25);
+
+  for (const hazard of hazards) {
+    hazard.age+=delta;
+    hazard.angle = normalize(hazard.angle + hazard.speed * delta * worldScale);
+    hazard.life -= delta;
+    if (hazard.age>=.85 && hazard.life > 0.35 && angleDistance(player.angle, hazard.angle) < 0.135) {beginCrash("hazard");if(state.mode!=="run")return;}
+  }
+  hazards = hazards.filter((hazard) => hazard.life > 0);
+
+  updateFragments(delta,worldScale,previousPlayer);
+  updateSpawns(delta,phase);
+
+  if (Math.random() < delta * (state.fever > 0 ? 42 : 13)) burst(playerPoint(), currentCosmetic().mid, 1, state.fever > 0 ? 130 : 55, "paper");
+  updateEffects(delta);
+  updateHud();
+}
+
+function updateSpawns(delta,phase) {
   if (state.runType === "campaign") {
     const level=currentCampaignLevel();
     nextGate-=delta;nextFragment-=delta;
@@ -610,35 +640,6 @@ function update(delta) {
     if(spawned&&state.runType==="campaign")campaignHazardIndex+=1;
     nextHazard = spawned ? 10 + Math.random() * 3 : .5;
   }
-
-  for (const gate of gates) {
-    if(gate.fresh){gate.fresh=false;continue;}
-    gate.previousRadius = gate.radius;
-    const gapBefore=gate.gap;
-    gate.radius -= gate.speed * delta * worldScale;
-    gate.gap = normalize(gate.gap + gate.rotation * delta * worldScale);
-    if (!gate.resolved && gate.previousRadius > orbitRadius && gate.radius <= orbitRadius) {
-      const travel=(gate.previousRadius-orbitRadius)/gate.speed,crossing=crossingTime(travel,oldFever);
-      resolveGate(gate,normalize(previousAngle+player.direction*orbitalTravel(state.elapsed-delta,crossing)),normalize(gapBefore+gate.rotation*travel));
-      if(state.mode!=="run")return;
-    }
-  }
-  gates = gates.filter((gate) => gate.radius > planetRadius - 25);
-
-  for (const hazard of hazards) {
-    if(hazard.fresh){hazard.fresh=false;continue;}
-    hazard.age+=delta;
-    hazard.angle = normalize(hazard.angle + hazard.speed * delta * worldScale);
-    hazard.life -= delta;
-    if (hazard.age>=.85 && hazard.life > 0.35 && angleDistance(player.angle, hazard.angle) < 0.135) {beginCrash("hazard");if(state.mode!=="run")return;}
-  }
-  hazards = hazards.filter((hazard) => hazard.life > 0);
-
-  updateFragments(delta,worldScale,previousPlayer);
-
-  if (Math.random() < delta * (state.fever > 0 ? 42 : 13)) burst(playerPoint(), currentCosmetic().mid, 1, state.fever > 0 ? 130 : 55, "paper");
-  updateEffects(delta);
-  updateHud();
 }
 
 function sweptPickup(before,after,shipBefore,shipAfter,radius) {
@@ -651,7 +652,6 @@ function sweptPickup(before,after,shipBefore,shipAfter,radius) {
 function updateFragments(delta,worldScale,previousPlayer) {
   const ship=playerPoint(),pickupRadius=Math.max(48,Math.min(68,orbitRadius*.44));
   for (const fragment of fragments) {
-    if(fragment.fresh){fragment.fresh=false;continue;}
     if(fragment.collected){fragment.snapLife-=delta;continue;}
     const before={x:cx+Math.cos(fragment.angle)*fragment.radius,y:cy+Math.sin(fragment.angle)*fragment.radius};
     fragment.previousRadius = fragment.radius;
