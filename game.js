@@ -85,7 +85,7 @@ const initialStats = saved.stats || { sessions: 0, runs: 0, totalMs: 0, longestM
 const savedCampaign=saved.campaign||{},completedCampaign=Array.isArray(savedCampaign.completed)?savedCampaign.completed:[];
 const initialCampaign={completed:completedCampaign,ratings:savedCampaign.ratings||{},fragments:savedCampaign.fragments||{},rewards:savedCampaign.rewards||[],unlockedLevel:Math.max(Number(savedCampaign.unlockedLevel)||1,completedCampaign.includes("first-light")?2:1),restoration:Math.max(Number(savedCampaign.restoration)||0,completedCampaign.length)};
 const state = {
-  mode: "home", score: 0, multiplier: 1, streak: 0, runBestStreak: 0, fever: 0,
+  mode: "home", score: 0, multiplier: 1, streak: 0, runBestStreak: 0, fever: 0, feverCharge: 0,
   best: saved.best || 0, bestStreak: saved.bestStreak || 0,
   unlocked: saved.unlocked || ["bloom"], selected: saved.selected || "bloom",
   stars: Number(saved.stars) || 0, runStars: 0, gatesPassed: 0, perfects: 0, feverCount: 0,
@@ -196,6 +196,7 @@ function startRun(runType = "endless", levelId = null) {
   state.streak = 0;
   state.runBestStreak = 0;
   state.fever = 0;
+  state.feverCharge = 0;
   state.elapsed = 0;
   state.runStars = 0;
   state.gatesPassed = 0;
@@ -265,7 +266,8 @@ function beginCrash(cause = "gate") {
     state.shield = false;
     state.invulnerable = 1;
     state.streak = 0;
-    state.multiplier = 1;
+    state.feverCharge = 0;
+    state.multiplier = state.fever>0 ? 5 : 1;
     gates = gates.filter((gate) => gate.resolved || gate.radius > orbitRadius + 42);
     hazards = [];
     flash = .75; shake = state.reducedEffects ? 2 : 8;
@@ -520,7 +522,9 @@ function update(delta) {
   }
   tutorial = Math.max(0, tutorial - delta);
   state.score += delta * (4 + state.multiplier * 1.45);
+  const wasFever=state.fever>0;
   state.fever = Math.max(0, state.fever - delta);
+  if(wasFever&&state.fever===0) state.multiplier=1+Math.min(4,state.streak);
   state.invulnerable = Math.max(0, state.invulnerable - delta);
   const worldScale = state.fever > 0 ? 0.8 : 1;
   const previousPlayer = playerPoint();
@@ -617,15 +621,17 @@ function resolveGate(gate) {
     updateGoals("perfect", 1);
     state.streak += 1;
     state.runBestStreak = Math.max(state.runBestStreak, state.streak);
-    state.multiplier = 1 + Math.min(4, state.streak);
+    state.multiplier = state.fever>0 ? 5 : 1 + Math.min(4, state.streak);
+    if(state.fever<=0) state.feverCharge=Math.min(5,state.feverCharge+1);
     state.score += 28 * state.multiplier;
     player.glow = 1;
     rings.push({ radius: orbitRadius, life: 0.65, max: 0.65, color: currentCosmetic().gold, speed: 72 });
-    labels.push({ text: state.streak >= 5 ? "FEVER" : "PERFECT", life: 0.8, max: 0.8, y: cy - orbitRadius - 28 });
+    labels.push({ text: state.feverCharge===5 ? "FEVER" : "PERFECT", life: 0.8, max: 0.8, y: cy - orbitRadius - 28 });
     burst(playerPoint(), currentCosmetic().gold, 18, 175, "paper");
     beep(570 + Math.min(5, state.streak) * 62, 0.07, "triangle");
-    if (state.streak >= 5 && state.fever <= 0) {
+    if (state.feverCharge >= 5 && state.fever <= 0) {
       state.fever = 6;
+      state.feverCharge = 0;
       state.feverCount += 1;
       state.runStars += 5;
       updateGoals("fever", 1);
@@ -637,7 +643,7 @@ function resolveGate(gate) {
   } else {
     state.score += 18 * state.multiplier;
     state.streak = 0;
-    state.multiplier = 1;
+    state.multiplier = state.fever>0 ? 5 : 1;
     burst(playerPoint(), currentCosmetic().light, 7, 90, "paper");
     beep(440, 0.045, "sine");
   }
@@ -1284,7 +1290,7 @@ function updateHud() {
   ui.score.textContent = Math.floor(state.score);
   ui.multiplier.textContent = `x${state.multiplier}`;
   ui.best.textContent = state.best;
-  ui.fever.style.width = `${(state.fever > 0 ? state.fever / 6 : Math.min(1, state.streak / 5)) * 100}%`;
+  ui.fever.style.width = `${(state.fever > 0 ? state.fever / 6 : state.feverCharge / 5) * 100}%`;
   ui.shield.classList.toggle("ready", state.shield && state.mode === "run");
   ui.campaignRun.classList.toggle("active", state.runType === "campaign" && state.mode === "run");
   ui.fragmentCount.textContent = `${Math.min(3,state.runFragments)}/3`;
