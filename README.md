@@ -4,7 +4,7 @@ A dependency-free mobile Canvas arcade journey with authored Luminous Papercut w
 
 Version 1 adds a four-level Bloom chapter to the Cosmic Islands campaign. **First Light**, **Pollen Path**, **Tangled Orbit**, and **Crown of Petals** grow from a 45-second introduction into a 75-second Budkeeper finale. The island visibly restores after each clear, while the original continuous journey remains available as Ascension.
 
-This chapter build lives on `codex/version-1` for playtest review. Ember and Void remain locked until Bloom pacing and guidance are approved.
+The approved Bloom chapter is on `main`. Ember and Void remain locked pending further playtesting.
 
 ## Play locally
 
@@ -45,7 +45,15 @@ For a phone test:
 - Settings: sound, supported-device haptics, and reduced effects.
 - Playtest report: view and copy local run/retention statistics from Settings; nothing is uploaded automatically.
 
-Each Bloom level awards up to three campaign stars for finishing, collecting all fragments, and meeting its perfect-dodge target. Precision side openings use coral safe-gap beacons that fade through the chapter, while difficult side gates are followed by a wider recovery gate. First Light unlocks Bloom Wake and Crown of Petals restores the Bloom constellation. Campaign ratings join scores, goals, trails, relics, statistics, ships, biomes, and preferences in the versioned `orbit-shift-save`; existing First Light saves migrate automatically.
+Each Bloom level offers six fragments; collect any three for its fragment rating. Nearby fragments snap to the ship, and extras award three spendable stars each. The other ratings reward finishing and earning 2/2/3/3 perfects across the four levels. Selected golden-petal gates offer a more forgiving perfect zone; ordinary gates, paired gates, and guardians retain their original collision and perfect windows.
+
+Five perfects charge fever even with ordinary passes between them. Fever lasts six seconds at x5, slows hazards by 20%, and grants at most one shield per run. Charge is run-only; ordinary passes reset the scoring streak, and shield collisions reset streak and charge. First Light unlocks Bloom Wake and Crown of Petals restores the Bloom constellation. Existing scores, campaign ratings, ships, currency, and settings remain intact.
+
+## Verification
+
+Run `node tests/ascension-timing.cjs` for deterministic movement, pickup, fever, reward, legacy-save, and shared-route checks. The tests follow planned reversal inputs through all four levels and 120 seconds of Ascension at 20/30/60/120 FPS without collision immunity in the route checks.
+
+Open `http://127.0.0.1:3000/tests/visual.html` for isolated 320x568, 390x844, and 430x932 previews. Its iframe uses a disposable in-memory save and cannot overwrite real player progress. Normal, fever, and guardian drawing measured approximately 0.8-0.9 ms median / 5.5-5.8 ms p95 CPU submission locally at 220 particles. These measurements exclude GPU completion and do not establish phone frame rates. Validate completion rates and comfort with real players before further balance changes.
 
 ## Android direction
 

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Orbit Shift visual checks</title>
+<style>body{margin:12px;background:#ddd;font:14px system-ui}nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}button,select{padding:8px}iframe{display:block;border:0;background:#07171b}output{display:block;margin:8px 0;max-width:700px}</style>
+<nav><select id="size" aria-label="Phone size"><option>320x568</option><option selected>390x844</option><option>430x932</option></select><select id="scene" aria-label="Scene"><option>Normal</option><option>Fever</option><option>Guardian</option><option>Chapter</option><option>Results</option><option>Garage</option><option>Settings</option></select><label><input id="reduced" type="checkbox">Reduced effects</label><button id="profile">Measure drawing</button></nav>
+<output id="report">Disposable save. No real player progress is read or written.</output><iframe id="preview" title="Game preview"></iframe>
+<script>
+const preview=document.querySelector('#preview'),size=document.querySelector('#size');
+function resize(){const [w,h]=size.value.split('x');preview.width=w;preview.height=h;}
+function scene(){preview.contentWindow.testScene(document.querySelector('#scene').value,document.querySelector('#reduced').checked);}
+size.onchange=()=>{resize();scene();};document.querySelector('#scene').onchange=scene;document.querySelector('#reduced').onchange=scene;
+document.querySelector('#profile').onclick=()=>document.querySelector('#report').textContent=preview.contentWindow.profileDrawing();
+fetch('../index.html').then(r=>r.text()).then(html=>{
+  for(const asset of ['styles.css','journey.css','game.js','art-renderers.js'])html=html.replaceAll('="'+asset+'"','="'+asset+'?check='+Date.now()+'"');
+  resize();preview.onload=scene;
+  const isolation='<base href="../"><script>Object.defineProperty(window,"localStorage",{value:{getItem:()=>JSON.stringify({muted:true,tutorialSeen:true}),setItem:()=>{}}});<\/script>';
+  preview.srcdoc=html.replace('<head>','<head>'+isolation).replace('</body>','<script src="tests/visual-scenes.js"><\/script></body>');
+});
+</script></html>
