@@ -119,10 +119,12 @@ let stars = [];
 let grain = [];
 let gateCount = 0;
 let eligibleGateCount = 0;
+let plannedTurns = [];
 let nextGate = 0;
 let nextHazard = 12;
 let campaignGateIndex = 0;
 let campaignFragmentIndex = 0;
+let nextFragment = 0;
 let campaignHazardIndex = 0;
 let recoveryGate = false;
 let tutorial = 0;
@@ -221,14 +223,17 @@ function startRun(runType = "endless", levelId = null) {
   trail = [];
   gateCount = 0;
   eligibleGateCount = 0;
+  plannedTurns = [];
   nextGate = 0.65;
   nextHazard = 12;
   campaignGateIndex = 0;
   campaignFragmentIndex = 0;
+  nextFragment = 0;
   campaignHazardIndex = 0;
   recoveryGate = false;
   tutorial = state.tutorialSeen ? 0 : 4.5;
   crashTimer = 0;
+  lastReverse = 0;
   shake = 0;
   flash = 0;
   hideScreens();
@@ -292,6 +297,7 @@ function beginCrash(cause = "gate") {
 }
 
 function finishRun() {
+  if(state.mode!=="run"&&state.mode!=="crash") return;
   const oldBest = state.best;
   const previousUnlocks = state.unlocked.length;
   state.mode = "results";
@@ -406,6 +412,48 @@ function updateGoals(kind, amount, absolute = false) {
   }
 }
 
+function orbitalTravel(elapsed,duration) {
+  const primitive=t=>{const capped=Math.min(t,(2.45-1.66)/.009);return 1.66*capped+.0045*capped*capped+2.45*(t-capped);};
+  return primitive(elapsed+duration)-primitive(elapsed);
+}
+function worldTravel(duration,fever) { return duration-.2*Math.min(duration,fever); }
+function crossingTime(travel,fever=0) { return travel<=fever*.8 ? travel/.8 : travel+fever*.2; }
+function routeAngle(snapshot,time,turns) {
+  let angle=snapshot.angle,direction=snapshot.direction,previous=0;
+  for(const turn of turns){if(turn>time)break;angle+=direction*orbitalTravel(snapshot.elapsed+previous,turn-previous);direction*=-1;previous=turn;}
+  return normalize(angle+direction*orbitalTravel(snapshot.elapsed+previous,time-previous));
+}
+function routeIsSafe(snapshot,turns,horizon) {
+  for(const gate of snapshot.constraints||[]){
+    if(gate.time>horizon)continue;
+    if(angleDistance(routeAngle(snapshot,gate.time,turns),gate.gap)>gate.opening/2-.125)return false;
+  }
+  for(const hazard of snapshot.hazards||[]) for(let t=Math.max(0,hazard.arm);t<=Math.min(horizon,hazard.life);t+=.06){
+    if(angleDistance(routeAngle(snapshot,t,turns),normalize(hazard.angle+hazard.speed*worldTravel(t,snapshot.fever||0)))<.22)return false;
+  }
+  return true;
+}
+function findRoute(snapshot,horizon,targetTime,wantsEasy,random=Math.random) {
+  const base=(snapshot.turns||[]).filter(t=>t>0&&t<horizon),candidates=[base,[]];
+  const phase=random();
+  for(let i=0;i<48;i+=1){const turn=.1+(horizon-.2)*((i+phase)/48);candidates.push([turn]);if(base.length&&turn>base[base.length-1]+.1)candidates.push([...base,turn]);}
+  if(snapshot.hazards?.length)for(let first=1;first<7;first++)for(let second=first+1;second<8;second++)candidates.push([horizon*first/8,horizon*second/8]);
+  let fallback=null;
+  for(const turns of candidates){
+    if(!routeIsSafe(snapshot,turns,horizon))continue;
+    const route={turns,target:routeAngle(snapshot,targetTime,turns)};
+    fallback ||= route;
+    if(wantsEasy===undefined||isSideOpening(route.target)!==wantsEasy)return route;
+  }
+  return snapshot.forceEasy ? null : fallback;
+}
+function planningSnapshot() {
+  return {elapsed:state.elapsed,angle:player.angle,direction:player.direction,fever:state.fever,
+    turns:plannedTurns.map(t=>t-state.elapsed).filter(t=>t>0),
+    constraints:gates.filter(g=>!g.resolved).map(g=>{const travel=Math.max(0,(g.radius-orbitRadius)/g.speed);return {time:crossingTime(travel,state.fever),gap:normalize(g.gap+g.rotation*travel),opening:g.opening};}).concat(fragments.filter(f=>!f.collected&&f.radius>orbitRadius).map(f=>({time:crossingTime((f.radius-orbitRadius)/f.speed,state.fever),gap:f.angle,opening:.8}))),
+    hazards:hazards.map(h=>({...h,arm:Math.max(0,.85-h.age)}))};
+}
+
 function buildGatePlan(snapshot, random = Math.random) {
   const earlySpeeds = [52, 59, 66];
   const earlyOpenings = [1.66, 1.5, 1.38];
@@ -414,33 +462,24 @@ function buildGatePlan(snapshot, random = Math.random) {
   if (phase.id === "ember" || phase.id === "forge") speed *= 1.08;
   if (phase.id === "void" || phase.id === "eclipse") speed *= .96;
   if (phase.guardian) speed = Math.max(speed, phase.id === "forge" ? 98 : 90);
-  const radius = snapshot.orbitRadius + snapshot.shortSide * 0.56;
-  const flight = (radius - snapshot.orbitRadius) / speed;
   let rotationLimit = snapshot.index < 3 ? 0.12 : Math.min(0.54, 0.16 + snapshot.elapsed * 0.004);
   if (phase.id === "ember" || phase.id === "forge") rotationLimit *= 1.25;
   if (phase.id === "void" || phase.id === "eclipse") rotationLimit *= .72;
-  const rotation = (random() - 0.5) * 2 * rotationLimit;
   let opening = snapshot.index < 3 ? earlyOpenings[snapshot.index] : Math.max(0.88, 1.34 - snapshot.elapsed * 0.0046);
   if (phase.guardian) opening = phase.id === "forge" ? 1.04 : 1.12;
-  const wantsEasy = snapshot.forceEasy || random() < (snapshot.orientationBias ?? .5);
-  let candidate;
-  for (let attempt=0;attempt<8;attempt+=1) {
-    const wantsTurn = snapshot.index === 0 || (snapshot.index > 1 && random() < 0.64);
-    const turnAt = wantsTurn ? 0.18 + random() * Math.max(.16,Math.min(flight-.08,flight*.88)) : flight;
-    const travel = wantsTurn ? 2 * turnAt - flight : flight;
-    const target = normalize(snapshot.angle + snapshot.direction * snapshot.angularSpeed * travel + (random() - 0.5) * 0.1);
-    candidate={target,wantsTurn};
-    if (isSideOpening(target) !== wantsEasy) break;
-  }
+  if(snapshot.settings){[speed,opening,rotationLimit]=snapshot.settings;}
   if (snapshot.forceEasy) {
     opening=Math.max(opening,1.58);
-    // Random retries can miss the easy sectors; choose a reachable pole as fallback.
-    if (isSideOpening(candidate.target)) {
-      const pole = [Math.PI/2,Math.PI*1.5].sort((a,b)=>angleDistance(a,snapshot.angle)-angleDistance(b,snapshot.angle))[0];
-      if (angleDistance(pole,snapshot.angle) <= snapshot.angularSpeed*flight) candidate={target:pole,wantsTurn:true};
-    }
+    speed*=.92;
   }
-  return { radius, speed:snapshot.forceEasy?speed*.92:speed, flight, gap: normalize(candidate.target - rotation * flight), target:candidate.target, rotation, opening, wantsTurn:candidate.wantsTurn };
+  const radius=snapshot.orbitRadius+snapshot.shortSide*.56,rotation=(random()-.5)*2*rotationLimit;
+  const travel=(radius-snapshot.orbitRadius)/speed,flight=crossingTime(travel,snapshot.fever||0);
+  const pairFlight=crossingTime(travel+(snapshot.pairSpacing||0)/speed,snapshot.fever||0);
+  const horizon=Math.max(pairFlight,...(snapshot.constraints||[]).map(g=>g.time));
+  const candidate=findRoute(snapshot,horizon,flight,snapshot.forceEasy||random()<(snapshot.orientationBias??.5),random);
+  if(!candidate)return null;
+  return {radius,speed,flight,travel,gap:normalize(candidate.target-rotation*travel),target:candidate.target,rotation,opening,turns:candidate.turns,
+    pairGap:normalize(routeAngle(snapshot,pairFlight,candidate.turns)-rotation*(travel+(snapshot.pairSpacing||0)/speed)),wantsTurn:candidate.turns.length>0};
 }
 
 function isSideOpening(angle) { return Math.abs(Math.cos(angle)) > Math.abs(Math.sin(angle)); }
@@ -448,31 +487,28 @@ function endlessOrientationBias(elapsed) { return elapsed < 30 ? .8 : elapsed < 
 
 function spawnGate() {
   const phase = phaseAt(state.elapsed);
-  if (phase.transition) return;
+  if (phase.transition) return false;
   const level = state.runType === "campaign" ? currentCampaignLevel() : null;
   const forceEasy = recoveryGate && !phase.guardian;
+  const campaignPair=level?.id==="crown-of-petals"&&!phase.guardian&&gateCount+1>5&&(gateCount+1)%5===0;
+  const paired=(phase.id==="forge"||campaignPair||!level&&state.elapsed>103&&Math.random()<.24)&&gates.filter(g=>!g.resolved).length<2;
+  const settings=level ? (phase.guardian?[72,1.18,.24]:[[50,1.72,.04],[56,1.52,.1],[63,1.34,.2],[69,1.22,.28]][campaignLevels.indexOf(level)]) : null;
   const plan = buildGatePlan({
+    ...planningSnapshot(),settings,pairSpacing:paired?58:0,
     index: gateCount, elapsed: state.elapsed, angle: player.angle, direction: player.direction,
     angularSpeed: playerSpeed(), orbitRadius, shortSide: Math.min(width, height), phase, forceEasy,
     orientationBias:level?.orientationBias ?? endlessOrientationBias(state.elapsed),
   });
+  if(!plan)return false;
+  plannedTurns=plan.turns.map(t=>t+state.elapsed);
   const gate = {
-    ...plan, previousRadius: plan.radius, resolved: false, type: gateCount % 4,
+    ...plan, previousRadius: plan.radius, resolved: false, fresh:true, type: gateCount % 4,
     palette: gateCount % 3, pair: false, guardian: Boolean(phase.guardian), guardianId: phase.id,
     sideOpening:isSideOpening(plan.target),warningStrength:level?.warningStrength || 0,recovery:forceEasy,
   };
-  if (state.runType === "campaign") {
-    const levelIndex=campaignLevels.indexOf(level);
-    const settings=[[50,1.72,.04],[56,1.52,.1],[63,1.34,.2],[69,1.22,.28]][levelIndex];
-    if(phase.guardian){settings[0]=72;settings[1]=1.18;settings[2]=.24;}
-    gate.speed = settings[0]; gate.opening = settings[1]; gate.rotation = Math.max(-settings[2], Math.min(settings[2], gate.rotation));
-    gate.guardian = phase.id === "budkeeper"; gate.guardianId = phase.id;
-  }
   gates.push(gate);
   recoveryGate = !gate.guardian && gate.sideOpening && !forceEasy;
   gateCount += 1;
-  const campaignPair=state.runType==="campaign"&&state.levelId==="crown-of-petals"&&!phase.guardian&&gateCount>5&&gateCount%5===0;
-  const paired=(phase.id === "forge" || campaignPair || state.elapsed > 103 && Math.random() < .24) && gates.filter((item) => !item.resolved).length < 3;
   if(!gate.guardian&&!paired){
     eligibleGateCount+=1;
     gate.generous=level ? level.perfectGates.includes(gateCount) : eligibleGateCount%3===0;
@@ -481,22 +517,40 @@ function spawnGate() {
     const spacing = 58;
     gates.push({
       ...gate, radius: gate.radius + spacing, previousRadius: gate.radius + spacing,
-      gap: normalize(gate.gap - gate.rotation * spacing / gate.speed), resolved: false, pair: true,
+      gap: plan.pairGap, resolved: false, pair: true,
     });
   }
+  return true;
 }
 
 function spawnFragment() {
   const radius = orbitRadius + Math.min(width, height) * .5;
   const speed = 64;
-  const flight = (radius - orbitRadius) / speed;
-  fragments.push({ radius, previousRadius: radius, speed, angle: normalize(player.angle + player.direction * playerSpeed() * flight), collected: false, spin: Math.random() * TAU });
+  const snapshot=planningSnapshot(),flight=crossingTime((radius-orbitRadius)/speed,state.fever);
+  const horizon=Math.max(flight,...snapshot.constraints.map(g=>g.time));
+  const route=findRoute(snapshot,horizon,flight,undefined);
+  if(!route)return false;
+  plannedTurns=route.turns.map(t=>t+state.elapsed);
+  fragments.push({ radius, previousRadius: radius, speed, angle:route.target, collected:false,fresh:true,spin:Math.random()*TAU });
+  return true;
 }
 
 function spawnHazard() {
   const gateSoon = gates.some((gate) => !gate.resolved && (gate.radius - orbitRadius) / gate.speed < 2.2);
-  if (gateSoon) { nextHazard = 2; return; }
-  hazards.push({ angle: normalize(player.angle + Math.PI), speed: -player.direction * 0.65, life: 5.2, phase: Math.random() * TAU });
+  if (gateSoon) return false;
+  const hazard={angle:normalize(player.angle+Math.PI),speed:-player.direction*.65,life:5.2,age:0,fresh:true,phase:Math.random()*TAU};
+  const snapshot=planningSnapshot();snapshot.hazards.push({...hazard,arm:.85});
+  const horizon=Math.max(hazard.life,...snapshot.constraints.map(g=>g.time));
+  let route=null;
+  for(let sector=0;sector<6&&!route;sector++){
+    hazard.angle=normalize(player.angle+Math.PI+sector*TAU/6);
+    snapshot.hazards[snapshot.hazards.length-1].angle=hazard.angle;
+    route=findRoute(snapshot,horizon,horizon,undefined);
+  }
+  if(!route)return false;
+  plannedTurns=route.turns.map(t=>t+state.elapsed);
+  hazards.push(hazard);
+  return true;
 }
 
 function update(delta) {
@@ -523,12 +577,14 @@ function update(delta) {
   tutorial = Math.max(0, tutorial - delta);
   state.score += delta * (4 + state.multiplier * 1.45);
   const wasFever=state.fever>0;
+  const oldFever=state.fever;
   state.fever = Math.max(0, state.fever - delta);
   if(wasFever&&state.fever===0) state.multiplier=1+Math.min(4,state.streak);
   state.invulnerable = Math.max(0, state.invulnerable - delta);
-  const worldScale = state.fever > 0 ? 0.8 : 1;
+  const worldScale = delta>0 ? worldTravel(delta,oldFever)/delta : 1;
   const previousPlayer = playerPoint();
-  player.angle = normalize(player.angle + player.direction * playerSpeed() * delta);
+  const previousAngle=player.angle;
+  player.angle = normalize(player.angle + player.direction * orbitalTravel(state.elapsed-delta,delta));
   player.flip = Math.max(0, player.flip - delta * 7);
   player.glow = Math.max(0, player.glow - delta * 2.8);
   trail.unshift({ ...playerPoint(), life: 1 });
@@ -537,34 +593,44 @@ function update(delta) {
 
   if (state.runType === "campaign") {
     const level=currentCampaignLevel();
-    while (level.gateTimes[campaignGateIndex] <= state.elapsed) { spawnGate(); campaignGateIndex += 1; }
-    while (level.fragmentTimes[campaignFragmentIndex] <= state.elapsed) { spawnFragment(); campaignFragmentIndex += 1; }
-    while (level.hazardTimes[campaignHazardIndex] <= state.elapsed) { spawnHazard(); campaignHazardIndex += 1; }
+    nextGate-=delta;nextFragment-=delta;
+    if(level.gateTimes[campaignGateIndex]<=state.elapsed&&nextGate<=0){if(spawnGate())campaignGateIndex+=1;nextGate=.25;}
+    if(level.fragmentTimes[campaignFragmentIndex]<=state.elapsed&&nextFragment<=0){if(spawnFragment())campaignFragmentIndex+=1;nextFragment=.25;}
   } else {
     nextGate -= delta;
     if (nextGate <= 0) {
-      spawnGate();
-      nextGate = phase.transition ? phase.end - state.elapsed + .2 : phase.guardian ? 1.55 : gateCount < 3 ? 2.85 : Math.max(1.72, 2.52 - state.elapsed * 0.006);
+      const spawned=spawnGate();
+      nextGate = phase.transition ? phase.end - state.elapsed + .2 : !spawned ? .25 : phase.guardian ? 1.55 : gateCount < 3 ? 2.85 : Math.max(1.72, 2.52 - state.elapsed * 0.006);
     }
   }
   nextHazard -= delta;
-  if ((phase.id === "void" || phase.id === "eclipse" || phase.id === "ascension") && nextHazard <= 0) {
-    spawnHazard();
-    nextHazard = 10 + Math.random() * 3;
+  const hazardDue=state.runType==="campaign" ? currentCampaignLevel().hazardTimes[campaignHazardIndex]<=state.elapsed : ["void","eclipse","ascension"].includes(phase.id);
+  if (hazardDue && nextHazard <= 0) {
+    const spawned=spawnHazard();
+    if(spawned&&state.runType==="campaign")campaignHazardIndex+=1;
+    nextHazard = spawned ? 10 + Math.random() * 3 : .5;
   }
 
   for (const gate of gates) {
+    if(gate.fresh){gate.fresh=false;continue;}
     gate.previousRadius = gate.radius;
+    const gapBefore=gate.gap;
     gate.radius -= gate.speed * delta * worldScale;
     gate.gap = normalize(gate.gap + gate.rotation * delta * worldScale);
-    if (!gate.resolved && gate.previousRadius > orbitRadius && gate.radius <= orbitRadius) resolveGate(gate);
+    if (!gate.resolved && gate.previousRadius > orbitRadius && gate.radius <= orbitRadius) {
+      const travel=(gate.previousRadius-orbitRadius)/gate.speed,crossing=crossingTime(travel,oldFever);
+      resolveGate(gate,normalize(previousAngle+player.direction*orbitalTravel(state.elapsed-delta,crossing)),normalize(gapBefore+gate.rotation*travel));
+      if(state.mode!=="run")return;
+    }
   }
   gates = gates.filter((gate) => gate.radius > planetRadius - 25);
 
   for (const hazard of hazards) {
+    if(hazard.fresh){hazard.fresh=false;continue;}
+    hazard.age+=delta;
     hazard.angle = normalize(hazard.angle + hazard.speed * delta * worldScale);
     hazard.life -= delta;
-    if (hazard.life > 0.35 && angleDistance(player.angle, hazard.angle) < 0.135) beginCrash("hazard");
+    if (hazard.age>=.85 && hazard.life > 0.35 && angleDistance(player.angle, hazard.angle) < 0.135) {beginCrash("hazard");if(state.mode!=="run")return;}
   }
   hazards = hazards.filter((hazard) => hazard.life > 0);
 
@@ -585,6 +651,7 @@ function sweptPickup(before,after,shipBefore,shipAfter,radius) {
 function updateFragments(delta,worldScale,previousPlayer) {
   const ship=playerPoint(),pickupRadius=Math.max(48,Math.min(68,orbitRadius*.44));
   for (const fragment of fragments) {
+    if(fragment.fresh){fragment.fresh=false;continue;}
     if(fragment.collected){fragment.snapLife-=delta;continue;}
     const before={x:cx+Math.cos(fragment.angle)*fragment.radius,y:cy+Math.sin(fragment.angle)*fragment.radius};
     fragment.previousRadius = fragment.radius;
@@ -606,9 +673,10 @@ function updateFragments(delta,worldScale,previousPlayer) {
 
 function perfectWindow(gate) { return gate.generous && !gate.guardian && !gate.pair ? .24 : .145; }
 
-function resolveGate(gate) {
+function resolveGate(gate,crossingAngle=player.angle,crossingGap=gate.gap) {
+  if(gate.resolved||state.mode!=="run")return;
   gate.resolved = true;
-  const distance = angleDistance(player.angle, gate.gap);
+  const distance = angleDistance(crossingAngle, crossingGap);
   const clearance = gate.opening / 2 - 0.105 - distance;
   if (clearance < 0) { beginCrash("gate"); return; }
   state.gatesPassed += 1;
@@ -1004,7 +1072,7 @@ function drawHazards(time, palette) {
   for (const hazard of hazards) {
     const x = cx + Math.cos(hazard.angle) * orbitRadius;
     const y = cy + Math.sin(hazard.angle) * orbitRadius;
-    ctx.save(); ctx.translate(x, y); ctx.rotate(time * -2.1 + hazard.phase);
+    ctx.save();ctx.globalAlpha=hazard.age<.85?.35:1; ctx.translate(x, y); ctx.rotate(time * -2.1 + hazard.phase);
     ctx.fillStyle = palette.ink; paperDiamond(2, 3, 15, 0);
     ctx.fillStyle = palette.accent;
     for (let i = 0; i < 4; i += 1) { ctx.rotate(Math.PI / 2); ctx.beginPath(); ctx.moveTo(-3, -3); ctx.lineTo(0, -17); ctx.lineTo(4, -3); ctx.closePath(); ctx.fill(); }
