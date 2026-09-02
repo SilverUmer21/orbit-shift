@@ -59,7 +59,7 @@ const campaignLevels = [
     gateTimes:[2,7,12,17,22,27,32,37,42,47,51,57,63,69,73],fragmentTimes:[18,37,48],hazardTimes:[35],
     phases:[{id:"petal-ascent",name:"Petal Ascent",start:0,end:50,biome:0},{id:"budkeeper",name:"Budkeeper",start:50,end:75,biome:0,guardian:true,target:3},{id:"crown-complete",name:"Bloom Crown",start:75,end:Infinity,biome:0}],
   },
-].map(level=>({...level,biome:"bloom",objectives:["Restore the Bloom rhythm","Collect 3 orbit fragments",`Thread ${level.perfectTarget} perfect gates`]}));
+].map(level=>({...level,fragmentTimes:[.12,.24,.37,.5,.64,.78].map(fraction=>Math.round(level.duration*fraction)),biome:"bloom",objectives:["Restore the Bloom rhythm","Collect 3 orbit fragments",`Thread ${level.perfectTarget} perfect gates`]}));
 const phases = [
   { id: "bloom", name: "Bloom", start: 0, end: 25, biome: 0 },
   { id: "petal", name: "Petal Crown", start: 25, end: 33, biome: 0, guardian: true, target: 3 },
@@ -300,7 +300,7 @@ function finishRun() {
   let campaignRating = 0;
   if (state.runType === "campaign" && state.levelComplete) {
     const level=currentCampaignLevel();
-    campaignRating = 1 + Number(state.runFragments === 3) + Number(state.perfects >= level.perfectTarget);
+    campaignRating = 1 + Number(state.runFragments >= 3) + Number(state.perfects >= level.perfectTarget);
     const firstClear = !state.campaign.completed.includes(state.levelId);
     if (firstClear) {
       state.campaign.completed.push(state.levelId); state.runStars += 15;
@@ -331,9 +331,9 @@ function finishRun() {
   ui.resultObjectives.hidden = state.runType !== "campaign";
   if (state.runType === "campaign") {
     const level=currentCampaignLevel();
-    const checks = [state.levelComplete, state.runFragments === 3, state.perfects >= level.perfectTarget];
+    const checks = [state.levelComplete, state.runFragments >= 3, state.perfects >= level.perfectTarget];
     ui.resultObjectives.innerHTML = level.objectives.map((objective,index)=>`<span class="${checks[index]?"done":""}">${checks[index]?"★":"☆"} ${objective}</span>`).join("");
-    ui.resultStats.textContent = state.levelComplete ? `${"★".repeat(campaignRating)}${"☆".repeat(3-campaignRating)} · Best flow x${Math.max(1,state.runBestStreak)}` : `Reached ${Math.floor(state.elapsed)} seconds`;
+    ui.resultStats.textContent = (state.levelComplete ? `${"★".repeat(campaignRating)}${"☆".repeat(3-campaignRating)} · Best flow x${Math.max(1,state.runBestStreak)}` : `Reached ${Math.floor(state.elapsed)} seconds`) + ` · ${state.runFragments} fragments`;
   }
   ui.resultStars.textContent = `+${state.runStars} stars`;
   ui.goalRewards.textContent = state.runGoalRewards.join(" - ");
@@ -516,6 +516,7 @@ function update(delta) {
   state.fever = Math.max(0, state.fever - delta);
   state.invulnerable = Math.max(0, state.invulnerable - delta);
   const worldScale = state.fever > 0 ? 0.8 : 1;
+  const previousPlayer = playerPoint();
   player.angle = normalize(player.angle + player.direction * playerSpeed() * delta);
   player.flip = Math.max(0, player.flip - delta * 7);
   player.glow = Math.max(0, player.glow - delta * 2.8);
@@ -556,26 +557,40 @@ function update(delta) {
   }
   hazards = hazards.filter((hazard) => hazard.life > 0);
 
-  for (const fragment of fragments) {
-    fragment.previousRadius = fragment.radius;
-    fragment.radius -= fragment.speed * delta * worldScale;
-    fragment.spin += delta * 2.4;
-    if (!fragment.collected && fragment.previousRadius > orbitRadius && fragment.radius <= orbitRadius) {
-      fragment.collected = true;
-      if (angleDistance(player.angle, fragment.angle) < .34) {
-        state.runFragments += 1;
-        state.runStars += 3;
-        labels.push({ text: `FRAGMENT ${state.runFragments}/3`, life: 1, max: 1, y: cy - orbitRadius - 28 });
-        burst(playerPoint(), currentCosmetic().gold, 14, 130, "paper");
-        beep(720 + state.runFragments * 80, .1, "triangle");
-      }
-    }
-  }
-  fragments = fragments.filter((fragment) => fragment.radius > planetRadius - 18 && !fragment.collected);
+  updateFragments(delta,worldScale,previousPlayer);
 
   if (Math.random() < delta * (state.fever > 0 ? 42 : 13)) burst(playerPoint(), currentCosmetic().mid, 1, state.fever > 0 ? 130 : 55, "paper");
   updateEffects(delta);
   updateHud();
+}
+
+function sweptPickup(before,after,shipBefore,shipAfter,radius) {
+  const x=before.x-shipBefore.x,y=before.y-shipBefore.y;
+  const dx=after.x-shipAfter.x-x,dy=after.y-shipAfter.y-y;
+  const t=Math.max(0,Math.min(1,-(x*dx+y*dy)/(dx*dx+dy*dy||1)));
+  return (x+dx*t)**2+(y+dy*t)**2<=radius*radius;
+}
+
+function updateFragments(delta,worldScale,previousPlayer) {
+  const ship=playerPoint(),pickupRadius=Math.max(48,Math.min(68,orbitRadius*.44));
+  for (const fragment of fragments) {
+    if(fragment.collected){fragment.snapLife-=delta;continue;}
+    const before={x:cx+Math.cos(fragment.angle)*fragment.radius,y:cy+Math.sin(fragment.angle)*fragment.radius};
+    fragment.previousRadius = fragment.radius;
+    fragment.radius -= fragment.speed * delta * worldScale;
+    fragment.spin += delta * 2.4;
+    const after={x:cx+Math.cos(fragment.angle)*fragment.radius,y:cy+Math.sin(fragment.angle)*fragment.radius};
+    if (sweptPickup(before,after,previousPlayer,ship,pickupRadius)) {
+      fragment.collected = true;
+      fragment.snapLife=.14;fragment.snapFrom=after;
+        state.runFragments += 1;
+        state.runStars += 3;
+        labels.push({ text: state.runFragments>3 ? "BONUS FRAGMENT +3" : `FRAGMENT ${state.runFragments}/3`, life: 1, max: 1, y: cy - orbitRadius - 28 });
+        burst(playerPoint(), currentCosmetic().gold, 14, 130, "paper");
+        beep(720 + Math.min(6,state.runFragments) * 80, .1, "triangle");
+    }
+  }
+  fragments = fragments.filter((fragment) => fragment.collected ? fragment.snapLife>0 : fragment.radius > orbitRadius-pickupRadius-10);
 }
 
 function resolveGate(gate) {
@@ -665,8 +680,9 @@ function draw() {
 
 function drawFragments(time, palette) {
   for (const fragment of fragments) {
-    const x = cx + Math.cos(fragment.angle) * fragment.radius;
-    const y = cy + Math.sin(fragment.angle) * fragment.radius;
+    const ship=playerPoint(),progress=fragment.collected?1-(fragment.snapLife/.14)**2:0;
+    const x = fragment.collected ? fragment.snapFrom.x+(ship.x-fragment.snapFrom.x)*progress : cx + Math.cos(fragment.angle) * fragment.radius;
+    const y = fragment.collected ? fragment.snapFrom.y+(ship.y-fragment.snapFrom.y)*progress : cy + Math.sin(fragment.angle) * fragment.radius;
     ctx.save(); ctx.translate(x, y); ctx.rotate(fragment.spin); ctx.shadowColor = palette.gold; ctx.shadowBlur = state.reducedEffects ? 3 : 12;
     ctx.fillStyle = palette.gold; paperDiamond(0, 0, 9 + Math.sin(time * 5 + fragment.spin) * 1.2, 0);
     ctx.fillStyle = palette.light; paperDiamond(0, 0, 4, Math.PI / 4); ctx.restore();
@@ -1252,6 +1268,7 @@ function updateHud() {
   ui.shield.classList.toggle("ready", state.shield && state.mode === "run");
   ui.campaignRun.classList.toggle("active", state.runType === "campaign" && state.mode === "run");
   ui.fragmentCount.textContent = `${Math.min(3,state.runFragments)}/3`;
+  ui.fragmentCount.classList.toggle("complete",state.runFragments>=3);
   const perfectTarget=state.runType==="campaign"?currentCampaignLevel().perfectTarget:3;
   ui.perfectCount.textContent = `${Math.min(perfectTarget,state.perfects)}/${perfectTarget}`;
   const phase = phaseAt(state.elapsed);
