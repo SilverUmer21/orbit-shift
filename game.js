@@ -485,6 +485,7 @@ function renderRewardSeal(index = 0) {
   ui.rewardSeal.style.setProperty("--reward-gold", palette.gold);
   ui.rewardSeal.style.setProperty("--reward-light", palette.light);
   ui.rewardChoices.innerHTML = "";
+  ui.rewardChoices.hidden = rewards.length < 2;
   rewards.forEach((item, itemIndex) => {
     const button = document.createElement("button"), itemName = rewardDisplayName(item); button.type = "button"; button.textContent = String(itemIndex+1); button.title=itemName;button.setAttribute("aria-label",`Reward ${itemIndex + 1}: ${itemName}`);button.setAttribute("aria-pressed",String(itemIndex===index));
     button.className = itemIndex === index ? "selected" : ""; button.addEventListener("click", () => renderRewardSeal(itemIndex)); ui.rewardChoices.append(button);
