@@ -143,6 +143,7 @@ let lastTime = performance.now();
 let audio;
 let musicTimer = 0;
 let musicStep = 0;
+let awakening = null;
 
 const today = new Date().toISOString().slice(0, 10);
 state.stats.sessions += 1;
@@ -241,6 +242,7 @@ function startRun(runType = "endless", levelId = null) {
   recoveryGate = false;
   tutorial = state.tutorialSeen ? 0 : 4.5;
   crashTimer = 0;
+  awakening = null;
   lastReverse = 0;
   shake = 0;
   flash = 0;
@@ -365,6 +367,32 @@ function finishRun() {
   stopMusic();
   renderCosmetics();
   updateHud();
+}
+
+function beginAwakening() {
+  if(state.mode!=="run"||state.runType!=="campaign"||!state.levelComplete)return;
+  const level=currentCampaignLevel(),palette=currentCosmetic();
+  const paper=hazards.map((hazard,index)=>{
+    const angle=hazard.angle+index*.38, speed=28+index*6;
+    return {x:cx+Math.cos(hazard.angle)*orbitRadius,y:cy+Math.sin(hazard.angle)*orbitRadius,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,rotation:hazard.phase,spin:index%2?.9:-.9,color:index%2?palette.paper:palette.gold};
+  });
+  for(const gate of gates.slice(0,3))for(let i=0;i<4;i++){
+    const angle=gate.gap+Math.PI/2+i*.45;
+    paper.push({x:cx+Math.cos(angle)*gate.radius,y:cy+Math.sin(angle)*gate.radius,vx:Math.cos(angle)*24,vy:Math.sin(angle)*24,rotation:angle,spin:.7,color:palette.accent});
+  }
+  hazards=[]; gates=[]; fragments=[];
+  const skippable=state.campaign.completed.includes(state.levelId);
+  finishRun();
+  awakening={life:1.5,max:1.5,skippable,paper:paper.slice(0,state.reducedEffects?6:18),biome:level.biome,rating:1+Number(state.runFragments>=3)+Number(state.perfects>=level.perfectTarget)};
+  state.mode="awakening";
+  ui.results.hidden=true;
+}
+
+function finishAwakening() {
+  if(!awakening)return;
+  awakening=null;
+  state.mode="results";
+  ui.results.hidden=false;
 }
 
 function currentCampaignLevel() { return campaignLevels.find(level=>level.id===state.levelId) || campaignLevels[0]; }
@@ -591,6 +619,7 @@ function spawnHazard() {
 
 function update(delta) {
   if (state.paused) return;
+  if (state.mode === "awakening") { updateAwakening(delta); return; }
   if (state.mode === "crash") {
     crashTimer -= delta;
     updateEffects(delta);
@@ -607,7 +636,7 @@ function update(delta) {
   const phase = updateJourney();
   if (state.runType === "campaign" && state.elapsed >= currentCampaignLevel().duration) {
     state.levelComplete = true;
-    finishRun();
+    beginAwakening();
     return;
   }
   tutorial = Math.max(0, tutorial - delta);
@@ -770,6 +799,19 @@ function updateEffects(delta) {
   flash = Math.max(0, flash - delta * 2.5);
 }
 
+function updateAwakening(delta) {
+  if(!awakening)return;
+  awakening.life-=delta;
+  for(const paper of awakening.paper){
+    paper.x+=paper.vx*delta;paper.y+=paper.vy*delta;paper.rotation+=paper.spin*delta;
+    if(paper.x<12||paper.x>width-12)paper.vx*=-1;
+    if(paper.y<12||paper.y>height-12)paper.vy*=-1;
+    paper.x=Math.max(12,Math.min(width-12,paper.x));paper.y=Math.max(12,Math.min(height-12,paper.y));
+  }
+  updateEffects(delta);
+  if(awakening.life<=0)finishAwakening();
+}
+
 function draw() {
   const time = performance.now() / 1000;
   const palette = currentCosmetic();
@@ -782,7 +824,9 @@ function draw() {
   drawGates(time, palette);
   drawFragments(time, palette);
   drawGuardianAura(time, palette);
+  drawAwakening(time, palette, true);
   drawPlanet(time, palette);
+  drawAwakening(time, palette);
   drawOrbit(time, palette);
   drawHazards(time, palette);
   drawTrail(palette);
@@ -797,6 +841,33 @@ function draw() {
     ctx.fillStyle = `rgba(242,207,99,${flash * 0.18})`;
     ctx.fillRect(0, 0, width, height);
   }
+  ctx.restore();
+}
+
+function drawAwakening(time,palette,behind=false) {
+  if(!awakening)return;
+  const progress=1-awakening.life/awakening.max,burst=Math.sin(Math.min(1,progress/.8)*Math.PI);
+  if(behind){
+    ctx.save();ctx.globalAlpha=burst*(state.reducedEffects?.24:.56);ctx.fillStyle=palette.paper;
+    const rayCount=state.reducedEffects?4:8;
+    for(let i=0;i<rayCount;i++){
+      const angle=i*TAU/rayCount-time*.12;
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(angle-.09)*height,cy+Math.sin(angle-.09)*height);ctx.lineTo(cx+Math.cos(angle+.09)*height,cy+Math.sin(angle+.09)*height);ctx.closePath();ctx.fill();
+    }
+    for(const item of awakening.paper){ctx.globalAlpha=.72*Math.max(0,awakening.life/.55);ctx.fillStyle=item.color;paperDiamond(item.x,item.y,6,item.rotation);}
+    ctx.restore();return;
+  }
+  ctx.save();ctx.translate(cx,cy);ctx.globalAlpha=burst;
+  if(awakening.biome==="bloom"){
+    ctx.fillStyle=palette.accent;
+    const flowerCount=state.reducedEffects?4:8;
+    for(let i=0;i<flowerCount;i++){ctx.save();ctx.rotate(i*TAU/flowerCount+time*.2);ctx.beginPath();ctx.ellipse(0,-planetRadius*.88,planetRadius*.16,planetRadius*.46,0,0,TAU);ctx.fill();ctx.restore();}
+    ctx.fillStyle=palette.gold;ctx.beginPath();ctx.arc(0,0,planetRadius*.2,0,TAU);ctx.fill();
+  }else{
+    ctx.fillStyle=palette.gold;ctx.beginPath();ctx.moveTo(-planetRadius*.24,planetRadius*.25);ctx.quadraticCurveTo(-planetRadius*.42,-planetRadius*.1,0,-planetRadius*.72);ctx.quadraticCurveTo(planetRadius*.4,-planetRadius*.04,planetRadius*.2,planetRadius*.3);ctx.closePath();ctx.fill();
+    ctx.fillStyle=palette.light;ctx.beginPath();ctx.moveTo(-planetRadius*.08,planetRadius*.2);ctx.quadraticCurveTo(-planetRadius*.14,-planetRadius*.08,0,-planetRadius*.48);ctx.quadraticCurveTo(planetRadius*.16,-planetRadius*.06,planetRadius*.08,planetRadius*.2);ctx.closePath();ctx.fill();
+  }
+  if(progress>.42){ctx.globalAlpha=Math.min(1,(progress-.42)*4);ctx.fillStyle=palette.light;ctx.font="900 22px Arial";ctx.textAlign="center";ctx.fillText("★".repeat(awakening.rating),0,-planetRadius-30);}
   ctx.restore();
 }
 
@@ -829,7 +900,7 @@ function drawBackground(time, palette) {
 }
 
 function drawBloomScenery(time, palette) {
-  if(state.runType==="campaign"&&state.levelId==="kindling"&&["run","crash","results"].includes(state.mode)){drawEmberScenery(time,palette);return;}
+  if(state.runType==="campaign"&&state.levelId==="kindling"&&["run","crash","awakening","results"].includes(state.mode)){drawEmberScenery(time,palette);return;}
   ctx.save();
   for (let layer = 0; layer < 3; layer += 1) {
     ctx.globalAlpha = .09 + layer * .035;
@@ -1080,7 +1151,7 @@ function drawGateDetails(gate, start, end, color, palette, time) {
 
 function drawPlanet(time, palette) {
   const kick = state.mode === "crash" ? Math.sin(crashTimer * 36) * crashTimer * 8 : 0;
-  const ember=state.runType==="campaign"&&state.levelId==="kindling"&&["run","crash","results"].includes(state.mode);
+  const ember=state.runType==="campaign"&&state.levelId==="kindling"&&["run","crash","awakening","results"].includes(state.mode);
   OrbitArt.drawLivingPlanet(ctx,ember?"ember-furnace":"bloom-crown",{x:cx+kick,y:cy,radius:planetRadius,paletteId:palette.id,time:time*(state.fever>0?1.8:1),reduced:state.reducedEffects});
 }
 
@@ -1268,7 +1339,7 @@ function playerSpeed() { return Math.min(2.45, 1.66 + state.elapsed * 0.009); }
 function normalize(angle) { return (angle % TAU + TAU) % TAU; }
 function angleDistance(a, b) { return Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b))); }
 function currentCosmetic() {
-  const chapterRun=state.runType==="campaign"&&["run","crash","results"].includes(state.mode);
+  const chapterRun=state.runType==="campaign"&&["run","crash","awakening","results"].includes(state.mode);
   const id=chapterRun ? currentCampaignLevel().biome : state.selected;
   return cosmetics.find((item) => item.id === id) || cosmetics[0];
 }
@@ -1557,7 +1628,7 @@ function frame(time) {
 }
 
 window.addEventListener("resize", resize);
-canvas.addEventListener("pointerdown", reverse);
+canvas.addEventListener("pointerdown", () => awakening?.skippable ? finishAwakening() : reverse());
 document.querySelector("#play").addEventListener("click", () => showScreen("campaign"));
 document.querySelector("#ascension").addEventListener("click", () => startRun("endless"));
 for(const button of document.querySelectorAll("[data-chapter]"))button.addEventListener("click",()=>{if(!button.disabled){window.OrbitArchipelago?.pulse();openChapter(button.dataset.chapter);}});
@@ -1581,6 +1652,7 @@ window.addEventListener("keydown", (event) => {
   if (["Space", "ArrowLeft", "ArrowRight"].includes(event.code)) {
     event.preventDefault();
     if (state.mode === "run") reverse();
+    else if (state.mode === "awakening" && awakening?.skippable) finishAwakening();
     else if (state.mode === "home") showScreen("campaign");
     else if (state.mode === "campaign") openChapter();
     else if (state.mode === "bloomChapter" && event.target===document.body) startRun("campaign", state.chapter==="ember"?"kindling":campaignLevels[Math.min(state.campaign.unlockedLevel-1,3)].id);
