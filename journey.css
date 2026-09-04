@@ -40,11 +40,11 @@
 .results:has(.reward-seal:not([hidden])) h2{font-size:40px}
 .results:has(.reward-seal:not([hidden])) .copy,.results:has(.reward-seal:not([hidden])) .result-objectives,.results:has(.reward-seal:not([hidden])) .goal-rewards,.results:has(.reward-seal:not([hidden])) .record,.results:has(.reward-seal:not([hidden])) .unlock{display:none}
 .results:has(.reward-seal:not([hidden])) .earned{padding:4px}.results:has(.reward-seal:not([hidden])) .earned strong{font-size:17px}
-.reward-seal{position:relative;gap:4px;padding:8px 12px;clip-path:none;border-radius:2px;box-shadow:5px 5px 0 #4b2632;width:min(280px,86vw)}
-.reward-seal>button:first-child{position:relative;overflow:hidden;min-height:98px;border-radius:0}
-.reward-seal>button:first-child:before,.reward-seal>button:first-child:after{content:"";position:absolute;top:0;bottom:20px;width:51%;pointer-events:none;background:#4fae91;transform:scaleX(calc(1 - var(--unfold,0)));transform-origin:left center;z-index:1;clip-path:polygon(0 0,100% 12%,88% 86%,0 100%)}
-.reward-seal>button:first-child:before{left:0}.reward-seal>button:first-child:after{right:0;transform-origin:right center;background:#edca62;clip-path:polygon(0 12%,100% 0,100% 100%,12% 86%)}
-.reward-choices{flex-wrap:nowrap;max-width:100%;overflow-x:auto;touch-action:pan-x}.reward-choices button{flex:0 0 44px;min-width:44px;min-height:44px;padding:0;font-size:13px;box-shadow:none}
+.reward-seal{position:relative;gap:4px;padding:8px 12px;overflow:hidden;clip-path:none;border-radius:2px;background:var(--reward-paper,#4fae91);color:var(--reward-ink,#143d3b);box-shadow:5px 5px 0 var(--reward-ink,#143d3b);width:min(280px,86vw)}
+.reward-seal>button:first-child{position:relative;overflow:hidden;min-height:98px;border-radius:0;color:var(--reward-ink,#143d3b)}
+.reward-seal>button:first-child:before,.reward-seal>button:first-child:after{content:"";position:absolute;top:0;bottom:20px;width:51%;pointer-events:none;background:var(--reward-paper,#4fae91);transform:scaleX(calc(1 - var(--unfold,0)));transform-origin:left center;z-index:1;clip-path:polygon(0 0,100% 12%,88% 86%,0 100%)}
+.reward-seal>button:first-child:before{left:0}.reward-seal>button:first-child:after{right:0;transform-origin:right center;background:var(--reward-gold,#edca62);clip-path:polygon(0 12%,100% 0,100% 100%,12% 86%)}
+.reward-choices{flex-wrap:nowrap;max-width:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;touch-action:pan-x}.reward-choices::-webkit-scrollbar{display:none}.reward-choices button{flex:0 0 44px;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;font-size:13px;box-shadow:none}.reward-choices button.selected{background:var(--reward-gold,#edca62);color:var(--reward-ink,#143d3b)}
 .reward-seal .primary{min-height:44px;font-size:14px;padding:8px 12px;box-shadow:none}
 .result-rating{letter-spacing:0;display:flex;gap:5px;min-height:22px}.result-rating span.show{animation:none;opacity:1}
 .campaign { overflow: hidden; background: #050d13; }

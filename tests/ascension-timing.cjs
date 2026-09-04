@@ -235,8 +235,8 @@ vm.runInContext(`
 
   state.runRewards=[{type:'trail',id:'spark',label:'spark trail'},{type:'relic',id:'bloom-crown',label:'Bloom Crown relic'}];
   renderRewardSeal();assert.equal(ui.rewardSeal.hidden,false);assert.equal(ui.rewardChoices.children.length,2);
-  assert.equal(ui.rewardName.textContent,'spark trail');ui.rewardChoices.children[1].dispatchEvent({type:'click'});
-  assert.equal(ui.rewardName.textContent,'Bloom Crown relic','Grouped rewards select the clicked item');
+  assert.equal(ui.rewardName.textContent,'Trail: spark');ui.rewardChoices.children[1].dispatchEvent({type:'click'});
+  assert.equal(ui.rewardName.textContent,'Relic: Bloom Crown','Grouped rewards select the clicked item');
   ui.continueRewards.dispatchEvent({type:'click'});assert.equal(ui.rewardSeal.hidden,true,'Continue dismisses grouped rewards');
   state.mode='results';state.paused=false;animateRating(2,true);const animationStart=rewardAnimation.elapsed;update(.2);assert.ok(rewardAnimation.elapsed>animationStart,'Reward animation advances from update(delta)');
   state.paused=true;const pausedAnimation=rewardAnimation.elapsed;update(1);assert.equal(rewardAnimation.elapsed,pausedAnimation,'Paused results freeze reward animation');state.paused=false;

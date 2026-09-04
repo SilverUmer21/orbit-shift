@@ -477,26 +477,67 @@ function renderRewardSeal(index = 0) {
   ui.rewardSeal.hidden = rewards.length === 0;
   if (!rewards.length) return;
   const reward = rewards[Math.min(index, rewards.length - 1)];
-  ui.rewardName.textContent = reward.label;
+  const name = rewardDisplayName(reward), palette = rewardPalette(reward);
+  ui.rewardName.textContent = name;
+  ui.rewardPreview.setAttribute("aria-label", `Show next reward. Current reward: ${name}`);
+  ui.rewardSeal.style.setProperty("--reward-ink", palette.ink);
+  ui.rewardSeal.style.setProperty("--reward-paper", palette.paper);
+  ui.rewardSeal.style.setProperty("--reward-gold", palette.gold);
+  ui.rewardSeal.style.setProperty("--reward-light", palette.light);
   ui.rewardChoices.innerHTML = "";
   rewards.forEach((item, itemIndex) => {
-    const button = document.createElement("button"); button.type = "button"; button.textContent = String(itemIndex+1); button.title=item.label;button.setAttribute("aria-label",item.label);button.setAttribute("aria-pressed",String(itemIndex===index));
+    const button = document.createElement("button"), itemName = rewardDisplayName(item); button.type = "button"; button.textContent = String(itemIndex+1); button.title=itemName;button.setAttribute("aria-label",`Reward ${itemIndex + 1}: ${itemName}`);button.setAttribute("aria-pressed",String(itemIndex===index));
     button.className = itemIndex === index ? "selected" : ""; button.addEventListener("click", () => renderRewardSeal(itemIndex)); ui.rewardChoices.append(button);
   });
   ui.rewardSeal.style.setProperty("--unfold",state.reducedEffects?"1":"0");
   drawRewardPreview();
 }
 
+function rewardDisplayName(reward) {
+  const label = reward.label.replace(/\s+(trail|relic)$/i, "");
+  if (reward.type === "clear") return `Level cleared: ${label.replace(/\s+restored$/i, "")}`;
+  if (reward.type === "relic") return `Relic: ${label}`;
+  if (reward.type === "trail") return `Trail: ${label}`;
+  return `Palette: ${label.replace(/\s+palette$/i, "")}`;
+}
+
+function rewardPalette(reward) {
+  const level = campaignLevels.find(item => item.id === reward.id);
+  const phase = phases.find(item => item.id === reward.id) || campaignLevels.flatMap(item => item.phases).find(item => item.id === reward.id);
+  const id = reward.type === "biome" ? reward.id : level?.biome || cosmetics[phase?.biome]?.id || (reward.id === "bloom-crown" ? "bloom" : currentCosmetic().id);
+  return cosmetics.find(item => item.id === id) || cosmetics[0];
+}
+
 function drawRewardPreview() {
   const reward=state.runRewards[rewardIndex]; if(!reward)return;
-  const target = ui.rewardPreview.querySelector("canvas").getContext("2d"), palette=currentCosmetic(),time=rewardAnimation?.elapsed||0;
-  target.clearRect(0, 0, 180, 76); target.save(); target.translate(90, 38);
+  const target = ui.rewardPreview.querySelector("canvas").getContext("2d"), palette=rewardPalette(reward),time=rewardAnimation?.elapsed||0;
+  target.clearRect(0, 0, 180, 76); drawRewardSurface(target,palette,time); target.save(); target.translate(90, 39);
   if (reward.type === "trail") {
     for(let i=0;i<12;i++){target.globalAlpha=1-i/12;target.fillStyle=i%2?palette.accent:palette.gold;drawTrailPiece(target,reward.id,48-i*9,Math.sin(i*.3-time)*8,5,0,i);}
   } else if (reward.type === "biome") {
     OrbitArt.drawLivingPlanet(target,reward.id==="ember"?"ember-furnace":"bloom-crown",{x:0,y:0,radius:30,paletteId:reward.id,time,reduced:state.reducedEffects});
-  } else { drawChapterEmblem(target,palette,28); }
+  } else if (reward.type === "clear") {
+    const level=campaignLevels.find(item=>item.id===reward.id), biome=level?.biome === "ember" ? "ember" : "bloom";
+    OrbitArt.drawLivingPlanet(target,biome === "ember" ? "ember-furnace" : "bloom-crown",{x:0,y:2,radius:27,paletteId:biome,time,reduced:state.reducedEffects});
+    drawRewardCompletion(target,palette);
+  } else drawRelicMedallion(target,palette,time);
   target.restore();
+}
+
+function drawRewardSurface(target,palette,time) {
+  target.fillStyle=palette.light;target.fillRect(0,0,180,76);
+  target.fillStyle=palette.paper;target.beginPath();target.moveTo(0,54);target.lineTo(34,43);target.lineTo(70,57);target.lineTo(111,40);target.lineTo(180,52);target.lineTo(180,76);target.lineTo(0,76);target.closePath();target.fill();
+  target.fillStyle=palette.ink;target.globalAlpha=.18;target.beginPath();target.moveTo(0,63);target.lineTo(48,54);target.lineTo(93,69);target.lineTo(139,51);target.lineTo(180,62);target.lineTo(180,76);target.lineTo(0,76);target.closePath();target.fill();target.globalAlpha=1;
+  window.OrbitArt.helpers?.paperGrain?.(target,180,76,palette.ink,.08);
+  target.strokeStyle=palette.gold;target.globalAlpha=.45;target.lineWidth=1;target.beginPath();target.moveTo(8,13);target.lineTo(39,8);target.lineTo(58,15);target.moveTo(127,11);target.lineTo(170,16);target.stroke();target.globalAlpha=1;
+}
+
+function drawRewardCompletion(target,palette) {
+  target.save();target.translate(0,-27);target.fillStyle=palette.gold;target.beginPath();target.moveTo(-16,8);target.lineTo(-16,-5);target.lineTo(-7,1);target.lineTo(0,-8);target.lineTo(7,1);target.lineTo(16,-5);target.lineTo(16,8);target.closePath();target.fill();target.strokeStyle=palette.ink;target.lineWidth=1.5;target.stroke();target.strokeStyle=palette.light;target.lineWidth=2.5;target.beginPath();target.moveTo(-6,9);target.lineTo(-1,14);target.lineTo(9,3);target.stroke();target.restore();
+}
+
+function drawRelicMedallion(target,palette,time) {
+  target.save();target.rotate(time*.04);target.fillStyle=palette.ink;target.beginPath();for(let i=0;i<12;i++){const a=i*TAU/12-Math.PI/2,r=i%2?25:30;i?target.lineTo(Math.cos(a)*r,Math.sin(a)*r):target.moveTo(Math.cos(a)*r,Math.sin(a)*r);}target.closePath();target.fill();target.fillStyle=palette.gold;target.beginPath();target.arc(0,0,23,0,TAU);target.fill();target.fillStyle=palette.paper;target.beginPath();target.moveTo(-14,-9);target.lineTo(0,-17);target.lineTo(14,-9);target.lineTo(14,9);target.lineTo(0,17);target.lineTo(-14,9);target.closePath();target.fill();target.strokeStyle=palette.light;target.lineWidth=2;target.beginPath();target.moveTo(-10,-4);target.lineTo(0,5);target.lineTo(10,-4);target.moveTo(0,5);target.lineTo(0,13);target.stroke();target.restore();
 }
 
 function drawChapterEmblem(target,palette,size) {
