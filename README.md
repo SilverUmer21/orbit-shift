@@ -4,7 +4,7 @@ A dependency-free mobile Canvas arcade journey with authored Luminous Papercut w
 
 Version 1 adds a four-level Bloom chapter to the Cosmic Islands campaign. **First Light**, **Pollen Path**, **Tangled Orbit**, and **Crown of Petals** grow from a 45-second introduction into a 75-second Budkeeper finale. The island visibly restores after each clear, while the original continuous journey remains available as Ascension.
 
-The approved Bloom chapter and Ember's Kindling level are on `main`. The remaining Ember levels and Void stay unavailable pending approval.
+The approved Bloom chapter and Ember's Kindling level are on `main`. The `ember-chapter` review branch completes Ember with Cinder Step, Furnace Heart, and Solar Forge. Void remains deferred.
 
 ## Kindling review build
 
@@ -14,11 +14,17 @@ Heat gates start at 75% of base speed, show bright inward paper folds during war
 
 Open `http://127.0.0.1:3000/tests/visual.html` for the isolated review build. It starts a playable Kindling run using disposable progress, so completing Bloom is unnecessary for review and real saves are untouched. The scene selector includes heat warnings, the Ember chapter, results, and the map. Use Play Kindling to restart the review run. Preview progress survives menu navigation, but resets when the preview page reloads.
 
-Cinder Step, Furnace Heart, and Solar Forge are disabled previews, not playable levels.
+## Ember chapter review
+
+- Cinder Step: 65 seconds of alternating heat and steady recovery gates; two perfects for the skill rating.
+- Furnace Heart: 70 seconds of rotating heat gates with one telegraphed hazard; three perfects.
+- Solar Forge: 80 seconds ending in a paired-band Forge guardian; three perfects.
+
+Each offers six fragments with an objective of three. Complete the preceding level with any rating to unlock the next. Existing 15-star first-clear rewards, fever, shield, saves, and World Awakening are preserved. Bloom and Ember each offer 12 rating stars, 24 combined. Use the isolated visual lab's new level scenes to review without changing real progress. Do not merge this chapter before review.
 
 ## World Awakening review
 
-The `world-awakening` branch adds a short campaign-clear celebration before the existing results. Paper rays unfold from the planet, Bloom blossoms or Ember ignites, and earned rating stars appear. Repeat clears can skip the celebration; reduced effects keep it restrained. Gameplay difficulty, rewards, and Ascension remain unchanged. This visual update awaits review before merging.
+World Awakening is approved and merged: a short campaign-clear celebration before the existing results. Paper rays unfold from the planet, Bloom blossoms or Ember ignites, and earned rating stars appear. Repeat clears can skip the celebration; reduced effects keep it restrained.
 
 ## Play locally
 
@@ -74,6 +80,8 @@ Kindling preview release checks: deterministic suites passed with seed/width pai
 ## Android direction
 
 Keep the Vercel build as the playtest version. Once controls and replay balance are proven, wrap this same static app with Capacitor, add adaptive icons and splash assets, test offline/device behavior, sign an Android App Bundle, and release it through Play Console internal testing before a public listing.
+
+See [ANDROID-RELEASE.md](ANDROID-RELEASE.md) for the packaging, account, testing, and store-material checklist with official references. No Android project is included yet.
 
 ## Story direction
 
