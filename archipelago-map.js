@@ -12,6 +12,7 @@ export async function createArchipelagoMap(mount,{pointerTarget=mount,completed=
   const backdropArt=new Sprite(backdropTexture);backdropArt.anchor.set(.5);backdrop.addChild(backdropArt);
   const bloom=new Sprite(bloomTexture);bloom.anchor.set(.5);islands.addChild(bloom);
   const ember=new Sprite(emberTexture);ember.anchor.set(.5);islands.addChild(ember);
+  const furnaceLight=new Graphics().poly([0,-22,8,-2,5,8,0,12,-7,5,-5,-7]).fill({color:0xffe8a9,alpha:.95});furnaceLight.visible=false;atmosphere.addChild(furnaceLight);
   const voidIsland=new Sprite(voidTexture);voidIsland.anchor.set(.5);islands.addChild(voidIsland);
   const bridgeGlow=new Graphics(),bridgeCore=new Graphics();bridges.addChild(bridgeGlow,bridgeCore);bridgeGlow.filters=[new BlurFilter({strength:6,quality:3})];
   const selectionRingBack=new Graphics(),selectionRingFront=new Graphics(),selectionRings=[selectionRingBack,selectionRingFront];bridges.addChild(selectionRingBack);atmosphere.addChild(selectionRingFront);
@@ -27,6 +28,7 @@ export async function createArchipelagoMap(mount,{pointerTarget=mount,completed=
   const leave=()=>{pointer.x=0;pointer.y=0;};pointerTarget.addEventListener("pointermove",move);pointerTarget.addEventListener("pointerleave",leave);
   function setRestoration(stage=0){restorationStage=Math.max(0,Math.min(4,Number(stage)||0));completed=restorationStage>0;ember.alpha=completed?.88:.58;voidIsland.alpha=restorationStage>=4?.76:completed?.68:.5;bridgeCore.tint=completed?0xf2cf63:0xffffff;if(app.screen.width)drawRestoration(app.screen.width,app.screen.height);}
   function setCompleted(value){setRestoration(value?Math.max(1,restorationStage):0);}
+  function setEmberRestoration(value){furnaceLight.visible=Number(value)>0;}
   function drawRestoration(width,height){
     restorationArt.clear();if(!restorationStage)return;
     const scale=Math.min(width/430,height/844),x=width*.34,y=height*.23;
@@ -47,7 +49,8 @@ export async function createArchipelagoMap(mount,{pointerTarget=mount,completed=
     motes.forEach((mote,index)=>{mote.baseX=(index*137%977)/977*width;mote.baseY=(index*211%971)/971*height;});stars.forEach((star,index)=>star.position.set((index*83%997)/997*width,(index*137%991)/991*height));
   }
   let elapsed=0;
+  app.ticker.add(()=>{furnaceLight.position.set(ember.x,ember.y-ember.scale.y*48);furnaceLight.scale.set(ember.scale.x*(1+Math.sin(elapsed*3)*.06));});
   app.ticker.add(ticker=>{elapsed+=ticker.deltaMS/1000;world.x+=(pointer.x*7-world.x)*.04;world.y+=(pointer.y*5-world.y)*.04;stars.forEach((star,index)=>{star.alpha=.28+Math.sin(elapsed*(.35+index%4*.08)+star.seed)*.16;});bloom.position.set(bloom.baseX+Math.sin(elapsed*.42)*3,bloom.baseY+Math.sin(elapsed*.67)*5);bloom.rotation=Math.sin(elapsed*.31)*.012;ember.position.set(ember.baseX+Math.sin(elapsed*.36+2)*4,ember.baseY+Math.sin(elapsed*.58+1)*4);ember.rotation=Math.sin(elapsed*.28+2)*.014;voidIsland.position.set(voidIsland.baseX+Math.sin(elapsed*.33+4)*3,voidIsland.baseY+Math.sin(elapsed*.53+4)*5);voidIsland.rotation=Math.sin(elapsed*.24+4)*.012;const centers=[[bloom.x,bloom.y,76],[ember.x,ember.y,57],[voidIsland.x,voidIsland.y,56]];satellites.forEach(shard=>{const center=centers[shard.orbit],angle=elapsed*(.12+shard.orbit*.025)+shard.phase;shard.position.set(center[0]+Math.cos(angle)*center[2],center[1]+Math.sin(angle)*center[2]*.55);shard.rotation=angle+.5;});motes.forEach(mote=>{mote.x=mote.baseX+Math.sin(elapsed*.22+mote.seed)*5;mote.y=(mote.baseY-elapsed*(4+mote.seed%3)+app.screen.height)%app.screen.height;mote.alpha=.2+Math.sin(elapsed*.7+mote.seed)*.14;});bridgeCore.alpha=.42+Math.sin(elapsed*1.4)*.14;restorationArt.alpha=.72+Math.sin(elapsed*1.3)*.2;const ringScale=1+Math.sin(elapsed*1.8)*.035,ringAlpha=.45+Math.sin(elapsed*1.8)*.2;selectionRings.forEach(ring=>{ring.scale.set(ringScale);ring.alpha=ringAlpha;});});
   const observer=new ResizeObserver(()=>resize());observer.observe(mount);resize();setRestoration(completed?1:0);
-  return{app,resize,setCompleted,setRestoration,pulse(){selectionRings.forEach(ring=>ring.scale.set(1.16));},setActive(active){active?app.ticker.start():app.ticker.stop();},destroy(){observer.disconnect();pointerTarget.removeEventListener("pointermove",move);pointerTarget.removeEventListener("pointerleave",leave);app.destroy(true);}};
+  return{app,resize,setCompleted,setRestoration,setEmberRestoration,pulse(){selectionRings.forEach(ring=>ring.scale.set(1.16));},setActive(active){active?app.ticker.start():app.ticker.stop();},destroy(){observer.disconnect();pointerTarget.removeEventListener("pointermove",move);pointerTarget.removeEventListener("pointerleave",leave);app.destroy(true);}};
 }
