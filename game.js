@@ -873,9 +873,6 @@ function drawAwakening(time,palette,behind=false) {
   }
   ctx.save();ctx.translate(cx,cy);ctx.globalAlpha=burst;
   if(awakening.biome==="bloom"){
-    ctx.fillStyle=palette.accent;
-    const flowerCount=state.reducedEffects?4:8;
-    for(let i=0;i<flowerCount;i++){ctx.save();ctx.rotate(i*TAU/flowerCount+time*.2);ctx.beginPath();ctx.ellipse(0,-planetRadius*.88,planetRadius*.16,planetRadius*.46,0,0,TAU);ctx.fill();ctx.restore();}
     ctx.fillStyle=palette.gold;ctx.beginPath();ctx.arc(0,0,planetRadius*.2,0,TAU);ctx.fill();
   }else{
     ctx.fillStyle=palette.gold;ctx.beginPath();ctx.moveTo(-planetRadius*.24,planetRadius*.25);ctx.quadraticCurveTo(-planetRadius*.42,-planetRadius*.1,0,-planetRadius*.72);ctx.quadraticCurveTo(planetRadius*.4,-planetRadius*.04,planetRadius*.2,planetRadius*.3);ctx.closePath();ctx.fill();
