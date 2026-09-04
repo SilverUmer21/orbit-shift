@@ -1,14 +1,15 @@
 // This script runs only inside the isolated visual-test iframe.
 function testScene(name,reduced) {
   state.campaign.unlockedLevel=4;
-  if(!state.campaign.completed.includes('crown-of-petals'))state.campaign.completed.push('crown-of-petals');
-  const ember=['Kindling play','Kindling','Heat warning','Ember chapter','Kindling results','Awakening Ember','Map'].includes(name);
-  startRun('campaign',ember?'kindling':'crown-of-petals');state.reducedEffects=reduced;
+  for(const id of ['crown-of-petals','kindling','cinder-step','furnace-heart'])if(!state.campaign.completed.includes(id))state.campaign.completed.push(id);
+  const levels={Cinder:'cinder-step',Furnace:'furnace-heart',Solar:'solar-forge'};
+  const ember=['Kindling play','Kindling','Heat warning','Ember chapter','Kindling results','Awakening Ember','Map',...Object.keys(levels)].includes(name);
+  startRun('campaign',levels[name]||(ember?'kindling':'crown-of-petals'));state.reducedEffects=reduced;
   if(name==='Kindling play')return;
-  state.elapsed=name==='Guardian'?55:12;state.invulnerable=999;
+  state.elapsed=name==='Guardian'?55:name==='Solar'?60:12;state.invulnerable=999;
   state.fever=name==='Fever'?6:0;state.feverCharge=3;state.multiplier=state.fever?5:1;
   resize();updateJourney(true);gates=[];hazards=[];fragments=[];
-  if(ember)gateCount=2;
+  if(ember)gateCount=name==='Cinder'?3:name==='Furnace'?4:name==='Solar'?11:2;
   spawnGate();gates[0].radius=orbitRadius+(name==='Heat warning'?85:38);gates[0].age=name==='Heat warning'?.9:2;gates[0].generous=name!=='Guardian';
   spawnFragment();if(fragments[0]){fragments[0].radius=orbitRadius+12;fragments[0].angle=player.angle+.3;}
   burst(playerPoint(),currentCosmetic().gold,MAX_PARTICLES,100,'paper');
