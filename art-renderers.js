@@ -151,6 +151,31 @@
     ctx.save();ctx.beginPath();ctx.arc(0,0,radius*.96,0,TAU);ctx.clip();ctx.translate(-radius,-radius);paperGrain(ctx,radius*2,radius*2,palette.ink,.07);ctx.restore();ctx.restore();
   };
 
+  planetRenderers["ember-furnace"] = function(ctx,x,y,radius,palette,time,options={}){
+    planetShadow(ctx,x,y,radius,palette);ctx.save();ctx.translate(x,y);
+    const motion=options.reduced?0:time,lit=options.lit!==false;
+    blob(ctx,2,5,radius,11,.035,"#101d23");
+    blob(ctx,0,0,radius*.96,10,.035,palette.paper,.2);
+    blob(ctx,-radius*.025,-radius*.045,radius*.84,9,.04,"#273139");
+    for(let i=0;i<8;i++){
+      ctx.save();ctx.rotate(i*TAU/8+Math.sin(motion*.35)*.025);
+      polygon(ctx,[[radius*.36,-radius*.09],[radius*.68,-radius*.28],[radius*.94,-radius*.13],[radius*.72,radius*.08],[radius*.47,radius*.14]],i%2?"#38444a":"#222d33");
+      ctx.strokeStyle=i%2?palette.mid:palette.paper;ctx.lineWidth=radius*.018;ctx.beginPath();ctx.moveTo(radius*.39,0);ctx.lineTo(radius*.67,-radius*.13);ctx.lineTo(radius*.86,-radius*.11);ctx.stroke();
+      polygon(ctx,[[radius*.66,-radius*.3],[radius*.72,-radius*.45],[radius*.83,-radius*.26]],i%3?palette.mid:palette.light);
+      ctx.restore();
+    }
+    blob(ctx,0,0,radius*.4,6,.015,palette.ink,-Math.PI/6);
+    blob(ctx,0,0,radius*.32,6,.012,lit?palette.paper:"#28343a",-Math.PI/6);
+    if(lit){
+      ctx.save();ctx.scale(1,1+Math.sin(motion*3)*.055);
+      polygon(ctx,[[0,-radius*.34],[radius*.18,-radius*.04],[radius*.12,radius*.19],[0,radius*.27],[-radius*.16,radius*.11],[-radius*.13,-radius*.12]],palette.gold);
+      polygon(ctx,[[0,-radius*.21],[radius*.06,radius*.05],[0,radius*.19],[-radius*.065,radius*.06]],palette.light);
+      ctx.restore();
+    }else star(ctx,0,0,radius*.07,palette.paper,0);
+    ctx.save();ctx.beginPath();ctx.arc(0,0,radius*.91,0,TAU);ctx.clip();ctx.translate(-radius,-radius);paperGrain(ctx,radius*2,radius*2,palette.light,.075);ctx.restore();
+    ctx.strokeStyle=alpha(palette.light,.55);ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(-radius*.02,-radius*.03,radius*.89,-2.8,-1);ctx.stroke();ctx.restore();
+  };
+
   planetRenderers["terrarium-globe"] = function(ctx,x,y,radius,palette,time){
     planetShadow(ctx,x,y,radius,palette);ctx.save();ctx.translate(x,y);ctx.rotate(time*.025);
     blob(ctx,0,0,radius,10,.025,palette.deep);ctx.save();ctx.beginPath();ctx.arc(0,0,radius*.94,0,TAU);ctx.clip();
