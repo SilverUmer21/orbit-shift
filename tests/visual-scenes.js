@@ -1,5 +1,6 @@
 // This script runs only inside the isolated visual-test iframe.
 function testScene(name,reduced) {
+  if(name==='Tutorial'){state.reducedEffects=reduced;startTutorial();return;}
   state.campaign.unlockedLevel=4;
   for(const id of ['crown-of-petals','kindling','cinder-step','furnace-heart'])if(!state.campaign.completed.includes(id))state.campaign.completed.push(id);
   const levels={Cinder:'cinder-step',Furnace:'furnace-heart',Solar:'solar-forge'};
@@ -18,7 +19,10 @@ function testScene(name,reduced) {
   if(name==='Map'){showScreen('campaign');}
   if(name==='Garage'){showScreen('garage');}
   if(name==='Settings'){showScreen('settings');}
-  if(name==='Results'||name==='Kindling results'){state.runFragments=6;state.perfects=3;state.levelComplete=true;finishRun();}
+  if(name==='Results'||name==='Kindling results'||name==='Rewards'){
+    if(name==='Rewards'){state.campaign.completed=state.campaign.completed.filter(id=>id!==state.levelId);state.campaign.rewards=state.campaign.rewards.filter(id=>id!=='bloom-wake');state.unlockedTrails=state.unlockedTrails.filter(id=>id!=='bloom-wake');state.unlocked=state.unlocked.filter(id=>id!=='ember');state.score=300;}
+    state.runFragments=6;state.perfects=3;state.levelComplete=true;finishRun();if(name==='Rewards'){state.paused=false;return;}
+  }
   if(name==='Awakening Bloom'||name==='Awakening Ember'){
     if(name==='Awakening Bloom')state.campaign.completed=state.campaign.completed.filter(id=>id!=='crown-of-petals');
     hazards=[{angle:player.angle+.7,phase:0},{angle:player.angle-.8,phase:1.2}];state.runFragments=6;state.perfects=3;state.levelComplete=true;beginAwakening();awakening.life=.75;
