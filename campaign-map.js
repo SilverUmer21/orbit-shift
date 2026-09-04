@@ -6,6 +6,7 @@ window.OrbitArchipelago={
   ready,
   setCompleted:value=>ready.then(map=>map.setCompleted(value)),
   setRestoration:value=>ready.then(map=>map.setRestoration(value)),
+  setEmberRestoration:value=>ready.then(map=>map.setEmberRestoration(value)),
   pulse:()=>ready.then(map=>map.pulse()),
   setActive:value=>ready.then(map=>map.setActive(value))
 };
