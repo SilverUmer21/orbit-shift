@@ -2,7 +2,7 @@
 function testScene(name,reduced) {
   state.campaign.unlockedLevel=4;
   if(!state.campaign.completed.includes('crown-of-petals'))state.campaign.completed.push('crown-of-petals');
-  const ember=['Kindling play','Kindling','Heat warning','Ember chapter','Kindling results','Map'].includes(name);
+  const ember=['Kindling play','Kindling','Heat warning','Ember chapter','Kindling results','Awakening Ember','Map'].includes(name);
   startRun('campaign',ember?'kindling':'crown-of-petals');state.reducedEffects=reduced;
   if(name==='Kindling play')return;
   state.elapsed=name==='Guardian'?55:12;state.invulnerable=999;
@@ -18,6 +18,10 @@ function testScene(name,reduced) {
   if(name==='Garage'){showScreen('garage');}
   if(name==='Settings'){showScreen('settings');}
   if(name==='Results'||name==='Kindling results'){state.runFragments=6;state.perfects=3;state.levelComplete=true;finishRun();}
+  if(name==='Awakening Bloom'||name==='Awakening Ember'){
+    if(name==='Awakening Bloom')state.campaign.completed=state.campaign.completed.filter(id=>id!=='crown-of-petals');
+    hazards=[{angle:player.angle+.7,phase:0},{angle:player.angle-.8,phase:1.2}];state.runFragments=6;state.perfects=3;state.levelComplete=true;beginAwakening();awakening.life=.75;
+  }
   state.paused=true;updateHud();
 }
 function profileDrawing() {
