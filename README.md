@@ -4,7 +4,7 @@ A dependency-free mobile Canvas arcade journey with authored Luminous Papercut w
 
 Version 1 adds a four-level Bloom chapter to the Cosmic Islands campaign. **First Light**, **Pollen Path**, **Tangled Orbit**, and **Crown of Petals** grow from a 45-second introduction into a 75-second Budkeeper finale. The island visibly restores after each clear, while the original continuous journey remains available as Ascension.
 
-The approved Bloom chapter is on `main`. This `ember-kindling` review build adds one playable Ember level; the remaining Ember levels and Void stay unavailable pending approval.
+The approved Bloom chapter and Ember's Kindling level are on `main`. The remaining Ember levels and Void stay unavailable pending approval.
 
 ## Kindling review build
 
@@ -14,7 +14,11 @@ Heat gates start at 75% of base speed, show bright inward paper folds during war
 
 Open `http://127.0.0.1:3000/tests/visual.html` for the isolated review build. It starts a playable Kindling run using disposable progress, so completing Bloom is unnecessary for review and real saves are untouched. The scene selector includes heat warnings, the Ember chapter, results, and the map. Use Play Kindling to restart the review run. Preview progress survives menu navigation, but resets when the preview page reloads.
 
-Cinder Step, Furnace Heart, and Solar Forge are disabled previews, not playable levels. Do not expand the chapter or merge the review branch until Kindling is approved.
+Cinder Step, Furnace Heart, and Solar Forge are disabled previews, not playable levels.
+
+## World Awakening review
+
+The `world-awakening` branch adds a short campaign-clear celebration before the existing results. Paper rays unfold from the planet, Bloom blossoms or Ember ignites, and earned rating stars appear. Repeat clears can skip the celebration; reduced effects keep it restrained. Gameplay difficulty, rewards, and Ascension remain unchanged. This visual update awaits review before merging.
 
 ## Play locally
 
