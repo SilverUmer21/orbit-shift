@@ -37,7 +37,7 @@ const riders = [
   { id: "shuttle", name: "Shuttle", price: 350, shape: "shuttle" },
   { id: "ringsail", name: "Ring Sail", price: 550, shape: "ringsail" },
 ];
-const SAVE_VERSION = 4;
+const SAVE_VERSION = 5;
 const campaignLevels = [
   {
     id:"first-light",name:"First Light",duration:45,story:"A sleeping seed searches for its first rhythm.",perfectTarget:2,orientationBias:.8,warningStrength:1,
@@ -59,7 +59,14 @@ const campaignLevels = [
     gateTimes:[2,7,12,17,22,27,32,37,42,47,51,57,63,69,73],hazardTimes:[35],
     phases:[{id:"petal-ascent",name:"Petal Ascent",start:0,end:50,biome:0},{id:"budkeeper",name:"Budkeeper",start:50,end:75,biome:0,guardian:true,target:3},{id:"crown-complete",name:"Bloom Crown",start:75,end:Infinity,biome:0}],
   },
-].map((level,index)=>({...level,perfectGates:[[3,5,7],[3,6,9],[3,6,9,12],[3,6,9]][index],fragmentTimes:[.12,.24,.37,.5,.64,.78].map(fraction=>Math.round(level.duration*fraction)),biome:"bloom",objectives:["Restore the Bloom rhythm","Collect 3 orbit fragments",`Thread ${level.perfectTarget} perfect gates`]}));
+].map((level,index)=>({...level,motion:[[50,1.72,.04],[56,1.52,.1],[63,1.34,.2],[69,1.22,.28]][index],perfectGates:[[3,5,7],[3,6,9],[3,6,9,12],[3,6,9]][index],fragmentTimes:[.12,.24,.37,.5,.64,.78].map(fraction=>Math.round(level.duration*fraction)),biome:"bloom",objectives:["Restore the Bloom rhythm","Collect 3 orbit fragments",`Thread ${level.perfectTarget} perfect gates`]}));
+campaignLevels.push({
+  id:"kindling",name:"Kindling",biome:"ember",duration:60,story:"Carry Bloom's spark into the sleeping furnace.",
+  perfectTarget:2,orientationBias:.65,warningStrength:.72,motion:[62,1.6,.08],
+  gateTimes:[2,7,12,18,23,29,35,41,47,53],perfectGates:[3,5,7,9],heatGates:[3,5,7,9],hazardTimes:[],
+  fragmentTimes:[7,14,22,30,38,47],objectives:["Light the sleeping furnace","Collect 3 orbit fragments","Thread 2 perfect gates"],
+  phases:[{id:"kindling-arrival",name:"Kindling",start:0,end:12,biome:1},{id:"kindling-heat",name:"First Heat",start:12,end:35,biome:1},{id:"kindling-rhythm",name:"Furnace Rhythm",start:35,end:60,biome:1},{id:"kindling-complete",name:"Furnace Lit",start:60,end:Infinity,biome:1}],
+});
 const phases = [
   { id: "bloom", name: "Bloom", start: 0, end: 25, biome: 0 },
   { id: "petal", name: "Petal Crown", start: 25, end: 33, biome: 0, guardian: true, target: 3 },
@@ -82,7 +89,8 @@ const goalCycle = saved.goalCycle || { survival: 0, skill: 0, journey: 0 };
 const initialGoals = saved.goals || Object.keys(goalSets).map((category) => makeGoal(category, goalCycle[category]));
 const initialStats = saved.stats || { sessions: 0, runs: 0, totalMs: 0, longestMs: 0, deaths: { gate: 0, hazard: 0 }, acts: [0,0,0], guardians: 0, goals: 0, dates: [] };
 const savedCampaign=saved.campaign||{},completedCampaign=Array.isArray(savedCampaign.completed)?savedCampaign.completed:[];
-const initialCampaign={completed:completedCampaign,ratings:savedCampaign.ratings||{},fragments:savedCampaign.fragments||{},rewards:savedCampaign.rewards||[],unlockedLevel:Math.max(Number(savedCampaign.unlockedLevel)||1,completedCampaign.includes("first-light")?2:1),restoration:Math.max(Number(savedCampaign.restoration)||0,completedCampaign.length)};
+const bloomCompleted=campaignLevels.filter(level=>level.biome==="bloom"&&completedCampaign.includes(level.id));
+const initialCampaign={completed:completedCampaign,ratings:savedCampaign.ratings||{},fragments:savedCampaign.fragments||{},rewards:savedCampaign.rewards||[],unlockedLevel:Math.min(4,Math.max(Number(savedCampaign.unlockedLevel)||1,completedCampaign.includes("first-light")?2:1)),restoration:Math.min(4,Math.max(Number(savedCampaign.restoration)||0,bloomCompleted.length)),emberRestoration:completedCampaign.includes("kindling")?1:0};
 const state = {
   mode: "home", score: 0, multiplier: 1, streak: 0, runBestStreak: 0, fever: 0, feverCharge: 0,
   best: saved.best || 0, bestStreak: saved.bestStreak || 0,
@@ -96,7 +104,7 @@ const state = {
   stats: initialStats,
   muted: Boolean(saved.muted), haptics: saved.haptics !== false, reducedEffects: Boolean(saved.reducedEffects),
   tutorialSeen: Boolean(saved.tutorialSeen), elapsed: 0, paused: false,
-  runType: "endless", levelId: null, levelComplete: false, runFragments: 0,
+  runType: "endless", levelId: null, levelComplete: false, runFragments: 0, chapter: "bloom",
   campaign: initialCampaign,
 };
 
@@ -186,6 +194,7 @@ function resize() {
 }
 
 function startRun(runType = "endless", levelId = null) {
+  if(runType==="campaign"&&!isLevelUnlocked(levelId))return false;
   window.OrbitArchipelago?.setActive(false);
   state.mode = "run";
   state.runType = runType;
@@ -314,12 +323,14 @@ function finishRun() {
     if (firstClear) {
       state.campaign.completed.push(state.levelId); state.runStars += 15;
       const levelIndex=campaignLevels.findIndex(item=>item.id===state.levelId);
-      state.campaign.unlockedLevel=Math.max(state.campaign.unlockedLevel,Math.min(campaignLevels.length,levelIndex+2));
-      state.campaign.restoration=Math.max(state.campaign.restoration,levelIndex+1);
+      if(level.biome==="bloom"){
+        state.campaign.unlockedLevel=Math.max(state.campaign.unlockedLevel,Math.min(4,levelIndex+2));
+        state.campaign.restoration=Math.max(state.campaign.restoration,levelIndex+1);
+      }else state.campaign.emberRestoration=1;
     }
     state.campaign.ratings[state.levelId] = Math.max(state.campaign.ratings[state.levelId] || 0, campaignRating);
     state.campaign.fragments[state.levelId] = Math.max(state.campaign.fragments[state.levelId] || 0, state.runFragments);
-    if (!state.campaign.rewards.includes("bloom-wake")) {
+    if (level.biome==="bloom" && !state.campaign.rewards.includes("bloom-wake")) {
       state.campaign.rewards.push("bloom-wake");
       if (!state.unlockedTrails.includes("bloom-wake")) state.unlockedTrails.push("bloom-wake");
       state.runGoalRewards.push("Bloom Wake unlocked");
@@ -348,7 +359,7 @@ function finishRun() {
   ui.goalRewards.textContent = state.runGoalRewards.join(" - ");
   ui.record.textContent = state.best > oldBest ? "New orbit record" : "";
   ui.unlock.textContent = state.unlocked.length > previousUnlocks ? "New biome awakened" : "";
-  ui.resultHome.textContent = state.runType === "campaign" ? "Chapter" : "Home";
+  ui.resultHome.textContent = state.runType === "campaign" ? `${currentCampaignLevel().biome==="ember"?"Ember":"Bloom"} Chapter` : "Home";
   ui.results.hidden = false;
   ui.shell.classList.remove("playing");
   stopMusic();
@@ -357,6 +368,11 @@ function finishRun() {
 }
 
 function currentCampaignLevel() { return campaignLevels.find(level=>level.id===state.levelId) || campaignLevels[0]; }
+function isLevelUnlocked(id) {
+  const level=campaignLevels.find(item=>item.id===id);
+  if(!level)return false;
+  return level.biome==="ember" ? state.campaign.completed.includes("crown-of-petals") : campaignLevels.indexOf(level)<state.campaign.unlockedLevel;
+}
 function activePhases() { return state.runType === "campaign" ? currentCampaignLevel().phases : phases; }
 function phaseAt(elapsed) { const list = activePhases(); return list.find((phase) => elapsed >= phase.start && elapsed < phase.end) || list[list.length - 1]; }
 
@@ -417,6 +433,22 @@ function orbitalTravel(elapsed,duration) {
 }
 function worldTravel(duration,fever) { return duration-.2*Math.min(duration,fever); }
 function crossingTime(travel,fever=0) { return travel<=fever*.8 ? travel/.8 : travel+fever*.2; }
+// Integral of the heat speed multiplier in hazard-clock seconds.
+function heatTravel(age) {
+  if(age<=1.2)return .75*age;
+  if(age>=1.6)return 1.3+1.25*(age-1.6);
+  const u=(age-1.2)/.4;
+  return .9+.75*(age-1.2)+.2*(u**3-.5*u**4);
+}
+function gateDistance(gate,duration,age=gate.age||0) {
+  return gate.speed*(gate.heat ? heatTravel(age+duration)-heatTravel(age) : duration);
+}
+function gateTravelTime(gate,distance,age=gate.age||0) {
+  if(!gate.heat)return Math.max(0,distance)/gate.speed;
+  let low=0,high=Math.max(0,distance)/(gate.speed*.75);
+  for(let i=0;i<32;i++){const mid=(low+high)/2;if(gateDistance(gate,mid,age)<distance)low=mid;else high=mid;}
+  return (low+high)/2;
+}
 function routeAngle(snapshot,time,turns) {
   let angle=snapshot.angle,direction=snapshot.direction,previous=0;
   for(const turn of turns){if(turn>time)break;angle+=direction*orbitalTravel(snapshot.elapsed+previous,turn-previous);direction*=-1;previous=turn;}
@@ -450,7 +482,7 @@ function findRoute(snapshot,horizon,targetTime,wantsEasy,random=Math.random) {
 function planningSnapshot() {
   return {elapsed:state.elapsed,angle:player.angle,direction:player.direction,fever:state.fever,
     turns:plannedTurns.map(t=>t-state.elapsed).filter(t=>t>0),
-    constraints:gates.filter(g=>!g.resolved).map(g=>{const travel=Math.max(0,(g.radius-orbitRadius)/g.speed);return {time:crossingTime(travel,state.fever),gap:normalize(g.gap+g.rotation*travel),opening:g.opening};}).concat(fragments.filter(f=>!f.collected&&f.radius>orbitRadius).map(f=>({time:crossingTime((f.radius-orbitRadius)/f.speed,state.fever),gap:f.angle,opening:.8}))),
+    constraints:gates.filter(g=>!g.resolved).map(g=>{const travel=gateTravelTime(g,g.radius-orbitRadius);return {time:crossingTime(travel,state.fever),gap:normalize(g.gap+g.rotation*travel),opening:g.opening};}).concat(fragments.filter(f=>!f.collected&&f.radius>orbitRadius).map(f=>({time:crossingTime((f.radius-orbitRadius)/f.speed,state.fever),gap:f.angle,opening:.8}))),
     hazards:hazards.map(h=>({...h,arm:Math.max(0,.85-h.age)}))};
 }
 
@@ -470,16 +502,18 @@ function buildGatePlan(snapshot, random = Math.random) {
   if(snapshot.settings){[speed,opening,rotationLimit]=snapshot.settings;}
   if (snapshot.forceEasy) {
     opening=Math.max(opening,1.58);
-    speed*=.92;
+    if(!snapshot.heat)speed*=.92;
   }
   const radius=snapshot.orbitRadius+snapshot.shortSide*.56,rotation=(random()-.5)*2*rotationLimit;
-  const travel=(radius-snapshot.orbitRadius)/speed,flight=crossingTime(travel,snapshot.fever||0);
-  const pairFlight=crossingTime(travel+(snapshot.pairSpacing||0)/speed,snapshot.fever||0);
+  const motion={speed,heat:Boolean(snapshot.heat),age:0};
+  const travel=gateTravelTime(motion,radius-snapshot.orbitRadius),flight=crossingTime(travel,snapshot.fever||0);
+  const pairTravel=gateTravelTime(motion,radius-snapshot.orbitRadius+(snapshot.pairSpacing||0));
+  const pairFlight=crossingTime(pairTravel,snapshot.fever||0);
   const horizon=Math.max(pairFlight,...(snapshot.constraints||[]).map(g=>g.time));
   const candidate=findRoute(snapshot,horizon,flight,snapshot.forceEasy||random()<(snapshot.orientationBias??.5),random);
   if(!candidate)return null;
-  return {radius,speed,flight,travel,gap:normalize(candidate.target-rotation*travel),target:candidate.target,rotation,opening,turns:candidate.turns,
-    pairGap:normalize(routeAngle(snapshot,pairFlight,candidate.turns)-rotation*(travel+(snapshot.pairSpacing||0)/speed)),wantsTurn:candidate.turns.length>0};
+  return {...motion,radius,flight,travel,gap:normalize(candidate.target-rotation*travel),target:candidate.target,rotation,opening,turns:candidate.turns,
+    pairGap:normalize(routeAngle(snapshot,pairFlight,candidate.turns)-rotation*pairTravel),wantsTurn:candidate.turns.length>0};
 }
 
 function isSideOpening(angle) { return Math.abs(Math.cos(angle)) > Math.abs(Math.sin(angle)); }
@@ -489,12 +523,14 @@ function spawnGate() {
   const phase = phaseAt(state.elapsed);
   if (phase.transition) return false;
   const level = state.runType === "campaign" ? currentCampaignLevel() : null;
-  const forceEasy = recoveryGate && !phase.guardian;
+  const kindling=level?.id==="kindling",number=gateCount+1;
+  const heat=Boolean(level?.heatGates?.includes(number));
+  const forceEasy = (recoveryGate || kindling&&number>=4&&number%2===0) && !phase.guardian;
   const campaignPair=level?.id==="crown-of-petals"&&!phase.guardian&&gateCount+1>5&&(gateCount+1)%5===0;
   const paired=(phase.id==="forge"||campaignPair||!level&&state.elapsed>103&&Math.random()<.24)&&gates.filter(g=>!g.resolved).length<2;
-  const settings=level ? (phase.guardian?[72,1.18,.24]:[[50,1.72,.04],[56,1.52,.1],[63,1.34,.2],[69,1.22,.28]][campaignLevels.indexOf(level)]) : null;
+  const settings=level ? (phase.guardian?[72,1.18,.24]:kindling&&number<=2?[62,1.75,0]:kindling&&forceEasy?[62,1.75,.08]:level.motion) : null;
   const plan = buildGatePlan({
-    ...planningSnapshot(),settings,pairSpacing:paired?58:0,
+    ...planningSnapshot(),settings,heat,pairSpacing:paired?58:0,
     index: gateCount, elapsed: state.elapsed, angle: player.angle, direction: player.direction,
     angularSpeed: playerSpeed(), orbitRadius, shortSide: Math.min(width, height), phase, forceEasy,
     orientationBias:level?.orientationBias ?? endlessOrientationBias(state.elapsed),
@@ -502,7 +538,7 @@ function spawnGate() {
   if(!plan)return false;
   plannedTurns=plan.turns.map(t=>t+state.elapsed);
   const gate = {
-    ...plan, previousRadius: plan.radius, resolved: false, type: gateCount % 4,
+    ...plan, previousRadius: plan.radius, resolved: false, type: kindling?1:gateCount % 4,
     palette: gateCount % 3, pair: false, guardian: Boolean(phase.guardian), guardianId: phase.id,
     sideOpening:isSideOpening(plan.target),warningStrength:level?.warningStrength || 0,recovery:forceEasy,
   };
@@ -594,10 +630,13 @@ function update(delta) {
   for (const gate of gates) {
     gate.previousRadius = gate.radius;
     const gapBefore=gate.gap;
-    gate.radius -= gate.speed * delta * worldScale;
+    const ageBefore=gate.age||0;
+    gate.radius -= gateDistance(gate,delta*worldScale,ageBefore);
+    gate.age=ageBefore+delta*worldScale;
+    if(gate.heat&&ageBefore<.6&&gate.age>=.6)beep(230,.09,"triangle");
     gate.gap = normalize(gate.gap + gate.rotation * delta * worldScale);
     if (!gate.resolved && gate.previousRadius > orbitRadius && gate.radius <= orbitRadius) {
-      const travel=(gate.previousRadius-orbitRadius)/gate.speed,crossing=crossingTime(travel,oldFever);
+      const travel=gateTravelTime(gate,gate.previousRadius-orbitRadius,ageBefore),crossing=crossingTime(travel,oldFever);
       resolveGate(gate,normalize(previousAngle+player.direction*orbitalTravel(state.elapsed-delta,crossing)),normalize(gapBefore+gate.rotation*travel));
       if(state.mode!=="run")return;
     }
@@ -790,6 +829,7 @@ function drawBackground(time, palette) {
 }
 
 function drawBloomScenery(time, palette) {
+  if(state.runType==="campaign"&&state.levelId==="kindling"&&["run","crash","results"].includes(state.mode)){drawEmberScenery(time,palette);return;}
   ctx.save();
   for (let layer = 0; layer < 3; layer += 1) {
     ctx.globalAlpha = .09 + layer * .035;
@@ -816,6 +856,20 @@ function drawBloomScenery(time, palette) {
   }
   ctx.globalAlpha = .055; ctx.fillStyle = palette.light;
   for (let y = 7; y < height; y += 19) for (let x = (y % 38) + 5; x < width; x += 31) ctx.fillRect(x, y, 1.2, .8);
+  ctx.restore();
+}
+
+function drawEmberScenery(time,palette) {
+  ctx.save();
+  for(const side of [-1,1])for(let i=0;i<5;i++){
+    const x=side<0?-5:width+5,y=height*(.17+i*.17),depth=14+(i%3)*9;
+    ctx.fillStyle=i%2?"#20272d":"#29232c";ctx.beginPath();ctx.moveTo(x,y-48);ctx.lineTo(x-side*depth,y-16);ctx.lineTo(x-side*(depth+8),y+27);ctx.lineTo(x,y+69);ctx.closePath();ctx.fill();
+    ctx.strokeStyle=colorAlpha(palette.paper,.35);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x-side*4,y-32);ctx.lineTo(x-side*depth,y-10);ctx.lineTo(x-side*(depth+3),y+15);ctx.stroke();
+  }
+  if(!state.reducedEffects)for(let i=0;i<10;i++){
+    const x=i%2?width-22-(i%3)*8:22+(i%3)*8,y=height-((time*9+i*83)%height);
+    ctx.fillStyle=colorAlpha(i%3?palette.paper:palette.light,.2);paperDiamond(x,y,2.3,i+time*.15);
+  }
   ctx.restore();
 }
 
@@ -889,7 +943,7 @@ function drawGates(time, palette) {
   for (const gate of gates) {
     const alpha = gate.resolved ? 0.3 : Math.min(1, (orbitRadius + 210 - gate.radius) / 145 + 0.16);
     const colors = [palette.paper, palette.accent, palette.gold];
-    const color = colors[gate.palette];
+    const color = state.runType==="campaign"&&state.levelId==="kindling" ? gate.heat?palette.mid:palette.paper : colors[gate.palette];
     const half = gate.opening / 2;
     const start = gate.gap + half;
     const end = gate.gap + TAU - half;
@@ -903,6 +957,7 @@ function drawGates(time, palette) {
     ctx.lineWidth = gate.guardian ? 11 : gate.type === 3 ? 9 : 7;
     ctx.beginPath(); ctx.arc(cx, cy, gate.radius, start, end); ctx.stroke();
     drawGateDetails(gate, start, end, color, palette, time);
+    if(gate.heat)drawHeatWarning(gate,palette);
     if(gate.generous) drawPerfectPetals(gate,palette);
     drawSideGuidance(gate,time,palette,alpha);
     for (const side of [-1, 1]) {
@@ -914,6 +969,19 @@ function drawGates(time, palette) {
     }
     ctx.restore();
   }
+}
+
+function drawHeatWarning(gate,palette) {
+  const age=gate.age||0,warming=age>=.6&&age<1.6;
+  ctx.save();ctx.globalAlpha=gate.resolved?.2:warming?.95:.6;
+  ctx.strokeStyle=warming?palette.light:palette.mid;ctx.lineWidth=warming?2.8:1.8;
+  // Inward double folds mark solid paper, never the safe opening.
+  for(let mark=0;mark<7;mark++)for(let fold=0;fold<2;fold++){
+    const angle=gate.gap+gate.opening/2+.25+mark*(TAU-gate.opening-.5)/6,r=gate.radius+9+fold*7;
+    ctx.save();ctx.translate(cx+Math.cos(angle)*r,cy+Math.sin(angle)*r);ctx.rotate(angle);
+    ctx.beginPath();ctx.moveTo(3,-5);ctx.lineTo(-3,0);ctx.lineTo(3,5);ctx.stroke();ctx.restore();
+  }
+  ctx.restore();
 }
 
 function drawPerfectPetals(gate,palette) {
@@ -986,6 +1054,9 @@ function drawGateDetails(gate, start, end, color, palette, time) {
       ctx.fillStyle = angle % .72 < .36 ? palette.accent : palette.gold;
       ctx.beginPath(); ctx.moveTo(-6,12); ctx.quadraticCurveTo(0,1,6,12); ctx.quadraticCurveTo(0,19,-6,12); ctx.fill();
       ctx.fillStyle=palette.light;ctx.beginPath();ctx.arc(0,11,2.2,0,TAU);ctx.fill();
+    } else if (state.runType === "campaign" && state.levelId==="kindling") {
+      ctx.fillStyle=palette.paper;ctx.beginPath();ctx.moveTo(-5,3);ctx.lineTo(-1,15);ctx.lineTo(5,8);ctx.lineTo(2,1);ctx.closePath();ctx.fill();
+      ctx.strokeStyle=palette.light;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-1,4);ctx.lineTo(1,10);ctx.stroke();
     } else if (state.runType === "campaign" && !gate.guardian) {
       ctx.fillStyle = angle % .72 < .36 ? palette.mid : palette.light;
       ctx.beginPath(); ctx.ellipse(0, 8, 4, 10 + Math.sin(time * 1.6 + angle) * 1.5, angle % .72 < .36 ? .5 : -.5, 0, TAU); ctx.fill();
@@ -1009,7 +1080,8 @@ function drawGateDetails(gate, start, end, color, palette, time) {
 
 function drawPlanet(time, palette) {
   const kick = state.mode === "crash" ? Math.sin(crashTimer * 36) * crashTimer * 8 : 0;
-  OrbitArt.drawLivingPlanet(ctx,"bloom-crown",{x:cx+kick,y:cy,radius:planetRadius,paletteId:state.selected,time:time*(state.fever>0?1.8:1)});
+  const ember=state.runType==="campaign"&&state.levelId==="kindling"&&["run","crash","results"].includes(state.mode);
+  OrbitArt.drawLivingPlanet(ctx,ember?"ember-furnace":"bloom-crown",{x:cx+kick,y:cy,radius:planetRadius,paletteId:palette.id,time:time*(state.fever>0?1.8:1),reduced:state.reducedEffects});
 }
 
 function drawBiomeMarks(time, palette) {
@@ -1196,7 +1268,9 @@ function playerSpeed() { return Math.min(2.45, 1.66 + state.elapsed * 0.009); }
 function normalize(angle) { return (angle % TAU + TAU) % TAU; }
 function angleDistance(a, b) { return Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b))); }
 function currentCosmetic() {
-  return cosmetics.find((item) => item.id === state.selected) || cosmetics[0];
+  const chapterRun=state.runType==="campaign"&&["run","crash","results"].includes(state.mode);
+  const id=chapterRun ? currentCampaignLevel().biome : state.selected;
+  return cosmetics.find((item) => item.id === id) || cosmetics[0];
 }
 function currentRider() { return riders.find((item) => item.id === state.selectedRider) || riders[0]; }
 function colorAlpha(hex, alpha) { const value = parseInt(hex.slice(1), 16); return `rgba(${value >> 16},${value >> 8 & 255},${value & 255},${alpha})`; }
@@ -1249,36 +1323,50 @@ function hideScreens() { for (const screen of [ui.home, ui.campaign, ui.bloomCha
 
 function renderCampaignMap() {
   const rating = campaignLevels.reduce((total,level)=>total+(state.campaign.ratings[level.id]||0),0);
-  ui.campaignStars.textContent = `${rating}/12`;
-  ui.firstLightRating.textContent = `${state.campaign.completed.length}/4 restored`;
+  ui.campaignStars.textContent = `${rating}/${campaignLevels.length*3}`;
+  ui.firstLightRating.textContent = `${campaignLevels.filter(level=>level.biome==="bloom"&&state.campaign.completed.includes(level.id)).length}/4 restored`;
   const ember = ui.campaign.querySelector(".ember-island");
   const completed = state.campaign.completed.includes("first-light");
-  ember.classList.toggle("revealed", completed);
-  ember.querySelector("em").textContent = completed ? "Path revealed" : "Locked";
+  const unlocked=isLevelUnlocked("kindling");
+  ember.disabled=!unlocked;
+  ember.classList.toggle("locked",!unlocked);
+  ember.classList.toggle("revealed", unlocked);
+  ember.querySelector("em").textContent = unlocked ? `${state.campaign.ratings.kindling||0}/3 stars` : "Complete Bloom";
   window.OrbitArchipelago?.setCompleted(completed);
   window.OrbitArchipelago?.setRestoration(state.campaign.restoration);
+  window.OrbitArchipelago?.setEmberRestoration?.(state.campaign.emberRestoration);
 }
 
 function renderBloomChapter() {
-  const rating = campaignLevels.reduce((total,level)=>total+(state.campaign.ratings[level.id]||0),0);
-  ui.bloomProgress.textContent = `${rating}/12`;
-  ui.bloomStory.textContent = state.campaign.restoration >= 4 ? "The Bloom Crown shines in rhythm again." : campaignLevels[Math.min(state.campaign.unlockedLevel-1,3)].story;
+  const ember=state.chapter==="ember",levels=campaignLevels.filter(level=>level.biome===state.chapter);
+  const rating = levels.reduce((total,level)=>total+(state.campaign.ratings[level.id]||0),0);
+  ui.bloomChapter.dataset.biome=state.chapter;
+  ui.bloomChapter.querySelector(".eyebrow").textContent=ember?"Ember Chapter":"Bloom Chapter";
+  ui.bloomChapter.querySelector("h2").textContent=ember?"Light the Furnace":"Restore the Crown";
+  ui.bloomProgress.textContent = `${rating}/${levels.length*3}`;
+  ui.bloomStory.textContent = ember ? state.campaign.emberRestoration ? "A first flame breathes beneath the folded stone." : levels[0].story : state.campaign.restoration >= 4 ? "The Bloom Crown shines in rhythm again." : levels[Math.min(state.campaign.unlockedLevel-1,3)].story;
   ui.bloomLevels.innerHTML = "";
-  campaignLevels.forEach((level,index) => {
-    const unlocked = index < state.campaign.unlockedLevel;
+  const nodes=ember?[...levels,...["Cinder Step","Furnace Heart","Solar Forge"].map(name=>({name}))]:levels;
+  nodes.forEach((level,index) => {
+    const unlocked = isLevelUnlocked(level.id);
     const stars = state.campaign.ratings[level.id] || 0;
     const button = document.createElement("button");
     button.type = "button";
     button.className = `chapter-level${unlocked ? "" : " locked"}${stars ? " completed" : ""}`;
     button.disabled = !unlocked;
-    button.innerHTML = `<span>${String(index+1).padStart(2,"0")}</span><div><small>${level.duration} sec voyage</small><b>${level.name}</b><em>${unlocked ? `${"★".repeat(stars)}${"☆".repeat(3-stars)}` : "Locked"}</em></div>`;
+    button.innerHTML = `<span>${String(index+1).padStart(2,"0")}</span><div><small>${level.id?`${level.duration} sec voyage`:"Upcoming voyage"}</small><b>${level.name}</b><em>${!level.id?"Coming later":unlocked ? `${"★".repeat(stars)}${"☆".repeat(3-stars)}` : "Locked"}</em></div>`;
     button.addEventListener("click",()=>launchCampaignLevel(level.id,button));
     ui.bloomLevels.append(button);
   });
 }
 
+function openChapter(biome="bloom") {
+  if(biome!=="bloom"&&(biome!=="ember"||!isLevelUnlocked("kindling")))return;
+  state.chapter=biome;showScreen("bloomChapter");
+}
+
 function launchCampaignLevel(levelId,button) {
-  if (button?.disabled) return;
+  if (button?.disabled || !isLevelUnlocked(levelId)) return;
   button?.classList.add("launching");
   setTimeout(()=>{ button?.classList.remove("launching"); startRun("campaign",levelId); },180);
 }
@@ -1345,11 +1433,12 @@ function drawHomePreview(time) {
 
 function drawBloomChapterPreview(time) {
   if (ui.bloomChapter.hidden || !window.OrbitArt) return;
-  const frame=window.OrbitArt.helpers.prepare(ui.bloomChapterArt),target=frame.ctx,w=frame.width,h=frame.height,stage=state.campaign.restoration,palette=window.OrbitArt.palettes.bloom;
+  const ember=state.chapter==="ember";
+  const frame=window.OrbitArt.helpers.prepare(ui.bloomChapterArt),target=frame.ctx,w=frame.width,h=frame.height,stage=ember?state.campaign.emberRestoration:state.campaign.restoration,palette=window.OrbitArt.palettes[state.chapter];
   target.fillStyle=palette.bg;target.fillRect(0,0,w,h);window.OrbitArt.helpers.paperGrain(target,w,h,palette.light,.04);
-  window.OrbitArt.drawLivingPlanet(target,"bloom-crown",{x:w/2,y:h*.72,radius:Math.min(w*.25,h*.15),paletteId:"bloom",time});
+  window.OrbitArt.drawLivingPlanet(target,ember?"ember-furnace":"bloom-crown",{x:w/2,y:h*.72,radius:Math.min(w*.25,h*.15),paletteId:state.chapter,time,lit:stage>0,reduced:state.reducedEffects});
   target.save();target.translate(w/2,h*.72);target.lineWidth=2;
-  for(let ring=0;ring<stage;ring+=1){target.strokeStyle=colorAlpha(ring%2?"#edca62":"#77d5aa",.22+ring*.05);target.beginPath();target.ellipse(0,0,w*(.29+ring*.035),h*(.15+ring*.017),time*.015*(ring%2?1:-1),0,TAU);target.stroke();}
+  for(let ring=0;ring<stage;ring+=1){target.strokeStyle=colorAlpha(ember?palette.gold:ring%2?"#edca62":"#77d5aa",.22+ring*.05);target.beginPath();target.ellipse(0,0,w*(.29+ring*.035),h*(.15+ring*.017),time*.015*(ring%2?1:-1),0,TAU);target.stroke();}
   if(stage>=4){target.fillStyle="#edca62";for(let i=0;i<7;i+=1){const angle=i*TAU/7+time*.04,x=Math.cos(angle)*w*.4,y=Math.sin(angle)*h*.21;target.beginPath();target.moveTo(x,y-5);target.lineTo(x+4,y);target.lineTo(x,y+5);target.lineTo(x-4,y);target.closePath();target.fill();}}
   target.restore();
 }
@@ -1439,7 +1528,7 @@ function runSelfChecks() {
     for(let i=1;i<level.phases.length;i+=1) console.assert(level.phases[i-1].end===level.phases[i].start,`${level.name} phases must be contiguous`);
     let easy=0;
     for(const [index,elapsed] of level.gateTimes.entries()){
-      const phase=phaseAt(elapsed),plan=buildGatePlan({index,elapsed,angle:random()*TAU,direction:random()>.5?1:-1,angularSpeed:2,orbitRadius:150,shortSide:390,phase,orientationBias:level.orientationBias},random);
+      const phase=phaseAt(elapsed),kindling=level.id==="kindling",plan=buildGatePlan({index,elapsed,angle:random()*TAU,direction:random()>.5?1:-1,angularSpeed:2,orbitRadius:150,shortSide:390,phase,settings:level.motion,heat:level.heatGates?.includes(index+1),forceEasy:kindling&&index>=3&&index%2===1,orientationBias:level.orientationBias},random);
       easy+=Number(!isSideOpening(plan.target));
       console.assert(angleDistance(normalize(plan.gap+plan.rotation*plan.flight),plan.target)<.0001,`${level.name} gate must remain reachable`);
     }
@@ -1452,7 +1541,7 @@ function runSelfChecks() {
   console.assert(riders[0].id === "manta" && riders[0].price === 0, "Manta must remain the free default");
   console.assert(riders.slice(1).map((rider) => rider.price).join() === "40,100,200,350,550", "Garage prices must remain ordered");
   console.assert(trailStyles.length === 7 && state.goals.length === 3, "Progression must expose seven trails and three goals");
-  console.assert(SAVE_VERSION === 4 && state.campaign && campaignLevels.length === 4, "Campaign save migration must remain available");
+  console.assert(SAVE_VERSION === 5 && state.campaign && campaignLevels.length === 5, "Campaign save migration must remain available");
 }
 
 function frame(time) {
@@ -1471,11 +1560,11 @@ window.addEventListener("resize", resize);
 canvas.addEventListener("pointerdown", reverse);
 document.querySelector("#play").addEventListener("click", () => showScreen("campaign"));
 document.querySelector("#ascension").addEventListener("click", () => startRun("endless"));
-document.querySelector("[data-chapter='bloom']").addEventListener("click", () => { window.OrbitArchipelago?.pulse(); showScreen("bloomChapter"); });
+for(const button of document.querySelectorAll("[data-chapter]"))button.addEventListener("click",()=>{if(!button.disabled){window.OrbitArchipelago?.pulse();openChapter(button.dataset.chapter);}});
 document.querySelector("#retry").addEventListener("click", () => startRun(state.runType, state.levelId));
 document.querySelector("#openGarage").addEventListener("click", () => showScreen("garage"));
 document.querySelector("#openSettings").addEventListener("click", () => showScreen("settings"));
-ui.resultHome.addEventListener("click", () => showScreen(state.runType === "campaign" ? "bloomChapter" : "home"));
+ui.resultHome.addEventListener("click", () => state.runType === "campaign" ? openChapter(currentCampaignLevel().biome) : showScreen("home"));
 for (const button of document.querySelectorAll("[data-home]")) button.addEventListener("click", () => showScreen("home"));
 for (const button of document.querySelectorAll("[data-campaign]")) button.addEventListener("click", () => showScreen("campaign"));
 ui.sound.addEventListener("change", () => { state.muted = !ui.sound.checked; save(); });
@@ -1488,12 +1577,13 @@ ui.copyReport.addEventListener("click", async () => {
 });
 window.addEventListener("keydown", (event) => {
   if (event.repeat) return;
+  if(state.mode!=="run"&&event.target?.closest?.("button,input,select"))return;
   if (["Space", "ArrowLeft", "ArrowRight"].includes(event.code)) {
     event.preventDefault();
     if (state.mode === "run") reverse();
     else if (state.mode === "home") showScreen("campaign");
-    else if (state.mode === "campaign") showScreen("bloomChapter");
-    else if (state.mode === "bloomChapter") startRun("campaign", campaignLevels[Math.min(state.campaign.unlockedLevel-1,3)].id);
+    else if (state.mode === "campaign") openChapter();
+    else if (state.mode === "bloomChapter" && event.target===document.body) startRun("campaign", state.chapter==="ember"?"kindling":campaignLevels[Math.min(state.campaign.unlockedLevel-1,3)].id);
     else if (state.mode === "results") startRun(state.runType, state.levelId);
   }
 });
