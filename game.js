@@ -67,6 +67,17 @@ campaignLevels.push({
   fragmentTimes:[7,14,22,30,38,47],objectives:["Light the sleeping furnace","Collect 3 orbit fragments","Thread 2 perfect gates"],
   phases:[{id:"kindling-arrival",name:"Kindling",start:0,end:12,biome:1},{id:"kindling-heat",name:"First Heat",start:12,end:35,biome:1},{id:"kindling-rhythm",name:"Furnace Rhythm",start:35,end:60,biome:1},{id:"kindling-complete",name:"Furnace Lit",start:60,end:Infinity,biome:1}],
 });
+campaignLevels.push(
+  {id:"cinder-step",name:"Cinder Step",biome:"ember",duration:65,story:"The furnace answers in measured breaths.",perfectTarget:2,orientationBias:.64,warningStrength:.78,motion:[70,1.36,.16],
+    gateTimes:[2,7,12,18,23,29,34,40,45,51,56,61],perfectGates:[3,5,7,9,11],heatGates:[1,3,5,7,9,11],recoveryGates:[2,4,6,8,10,12],hazardTimes:[],fragmentTimes:[8,16,25,34,43,52],
+    objectives:["Temper the waking cinders","Collect 3 orbit fragments","Thread 2 perfect gates"],phases:[{id:"cinder-arrival",name:"Cinder Step",start:0,end:18,biome:1},{id:"cinder-breath",name:"Heat and Rest",start:18,end:65,biome:1},{id:"cinder-complete",name:"Cinders Steady",start:65,end:Infinity,biome:1}]},
+  {id:"furnace-heart",name:"Furnace Heart",biome:"ember",duration:70,story:"Turn with the furnace before its heart closes.",perfectTarget:3,orientationBias:.58,warningStrength:.84,motion:[72,1.35,.22],
+    gateTimes:[2,7,12,17,22,27,32,43,48,53,58,63],perfectGates:[3,6,8,10,12],heatGates:[2,3,5,6,8,10,11],recoveryGates:[1,4,7,9,12],hazardTimes:[38],fragmentTimes:[8,17,27,37,47,57],
+    objectives:["Reach the furnace heart","Collect 3 orbit fragments","Thread 3 perfect gates"],phases:[{id:"heart-entry",name:"Heart Entry",start:0,end:22,biome:1},{id:"heart-turn",name:"Rotating Heat",start:22,end:52,biome:1},{id:"heart-release",name:"Cooling Draft",start:52,end:70,biome:1},{id:"heart-complete",name:"Heart Tempered",start:70,end:Infinity,biome:1}]},
+  {id:"solar-forge",name:"Solar Forge",biome:"ember",duration:80,story:"The forge calls for one final, lucid orbit.",perfectTarget:3,orientationBias:.56,warningStrength:.9,motion:[72,1.35,.22],guardianMotion:[90,1.04,.22],
+    gateTimes:[2,7,12,17,22,27,32,37,42,47,52,57,61,65,69,73],perfectGates:[3,6,9,11,13,15],heatGates:[2,3,5,7,9,11,13,15],recoveryGates:[1,4,6,8,10,12],hazardTimes:[],fragmentTimes:[8,17,27,37,47,54],
+    objectives:["Answer the solar forge","Collect 3 orbit fragments","Thread 3 perfect gates"],phases:[{id:"solar-approach",name:"Solar Approach",start:0,end:28,biome:1},{id:"solar-temper",name:"Tempered Light",start:28,end:56,biome:1},{id:"solar-forge-guardian",name:"Solar Forge",start:56,end:80,biome:1,guardian:true,target:3},{id:"solar-complete",name:"Forge Awakened",start:80,end:Infinity,biome:1}]}
+);
 const phases = [
   { id: "bloom", name: "Bloom", start: 0, end: 25, biome: 0 },
   { id: "petal", name: "Petal Crown", start: 25, end: 33, biome: 0, guardian: true, target: 3 },
@@ -90,7 +101,8 @@ const initialGoals = saved.goals || Object.keys(goalSets).map((category) => make
 const initialStats = saved.stats || { sessions: 0, runs: 0, totalMs: 0, longestMs: 0, deaths: { gate: 0, hazard: 0 }, acts: [0,0,0], guardians: 0, goals: 0, dates: [] };
 const savedCampaign=saved.campaign||{},completedCampaign=Array.isArray(savedCampaign.completed)?savedCampaign.completed:[];
 const bloomCompleted=campaignLevels.filter(level=>level.biome==="bloom"&&completedCampaign.includes(level.id));
-const initialCampaign={completed:completedCampaign,ratings:savedCampaign.ratings||{},fragments:savedCampaign.fragments||{},rewards:savedCampaign.rewards||[],unlockedLevel:Math.min(4,Math.max(Number(savedCampaign.unlockedLevel)||1,completedCampaign.includes("first-light")?2:1)),restoration:Math.min(4,Math.max(Number(savedCampaign.restoration)||0,bloomCompleted.length)),emberRestoration:completedCampaign.includes("kindling")?1:0};
+const emberCompleted=campaignLevels.filter(level=>level.biome==="ember"&&completedCampaign.includes(level.id));
+const initialCampaign={completed:completedCampaign,ratings:savedCampaign.ratings||{},fragments:savedCampaign.fragments||{},rewards:savedCampaign.rewards||[],unlockedLevel:Math.min(4,Math.max(Number(savedCampaign.unlockedLevel)||1,completedCampaign.includes("first-light")?2:1)),restoration:Math.min(4,Math.max(Number(savedCampaign.restoration)||0,bloomCompleted.length)),emberRestoration:Math.min(4,emberCompleted.length)};
 const state = {
   mode: "home", score: 0, multiplier: 1, streak: 0, runBestStreak: 0, fever: 0, feverCharge: 0,
   best: saved.best || 0, bestStreak: saved.bestStreak || 0,
@@ -328,7 +340,7 @@ function finishRun() {
       if(level.biome==="bloom"){
         state.campaign.unlockedLevel=Math.max(state.campaign.unlockedLevel,Math.min(4,levelIndex+2));
         state.campaign.restoration=Math.max(state.campaign.restoration,levelIndex+1);
-      }else state.campaign.emberRestoration=1;
+      }else state.campaign.emberRestoration=Math.min(4,campaignLevels.filter(item=>item.biome==="ember"&&state.campaign.completed.includes(item.id)).length);
     }
     state.campaign.ratings[state.levelId] = Math.max(state.campaign.ratings[state.levelId] || 0, campaignRating);
     state.campaign.fragments[state.levelId] = Math.max(state.campaign.fragments[state.levelId] || 0, state.runFragments);
@@ -399,7 +411,9 @@ function currentCampaignLevel() { return campaignLevels.find(level=>level.id===s
 function isLevelUnlocked(id) {
   const level=campaignLevels.find(item=>item.id===id);
   if(!level)return false;
-  return level.biome==="ember" ? state.campaign.completed.includes("crown-of-petals") : campaignLevels.indexOf(level)<state.campaign.unlockedLevel;
+  if(level.biome!=="ember")return campaignLevels.indexOf(level)<state.campaign.unlockedLevel;
+  const emberLevels=campaignLevels.filter(item=>item.biome==="ember"),index=emberLevels.indexOf(level);
+  return index===0 ? state.campaign.completed.includes("crown-of-petals") : state.campaign.completed.includes(emberLevels[index-1].id);
 }
 function activePhases() { return state.runType === "campaign" ? currentCampaignLevel().phases : phases; }
 function phaseAt(elapsed) { const list = activePhases(); return list.find((phase) => elapsed >= phase.start && elapsed < phase.end) || list[list.length - 1]; }
@@ -519,14 +533,14 @@ function buildGatePlan(snapshot, random = Math.random) {
   const earlyOpenings = [1.66, 1.5, 1.38];
   const phase = snapshot.phase || phaseAt(snapshot.elapsed);
   let speed = snapshot.index < 3 ? earlySpeeds[snapshot.index] : Math.min(108, 68 + snapshot.elapsed * 0.42);
-  if (phase.id === "ember" || phase.id === "forge") speed *= 1.08;
+  if (phase.id === "ember" || phase.id === "forge" || phase.id === "solar-forge-guardian") speed *= 1.08;
   if (phase.id === "void" || phase.id === "eclipse") speed *= .96;
   if (phase.guardian) speed = Math.max(speed, phase.id === "forge" ? 98 : 90);
   let rotationLimit = snapshot.index < 3 ? 0.12 : Math.min(0.54, 0.16 + snapshot.elapsed * 0.004);
-  if (phase.id === "ember" || phase.id === "forge") rotationLimit *= 1.25;
+  if (phase.id === "ember" || phase.id === "forge" || phase.id === "solar-forge-guardian") rotationLimit *= 1.25;
   if (phase.id === "void" || phase.id === "eclipse") rotationLimit *= .72;
   let opening = snapshot.index < 3 ? earlyOpenings[snapshot.index] : Math.max(0.88, 1.34 - snapshot.elapsed * 0.0046);
-  if (phase.guardian) opening = phase.id === "forge" ? 1.04 : 1.12;
+  if (phase.guardian) opening = phase.id === "forge" || phase.id === "solar-forge-guardian" ? 1.04 : 1.12;
   if(snapshot.settings){[speed,opening,rotationLimit]=snapshot.settings;}
   if (snapshot.forceEasy) {
     opening=Math.max(opening,1.58);
@@ -551,12 +565,12 @@ function spawnGate() {
   const phase = phaseAt(state.elapsed);
   if (phase.transition) return false;
   const level = state.runType === "campaign" ? currentCampaignLevel() : null;
-  const kindling=level?.id==="kindling",number=gateCount+1;
+  const kindling=level?.id==="kindling",ember=level?.biome==="ember",number=gateCount+1;
   const heat=Boolean(level?.heatGates?.includes(number));
-  const forceEasy = (recoveryGate || kindling&&number>=4&&number%2===0) && !phase.guardian;
+  const forceEasy = (recoveryGate || level?.recoveryGates?.includes(number) || kindling&&number>=4&&number%2===0) && !phase.guardian;
   const campaignPair=level?.id==="crown-of-petals"&&!phase.guardian&&gateCount+1>5&&(gateCount+1)%5===0;
-  const paired=(phase.id==="forge"||campaignPair||!level&&state.elapsed>103&&Math.random()<.24)&&gates.filter(g=>!g.resolved).length<2;
-  const settings=level ? (phase.guardian?[72,1.18,.24]:kindling&&number<=2?[62,1.75,0]:kindling&&forceEasy?[62,1.75,.08]:level.motion) : null;
+  const paired=(phase.id==="forge"||phase.id==="solar-forge-guardian"||campaignPair||!level&&state.elapsed>103&&Math.random()<.24)&&gates.filter(g=>!g.resolved).length<2;
+  const settings=level ? (phase.guardian?(level.guardianMotion||[72,1.18,.24]):kindling&&number<=2?[62,1.75,0]:kindling&&forceEasy?[62,1.75,.08]:ember&&forceEasy?[Math.min(72,level.motion[0]),1.62,.08]:level.motion) : null;
   const plan = buildGatePlan({
     ...planningSnapshot(),settings,heat,pairSpacing:paired?58:0,
     index: gateCount, elapsed: state.elapsed, angle: player.angle, direction: player.direction,
@@ -566,7 +580,7 @@ function spawnGate() {
   if(!plan)return false;
   plannedTurns=plan.turns.map(t=>t+state.elapsed);
   const gate = {
-    ...plan, previousRadius: plan.radius, resolved: false, type: kindling?1:gateCount % 4,
+    ...plan, previousRadius: plan.radius, resolved: false, type: ember?1:gateCount % 4,
     palette: gateCount % 3, pair: false, guardian: Boolean(phase.guardian), guardianId: phase.id,
     sideOpening:isSideOpening(plan.target),warningStrength:level?.warningStrength || 0,recovery:forceEasy,
   };
@@ -900,7 +914,7 @@ function drawBackground(time, palette) {
 }
 
 function drawBloomScenery(time, palette) {
-  if(state.runType==="campaign"&&state.levelId==="kindling"&&["run","crash","awakening","results"].includes(state.mode)){drawEmberScenery(time,palette);return;}
+  if(state.runType==="campaign"&&currentCampaignLevel().biome==="ember"&&["run","crash","awakening","results"].includes(state.mode)){drawEmberScenery(time,palette);return;}
   ctx.save();
   for (let layer = 0; layer < 3; layer += 1) {
     ctx.globalAlpha = .09 + layer * .035;
@@ -1014,7 +1028,7 @@ function drawGates(time, palette) {
   for (const gate of gates) {
     const alpha = gate.resolved ? 0.3 : Math.min(1, (orbitRadius + 210 - gate.radius) / 145 + 0.16);
     const colors = [palette.paper, palette.accent, palette.gold];
-    const color = state.runType==="campaign"&&state.levelId==="kindling" ? gate.heat?palette.mid:palette.paper : colors[gate.palette];
+    const color = state.runType==="campaign"&&currentCampaignLevel().biome==="ember" ? gate.heat?palette.mid:palette.paper : colors[gate.palette];
     const half = gate.opening / 2;
     const start = gate.gap + half;
     const end = gate.gap + TAU - half;
@@ -1093,12 +1107,12 @@ function drawGuardianAura(time, palette) {
   const phase = phaseAt(state.elapsed);
   if (!phase.guardian || state.mode !== "run") return;
   if (phase.id === "budkeeper") { drawBudkeeper(time, palette); return; }
-  const count = phase.id === "forge" ? 4 : phase.id === "eclipse" ? 2 : 8;
+  const count = phase.id === "forge" || phase.id === "solar-forge-guardian" ? 4 : phase.id === "eclipse" ? 2 : 8;
   ctx.save(); ctx.globalAlpha = .32; ctx.strokeStyle = palette.accent; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(cx, cy, planetRadius + 18 + Math.sin(time * 4) * 3, 0, TAU); ctx.stroke();
   ctx.fillStyle = phase.id === "eclipse" ? palette.ink : palette.gold;
   for (let i=0;i<count;i+=1) {
-    const angle=time*(phase.id === "forge" ? 1.4 : .45)+i*TAU/count;
+    const angle=time*(phase.id === "forge" || phase.id === "solar-forge-guardian" ? 1.4 : .45)+i*TAU/count;
     paperDiamond(cx+Math.cos(angle)*(planetRadius+20),cy+Math.sin(angle)*(planetRadius+20),phase.id === "eclipse" ? 9 : 5,angle);
   }
   ctx.restore();
@@ -1125,7 +1139,7 @@ function drawGateDetails(gate, start, end, color, palette, time) {
       ctx.fillStyle = angle % .72 < .36 ? palette.accent : palette.gold;
       ctx.beginPath(); ctx.moveTo(-6,12); ctx.quadraticCurveTo(0,1,6,12); ctx.quadraticCurveTo(0,19,-6,12); ctx.fill();
       ctx.fillStyle=palette.light;ctx.beginPath();ctx.arc(0,11,2.2,0,TAU);ctx.fill();
-    } else if (state.runType === "campaign" && state.levelId==="kindling") {
+    } else if (state.runType === "campaign" && currentCampaignLevel().biome==="ember") {
       ctx.fillStyle=palette.paper;ctx.beginPath();ctx.moveTo(-5,3);ctx.lineTo(-1,15);ctx.lineTo(5,8);ctx.lineTo(2,1);ctx.closePath();ctx.fill();
       ctx.strokeStyle=palette.light;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-1,4);ctx.lineTo(1,10);ctx.stroke();
     } else if (state.runType === "campaign" && !gate.guardian) {
@@ -1151,7 +1165,7 @@ function drawGateDetails(gate, start, end, color, palette, time) {
 
 function drawPlanet(time, palette) {
   const kick = state.mode === "crash" ? Math.sin(crashTimer * 36) * crashTimer * 8 : 0;
-  const ember=state.runType==="campaign"&&state.levelId==="kindling"&&["run","crash","awakening","results"].includes(state.mode);
+  const ember=state.runType==="campaign"&&currentCampaignLevel().biome==="ember"&&["run","crash","awakening","results"].includes(state.mode);
   OrbitArt.drawLivingPlanet(ctx,ember?"ember-furnace":"bloom-crown",{x:cx+kick,y:cy,radius:planetRadius,paletteId:palette.id,time:time*(state.fever>0?1.8:1),reduced:state.reducedEffects});
 }
 
@@ -1402,7 +1416,7 @@ function renderCampaignMap() {
   ember.disabled=!unlocked;
   ember.classList.toggle("locked",!unlocked);
   ember.classList.toggle("revealed", unlocked);
-  ember.querySelector("em").textContent = unlocked ? `${state.campaign.ratings.kindling||0}/3 stars` : "Complete Bloom";
+  ember.querySelector("em").textContent = unlocked ? `${campaignLevels.filter(level=>level.biome==="ember").reduce((total,level)=>total+(state.campaign.ratings[level.id]||0),0)}/12 stars` : "Complete Bloom";
   window.OrbitArchipelago?.setCompleted(completed);
   window.OrbitArchipelago?.setRestoration(state.campaign.restoration);
   window.OrbitArchipelago?.setEmberRestoration?.(state.campaign.emberRestoration);
@@ -1417,7 +1431,7 @@ function renderBloomChapter() {
   ui.bloomProgress.textContent = `${rating}/${levels.length*3}`;
   ui.bloomStory.textContent = ember ? state.campaign.emberRestoration ? "A first flame breathes beneath the folded stone." : levels[0].story : state.campaign.restoration >= 4 ? "The Bloom Crown shines in rhythm again." : levels[Math.min(state.campaign.unlockedLevel-1,3)].story;
   ui.bloomLevels.innerHTML = "";
-  const nodes=ember?[...levels,...["Cinder Step","Furnace Heart","Solar Forge"].map(name=>({name}))]:levels;
+  const nodes=levels;
   nodes.forEach((level,index) => {
     const unlocked = isLevelUnlocked(level.id);
     const stars = state.campaign.ratings[level.id] || 0;
@@ -1425,7 +1439,7 @@ function renderBloomChapter() {
     button.type = "button";
     button.className = `chapter-level${unlocked ? "" : " locked"}${stars ? " completed" : ""}`;
     button.disabled = !unlocked;
-    button.innerHTML = `<span>${String(index+1).padStart(2,"0")}</span><div><small>${level.id?`${level.duration} sec voyage`:"Upcoming voyage"}</small><b>${level.name}</b><em>${!level.id?"Coming later":unlocked ? `${"★".repeat(stars)}${"☆".repeat(3-stars)}` : "Locked"}</em></div>`;
+    button.innerHTML = `<span>${String(index+1).padStart(2,"0")}</span><div><small>${level.duration} sec voyage</small><b>${level.name}</b><em>${unlocked ? `${"★".repeat(stars)}${"☆".repeat(3-stars)}` : "Locked"}</em></div>`;
     button.addEventListener("click",()=>launchCampaignLevel(level.id,button));
     ui.bloomLevels.append(button);
   });
@@ -1612,7 +1626,7 @@ function runSelfChecks() {
   console.assert(riders[0].id === "manta" && riders[0].price === 0, "Manta must remain the free default");
   console.assert(riders.slice(1).map((rider) => rider.price).join() === "40,100,200,350,550", "Garage prices must remain ordered");
   console.assert(trailStyles.length === 7 && state.goals.length === 3, "Progression must expose seven trails and three goals");
-  console.assert(SAVE_VERSION === 5 && state.campaign && campaignLevels.length === 5, "Campaign save migration must remain available");
+  console.assert(SAVE_VERSION === 5 && state.campaign && campaignLevels.length === 8, "Campaign save migration must remain available");
 }
 
 function frame(time) {
