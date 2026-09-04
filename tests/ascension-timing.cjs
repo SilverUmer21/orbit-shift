@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
+const logicalWidth=Number(process.argv[3])||390,logicalHeight={320:568,390:844,430:932}[logicalWidth]||844;
 
 // Run the real game loop without a browser or persistent player data.
 let mapActive = true;
@@ -9,8 +10,8 @@ let seed = Number(process.argv[2]) || 73;
 const math = Object.create(Math);
 math.random = () => (seed = seed * 16807 % 2147483647) / 2147483647;
 const context = new Proxy({}, { get: (_, key) => key === 'createRadialGradient' ? () => ({ addColorStop() {} }) : () => {} });
-const element = () => ({ clientWidth: 390, clientHeight: 844, width: 390, height: 844,
-  hidden: true, style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {} },
+const element = () => ({ clientWidth: logicalWidth, clientHeight: logicalHeight, width: logicalWidth, height: logicalHeight,
+  hidden: true, dataset:{}, style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {} },
   getContext: () => context, setAttribute() {}, addEventListener() {}, append() {}, querySelector: () => element() });
 const elements = new Map();
 const sandbox = { console: { ...console, assert: (ok,message) => assert.ok(ok,message) }, Math: math, performance: { now: () => 1000 }, devicePixelRatio: 1,
@@ -18,7 +19,7 @@ const sandbox = { console: { ...console, assert: (ok,message) => assert.ok(ok,me
     querySelectorAll: () => [], createElement: element, addEventListener() {} },
   window: { addEventListener() {}, OrbitArchipelago: { setActive(value) { mapActive = value; } },
     OrbitArt: { drawLivingPlanet() {} } },
-  localStorage: { getItem: () => '{"muted":true,"tutorialSeen":true}', setItem() {} },
+  localStorage: { getItem: () => '{"muted":true,"tutorialSeen":true,"campaign":{"completed":["crown-of-petals"],"unlockedLevel":4,"restoration":4}}', setItem() {} },
   navigator: {}, requestAnimationFrame() {}, setTimeout() {}, setInterval() {}, clearInterval() {}, assert };
 sandbox.OrbitArt = sandbox.window.OrbitArt;
 vm.createContext(sandbox);
@@ -48,9 +49,9 @@ vm.runInContext(`
   frame(lastTime+5000);
   assert.ok(state.elapsed-pausedAt<=.100001,'Long gaps must not cause a multi-second jump');
 `, sandbox);
-console.log('PASS: map suspension, 120-second Ascension at 20/30/60/120 FPS, particle cap, continuous perfect movement, pause and bounded catch-up');
+console.log('PASS: '+logicalWidth+'x'+logicalHeight+' map suspension, 120-second Ascension at 20/30/60/120 FPS, particle cap, continuous perfect movement, pause and bounded catch-up');
 vm.runInContext(`
-  assert.deepEqual(Array.from(campaignLevels,l=>l.perfectTarget),[2,2,3,3]);
+  assert.deepEqual(Array.from(campaignLevels,l=>l.perfectTarget),[2,2,3,3,2]);
   for(const level of campaignLevels)assert.equal(level.fragmentTimes.length,6);
   for(const elapsed of [0,30,87,110])for(const fever of [0,.4,6])for(const spacing of [0,58]){
     const snapshot={index:8,elapsed,fever,angle:1,direction:-1,orbitRadius:150,shortSide:390,pairSpacing:spacing,settings:[72,1.18,.24],phase:phases[0]};
@@ -69,7 +70,7 @@ vm.runInContext(`
   assert.equal(sweptPickup({x:-100,y:0},{x:100,y:0},{x:0,y:0},{x:0,y:0},48),true);
   assert.equal(sweptPickup({x:-100,y:49},{x:100,y:49},{x:0,y:0},{x:0,y:0},48),false);
   startRun('campaign','first-light');
-  for(const offset of [60,-30]){
+  for(const offset of [Math.max(48,Math.min(68,orbitRadius*.44))-2,-30]){
     fragments=[{angle:player.angle,radius:orbitRadius+offset,speed:64,spin:0,collected:false}];
     const before=state.runFragments;
     updateFragments(.016,1,playerPoint());
@@ -102,6 +103,74 @@ vm.createContext(legacy);vm.runInContext(fs.readFileSync(path.join(__dirname,'..
 vm.runInContext("assert.equal(state.stars,123);assert.equal(state.best,800);assert.equal(state.selectedRider,'dart');assert.equal(state.campaign.ratings['first-light'],3);assert.equal(state.campaign.unlockedLevel,2);",legacy);
 console.log('PASS: pickup boundaries, duplicate guards, generous gates, fever charge, shields, excess-fragment rewards, legacy saves');
 vm.runInContext(`
+  assert.equal(SAVE_VERSION,5);
+  const oldCompleted=state.campaign.completed.slice(),oldUnlock=state.campaign.unlockedLevel;
+  state.campaign.completed=[];state.campaign.unlockedLevel=1;
+  const runsBefore=state.stats.runs;
+  assert.equal(startRun('campaign','kindling'),false);assert.equal(startRun('campaign','missing'),false);
+  assert.equal(startRun('campaign','crown-of-petals'),false);assert.equal(state.stats.runs,runsBefore,'Locked launches cannot record runs');
+  state.campaign.completed=oldCompleted;state.campaign.unlockedLevel=oldUnlock;
+  state.selected='void';startRun('campaign','kindling');assert.equal(currentCosmetic().id,'ember');assert.equal(state.selected,'void');
+  const bloomStage=state.campaign.restoration;
+  state.levelComplete=true;state.runFragments=6;state.perfects=2;finishRun();
+  assert.equal(state.campaign.ratings.kindling,3);assert.equal(state.campaign.emberRestoration,1);assert.equal(state.campaign.restoration,bloomStage);
+  assert.equal(state.runStars,15);assert.equal(ui.resultHome.textContent,'Ember Chapter');
+  startRun('campaign','kindling');state.levelComplete=true;finishRun();assert.equal(state.runStars,0,'First clear reward is not repeated');
+  assert.equal(state.campaign.ratings.kindling,3,'Lower replay rating cannot erase a best rating');
+  showScreen('home');assert.equal(currentCosmetic().id,'void');assert.equal(state.selected,'void');
+  for(const age of [0,.59,.6,1.19,1.2,1.4,1.6,2])for(const distance of [1,40,200]){
+    const gate={speed:62,heat:true,age},duration=gateTravelTime(gate,distance);
+    assert.ok(Math.abs(gateDistance(gate,duration)-distance)<.00001,'Heat integral and inverse agree at every boundary');
+  }
+  assert.ok(Math.abs(heatTravel(1.2)-.9)<1e-9);assert.ok(Math.abs(heatTravel(1.6)-1.3)<1e-9);
+  for(const age of [0,.8,1.35,2])for(const fever of [0,.2,1,6]){
+    const gate={speed:62,heat:true,age},world=gateTravelTime(gate,180),flight=crossingTime(world,fever);
+    let advanced=0,worldAdvanced=0;
+    while(advanced<flight-1e-9){const dt=Math.min(1/120,flight-advanced);worldAdvanced+=worldTravel(dt,Math.max(0,fever-advanced));advanced+=dt;}
+    assert.ok(Math.abs(gateDistance(gate,worldAdvanced)-180)<.00001,'Fever expiration preserves pulse crossing');
+  }
+`,sandbox);
+for(const completed of [[],['first-light'],['first-light','pollen-path','tangled-orbit','crown-of-petals']]){
+  let written;
+  const fixture={version:4,best:800,stars:123,ownedRiders:['manta','dart'],selectedRider:'dart',selected:'void',unlocked:['bloom','ember','void'],muted:true,haptics:false,reducedEffects:true,tutorialSeen:true,stats:{sessions:3,runs:8,totalMs:1000,longestMs:1000,deaths:{gate:2,hazard:1},acts:[2,1,0],guardians:1,goals:2,dates:[]},campaign:{completed,ratings:{'first-light':3},fragments:{'first-light':6},rewards:['bloom-wake'],restoration:completed.length,unlockedLevel:Math.min(4,completed.length+1)}};
+  const migration={...sandbox,localStorage:{getItem:()=>JSON.stringify(fixture),setItem:(key,value)=>{written=JSON.parse(value);}}};
+  vm.createContext(migration);vm.runInContext(fs.readFileSync(path.join(__dirname,'..','game.js'),'utf8'),migration);
+  assert.equal(written.version,5);assert.equal(written.stars,123);assert.equal(written.selected,'void');assert.equal(written.selectedRider,'dart');assert.equal(written.haptics,false);assert.equal(written.reducedEffects,true);assert.equal(written.stats.runs,8);assert.deepEqual(written.campaign.completed,completed);assert.equal(written.campaign.fragments['first-light'],6);
+  assert.equal(vm.runInContext('isLevelUnlocked("kindling")',migration),completed.includes('crown-of-petals'));
+}
+console.log('PASS: Kindling access, chapter rewards, palette restoration, v4 migration, heat integral and fever boundaries');
+vm.runInContext(`
+  performance.now=()=>1000+state.elapsed*1000;
+  for(const fps of [20,30,60,120])for(const feverAt of [6.9,12.8]){
+    startRun('campaign','kindling');let activated=false,steps=0;
+    const spawned=[],actualSpawn=spawnGate;
+    spawnGate=()=>{const before=gates.length,ok=actualSpawn();if(ok)spawned.push({...gates[before]});return ok;};
+    while(state.mode==='run'&&state.elapsed<60-1e-8){
+      if(!activated&&state.elapsed>=feverAt-1e-8){
+        for(let i=0;i<5;i++)resolveGate({gap:player.angle+.44,opening:1.2});
+        assert.equal(state.fever,6);activated=true;
+        const snapshot=planningSnapshot(),horizon=Math.max(0,...snapshot.constraints.map(g=>g.time));
+        const route=findRoute(snapshot,horizon,horizon,undefined);
+        assert.ok(route,'Existing gates remain reachable when fever starts');
+        plannedTurns=route.turns.map(t=>t+state.elapsed);
+      }
+      while(plannedTurns.length&&plannedTurns[0]<=state.elapsed+1e-8){plannedTurns.shift();reverse();}
+      const nextTurn=plannedTurns.length?plannedTurns[0]-state.elapsed:Infinity;
+      const dt=Math.min(1/fps,1/60,nextTurn,activated?Infinity:feverAt-state.elapsed,60-state.elapsed);
+      if(dt>1e-9)update(dt);
+      assert.ok(++steps<20000,'Fever scenario must advance');
+    }
+    spawnGate=actualSpawn;
+    assert.equal(state.mode,'results');assert.equal(state.levelComplete,true);
+    assert.equal(state.shield,true,'Planned route must not rely on its shield');
+    assert.equal(state.fever,0);assert.equal(campaignGateIndex,10);assert.equal(campaignFragmentIndex,6);assert.ok(state.runFragments>=3);
+    assert.deepEqual(Array.from(spawned,(g,i)=>g.heat?i+1:null).filter(Boolean),[3,5,7,9]);
+    for(const index of [3,5,7,9]){assert.equal(spawned[index].heat,false);assert.equal(spawned[index].sideOpening,false);assert.ok(spawned[index].opening>=1.75);}
+    assert.ok(spawned.every(g=>!g.pair&&!g.guardian));
+  }
+`,sandbox);
+console.log('PASS: complete Kindling routes with fever starting/expiring during heat pulses at all four frame rates');
+vm.runInContext(`
   performance.now=()=>1000+state.elapsed*1000;
   const actualCrash=beginCrash;
   beginCrash=(cause)=>{if(state.mode==='run'&&!state.shield&&state.invulnerable<=0)console.log('Route collision',JSON.stringify({cause,time:state.elapsed,angle:player.angle,turns:plannedTurns,fever:state.fever,hazards:hazards.map(h=>({age:h.age,angle:h.angle,distance:angleDistance(h.angle,player.angle)})),gates:gates.filter(g=>!g.resolved).map(g=>({radius:g.radius,angle:g.gap,opening:g.opening}))}));actualCrash(cause);};
@@ -124,6 +193,7 @@ vm.runInContext(`
     assert.notEqual(state.mode,'crash',(level?.id||'endless')+' planned route collided at '+state.elapsed+' ('+fps+' FPS)');
     assert.ok(state.elapsed>=duration-.01,'Planned route must finish');
     if(level){assert.equal(campaignFragmentIndex,6,level.id+' must offer six pickups');assert.ok(state.runFragments>=3,level.id+' planned route must meet pickup target');assert.equal(campaignHazardIndex,level.hazardTimes.length,'Deferred hazard must eventually spawn');}
+    if(level?.id==='kindling'){assert.equal(campaignGateIndex,10);assert.equal(state.gatesPassed,10,'All Kindling gates must clear before completion');}
     simulationResults.push({level:level?.id||'endless',fps,gates:state.gatesPassed,fragments:state.runFragments});
   }
   console.log(JSON.stringify(simulationResults));
