@@ -11,6 +11,8 @@ const ui = {
   cosmetics: document.querySelector("#cosmetics"), riderGrid: document.querySelector("#riderGrid"),
   homeBest: document.querySelector("#homeBest"), homeStars: document.querySelector("#homeStars"), garageStars: document.querySelector("#garageStars"),
   resultStars: document.querySelector("#resultStars"), preview: document.querySelector("#riderPreview"),
+  tutorialPanel: document.querySelector("#tutorialPanel"), tutorialStep: document.querySelector("#tutorialStep"), tutorialCopy: document.querySelector("#tutorialCopy"), skipTutorial: document.querySelector("#skipTutorial"), replayTutorial: document.querySelector("#replayTutorial"),
+  rewardSeal: document.querySelector("#rewardSeal"), rewardPreview: document.querySelector("#rewardPreview"), rewardName: document.querySelector("#rewardName"), rewardChoices: document.querySelector("#rewardChoices"), continueRewards: document.querySelector("#continueRewards"), resultRating: document.querySelector("#resultRating"),
   sound: document.querySelector("#soundToggle"), haptics: document.querySelector("#hapticsToggle"), effects: document.querySelector("#effectsToggle"),
   shield: document.querySelector("#shield"), actLabel: document.querySelector("#actLabel"),
   campaignRun: document.querySelector("#campaignRun"), fragmentCount: document.querySelector("#fragmentCount"), perfectCount: document.querySelector("#perfectCount"),
@@ -110,6 +112,7 @@ const state = {
   stars: Number(saved.stars) || 0, runStars: 0, gatesPassed: 0, perfects: 0, feverCount: 0,
   ownedRiders: saved.ownedRiders || ["manta"], selectedRider: saved.selectedRider || "manta",
   shield: false, shieldEarned: false, invulnerable: 0, phaseId: "", guardianPassed: 0, runGoalRewards: [],
+  runRewards: [],
   runActMax: 0,
   goals: initialGoals, goalCycle, goalsCompleted: Number(saved.goalsCompleted) || 0,
   unlockedTrails: saved.unlockedTrails || ["paper"], selectedTrail: saved.selectedTrail || "paper", relics: saved.relics || [],
@@ -156,6 +159,10 @@ let audio;
 let musicTimer = 0;
 let musicStep = 0;
 let awakening = null;
+let tutorialSession = null;
+let purchasePreview = null;
+let rewardAnimation = null;
+let rewardIndex = 0;
 
 const today = new Date().toISOString().slice(0, 10);
 state.stats.sessions += 1;
@@ -208,6 +215,8 @@ function resize() {
 
 function startRun(runType = "endless", levelId = null) {
   if(runType==="campaign"&&!isLevelUnlocked(levelId))return false;
+  tutorialSession = null; rewardAnimation = null;
+  ui.tutorialPanel.hidden = true;
   window.OrbitArchipelago?.setActive(false);
   state.mode = "run";
   state.runType = runType;
@@ -232,7 +241,8 @@ function startRun(runType = "endless", levelId = null) {
   state.guardianPassed = 0;
   state.runActMax = 0;
   state.runGoalRewards = [];
-  state.stats.runs += 1;
+  state.runRewards = [];
+  if (runType !== "tutorial") state.stats.runs += 1;
   state.paused = false;
   player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0 };
   gates = [];
@@ -252,7 +262,7 @@ function startRun(runType = "endless", levelId = null) {
   nextFragment = 0;
   campaignHazardIndex = 0;
   recoveryGate = false;
-  tutorial = state.tutorialSeen ? 0 : 4.5;
+  tutorial = 0;
   crashTimer = 0;
   awakening = null;
   lastReverse = 0;
@@ -264,10 +274,56 @@ function startRun(runType = "endless", levelId = null) {
   ui.shell.classList.remove("crashing");
   lastTime = performance.now();
   updateHud();
-  updateJourney(true);
+  if (runType !== "tutorial") updateJourney(true);
   startMusic();
   beep(360, 0.07, "triangle");
   vibrate(12);
+}
+
+const tutorialSteps = [
+  { copy: "Tap to reverse direction", kind: "reverse" },
+  { copy: "Pass through the wide gate", kind: "pass" },
+  { copy: "Collect the orbit fragment", kind: "fragment" },
+  { copy: "Thread the marked perfect", kind: "perfect" },
+];
+
+function startTutorial() {
+  startRun("tutorial");
+  tutorialSession = { step: 0, elapsed: 0 };
+  setupTutorialStep();
+}
+
+function setupTutorialStep() {
+  const session = tutorialSession;
+  if (!session) return;
+  session.elapsed = 0; gates = []; fragments = []; hazards = []; trail = []; particles = []; labels = [];
+  const step = tutorialSteps[session.step];
+  ui.tutorialPanel.hidden = false;
+  ui.tutorialStep.textContent = `Practice ${session.step + 1}/4`;
+  ui.tutorialCopy.textContent = step.copy;
+  if (step.kind === "pass" || step.kind === "perfect") {
+    const travel = 150 / 80, opening = step.kind === "pass" ? 2.25 : 1.6;
+    const target = player.angle + player.direction * orbitalTravel(0, travel);
+    gates.push({ radius: orbitRadius + 150, previousRadius: orbitRadius + 150, speed: 80, age: 0, gap: normalize(target + (step.kind === "perfect" ? opening/2-.105-.12 : 0)), opening, rotation: 0, generous: step.kind === "perfect", palette: 0, type: 0, tutorialKind: step.kind });
+  }
+  if (step.kind === "fragment") fragments.push({ radius: orbitRadius + 130, speed: 120, angle: normalize(player.angle + player.direction * .85), spin: 0, collected: false, tutorial: true });
+}
+
+function advanceTutorial() {
+  if (!tutorialSession) return;
+  tutorialSession.step += 1;
+  if (tutorialSession.step < tutorialSteps.length) { setupTutorialStep(); beep(680, .08, "triangle"); return; }
+  state.tutorialSeen = true; save(); tutorialSession = null; ui.tutorialPanel.hidden = true; ui.shell.classList.remove("playing"); stopMusic(); showScreen("campaign");
+}
+
+function resetTutorialStep() {
+  if (!tutorialSession) return;
+  player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0 };
+  setupTutorialStep(); labels.push({ text: "TRY AGAIN", life: .8, max: .8, y: cy - orbitRadius - 28 });
+}
+
+function skipTutorial() {
+  state.tutorialSeen = true; save(); tutorialSession = null; ui.tutorialPanel.hidden = true; ui.shell.classList.remove("playing"); stopMusic(); showScreen("campaign");
 }
 
 function reverse() {
@@ -278,17 +334,14 @@ function reverse() {
   player.direction *= -1;
   player.flip = 1;
   burst(playerPoint(), currentCosmetic().accent, 7, 90, "dot");
-  if (tutorial > 0) {
-    tutorial = 0;
-    state.tutorialSeen = true;
-    save();
-  }
+  if (tutorialSession?.step === 0) advanceTutorial();
   beep(300 + (player.direction > 0 ? 65 : 0), 0.045, "triangle");
   vibrate(8);
 }
 
 function beginCrash(cause = "gate") {
   if (state.mode !== "run" || state.invulnerable > 0) return;
+  if (state.runType === "tutorial") { resetTutorialStep(); return; }
   if (state.shield) {
     state.shield = false;
     state.invulnerable = 1;
@@ -320,7 +373,9 @@ function beginCrash(cause = "gate") {
 
 function finishRun() {
   if(state.mode!=="run"&&state.mode!=="crash") return;
+  if (state.runType === "tutorial") return;
   const oldBest = state.best;
+  const firstCampaignClear = state.runType === "campaign" && state.levelComplete && !state.campaign.completed.includes(state.levelId);
   const previousUnlocks = state.unlocked.length;
   state.mode = "results";
   state.best = Math.max(state.best, Math.floor(state.score));
@@ -335,7 +390,7 @@ function finishRun() {
     campaignRating = 1 + Number(state.runFragments >= 3) + Number(state.perfects >= level.perfectTarget);
     const firstClear = !state.campaign.completed.includes(state.levelId);
     if (firstClear) {
-      state.campaign.completed.push(state.levelId); state.runStars += 15;
+      state.campaign.completed.push(state.levelId); state.runStars += 15; state.runRewards.push({ type: "clear", id: state.levelId, label: `${level.name} restored` });
       const levelIndex=campaignLevels.findIndex(item=>item.id===state.levelId);
       if(level.biome==="bloom"){
         state.campaign.unlockedLevel=Math.max(state.campaign.unlockedLevel,Math.min(4,levelIndex+2));
@@ -346,17 +401,17 @@ function finishRun() {
     state.campaign.fragments[state.levelId] = Math.max(state.campaign.fragments[state.levelId] || 0, state.runFragments);
     if (level.biome==="bloom" && !state.campaign.rewards.includes("bloom-wake")) {
       state.campaign.rewards.push("bloom-wake");
-      if (!state.unlockedTrails.includes("bloom-wake")) state.unlockedTrails.push("bloom-wake");
+      if (!state.unlockedTrails.includes("bloom-wake")) { state.unlockedTrails.push("bloom-wake"); state.runRewards.push({ type: "trail", id: "bloom-wake", label: "Bloom Wake trail" }); }
       state.runGoalRewards.push("Bloom Wake unlocked");
     }
     if (state.levelId === "crown-of-petals" && !state.campaign.rewards.includes("bloom-crown")) {
       state.campaign.rewards.push("bloom-crown"); state.runGoalRewards.push("Bloom constellation restored");
-      if(!state.relics.includes("bloom-crown")) state.relics.push("bloom-crown");
+      if(!state.relics.includes("bloom-crown")) { state.relics.push("bloom-crown"); state.runRewards.push({ type: "relic", id: "bloom-crown", label: "Bloom Crown relic" }); }
     }
   }
   state.stars += state.runStars;
   for (const cosmetic of cosmetics) {
-    if (state.best >= cosmetic.score && !state.unlocked.includes(cosmetic.id)) state.unlocked.push(cosmetic.id);
+    if (state.best >= cosmetic.score && !state.unlocked.includes(cosmetic.id)) { state.unlocked.push(cosmetic.id); state.runRewards.push({ type: "biome", id: cosmetic.id, label: `${cosmetic.name} palette` }); }
   }
   save();
   ui.resultScore.textContent = Math.floor(state.score);
@@ -375,6 +430,8 @@ function finishRun() {
   ui.unlock.textContent = state.unlocked.length > previousUnlocks ? "New biome awakened" : "";
   ui.resultHome.textContent = state.runType === "campaign" ? `${currentCampaignLevel().biome==="ember"?"Ember":"Bloom"} Chapter` : "Home";
   ui.results.hidden = false;
+  renderRewardSeal();
+  animateRating(campaignRating, firstCampaignClear);
   ui.shell.classList.remove("playing");
   stopMusic();
   renderCosmetics();
@@ -395,7 +452,7 @@ function beginAwakening() {
   hazards=[]; gates=[]; fragments=[];
   const skippable=state.campaign.completed.includes(state.levelId);
   finishRun();
-  awakening={life:1.5,max:1.5,skippable,paper:paper.slice(0,state.reducedEffects?6:18),biome:level.biome,rating:1+Number(state.runFragments>=3)+Number(state.perfects>=level.perfectTarget)};
+  awakening={life:1.5,max:1.5,skippable,paper:paper.slice(0,state.reducedEffects?6:18),biome:level.biome,rating:1+Number(state.runFragments>=3)+Number(state.perfects>=level.perfectTarget),chapterComplete:level.id==="crown-of-petals"||level.id==="solar-forge"};
   state.mode="awakening";
   ui.results.hidden=true;
 }
@@ -405,6 +462,57 @@ function finishAwakening() {
   awakening=null;
   state.mode="results";
   ui.results.hidden=false;
+}
+
+function animateRating(rating, firstClear) {
+  rewardAnimation = {elapsed:0,shown:0,rating:firstClear?rating:0};
+  ui.resultRating.hidden = !firstClear;
+  ui.resultRating.innerHTML = firstClear ? Array.from({ length: 3 }, (_, index) => `<span>${index < rating ? "★" : "☆"}</span>`).join("") : "";
+  if (!firstClear) return;
+}
+
+function renderRewardSeal(index = 0) {
+  rewardIndex = index;
+  const rewards = state.runRewards;
+  ui.rewardSeal.hidden = rewards.length === 0;
+  if (!rewards.length) return;
+  const reward = rewards[Math.min(index, rewards.length - 1)];
+  ui.rewardName.textContent = reward.label;
+  ui.rewardChoices.innerHTML = "";
+  rewards.forEach((item, itemIndex) => {
+    const button = document.createElement("button"); button.type = "button"; button.textContent = String(itemIndex+1); button.title=item.label;button.setAttribute("aria-label",item.label);button.setAttribute("aria-pressed",String(itemIndex===index));
+    button.className = itemIndex === index ? "selected" : ""; button.addEventListener("click", () => renderRewardSeal(itemIndex)); ui.rewardChoices.append(button);
+  });
+  ui.rewardSeal.style.setProperty("--unfold",state.reducedEffects?"1":"0");
+  drawRewardPreview();
+}
+
+function drawRewardPreview() {
+  const reward=state.runRewards[rewardIndex]; if(!reward)return;
+  const target = ui.rewardPreview.querySelector("canvas").getContext("2d"), palette=currentCosmetic(),time=rewardAnimation?.elapsed||0;
+  target.clearRect(0, 0, 180, 76); target.save(); target.translate(90, 38);
+  if (reward.type === "trail") {
+    for(let i=0;i<12;i++){target.globalAlpha=1-i/12;target.fillStyle=i%2?palette.accent:palette.gold;drawTrailPiece(target,reward.id,48-i*9,Math.sin(i*.3-time)*8,5,0,i);}
+  } else if (reward.type === "biome") {
+    OrbitArt.drawLivingPlanet(target,reward.id==="ember"?"ember-furnace":"bloom-crown",{x:0,y:0,radius:30,paletteId:reward.id,time,reduced:state.reducedEffects});
+  } else { drawChapterEmblem(target,palette,28); }
+  target.restore();
+}
+
+function drawChapterEmblem(target,palette,size) {
+  target.save();target.fillStyle=palette.gold;target.strokeStyle=palette.ink;target.lineWidth=2;target.beginPath();
+  for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,r=i%2?size*.46:size;target.lineTo(Math.cos(a)*r,Math.sin(a)*r);}target.closePath();target.fill();target.stroke();target.restore();
+}
+
+function updateRewardAnimation(delta) {
+  if(!rewardAnimation||state.mode!=="results")return;
+  rewardAnimation.elapsed+=delta;
+  const reveal=state.reducedEffects?1:Math.min(1,rewardAnimation.elapsed/.65);
+  ui.rewardSeal.style.setProperty("--unfold",String(reveal));
+  const stars=ui.resultRating.querySelectorAll("span");
+  const count=state.reducedEffects?stars.length:Math.min(stars.length,Math.floor(rewardAnimation.elapsed/.18)+1);
+  while(rewardAnimation.shown<count){const i=rewardAnimation.shown++;stars[i].classList.add("show");if(i<rewardAnimation.rating)beep(540+i*110,.06,"triangle");}
+  if(!ui.rewardSeal.hidden)drawRewardPreview();
 }
 
 function currentCampaignLevel() { return campaignLevels.find(level=>level.id===state.levelId) || campaignLevels[0]; }
@@ -446,7 +554,7 @@ function completeGuardian(phase) {
   state.runStars += 10;
   updateGoals("guardian", 1);
   const relic = phase.id;
-  if (!state.relics.includes(relic)) { state.relics.push(relic); state.runGoalRewards.push(`${phase.name} relic`); }
+  if (!state.relics.includes(relic)) { state.relics.push(relic); state.runGoalRewards.push(`${phase.name} relic`); state.runRewards.push({type:"relic",id:relic,label:`${phase.name} relic`}); }
   labels.push({ text: "GUARDIAN CLEARED", life: 1.4, max: 1.4, y: cy - orbitRadius - 28 });
   beep(1040, .18, "triangle"); vibrate(28);
 }
@@ -462,7 +570,7 @@ function updateGoals(kind, amount, absolute = false) {
     state.stats.goals += 1;
     state.runGoalRewards.push(`${goal.label} +${goal.reward} stars`);
     const trailName = trailStyles[Math.min(state.goalsCompleted, trailStyles.length - 1)];
-    if (!state.unlockedTrails.includes(trailName)) { state.unlockedTrails.push(trailName); state.runGoalRewards.push(`${trailName} trail unlocked`); }
+    if (!state.unlockedTrails.includes(trailName)) { state.unlockedTrails.push(trailName); state.runGoalRewards.push(`${trailName} trail unlocked`); state.runRewards.push({ type: "trail", id: trailName, label: `${trailName} trail` }); }
     state.goalCycle[goal.category] = (state.goalCycle[goal.category] || 0) + 1;
     state.goals[i] = makeGoal(goal.category, state.goalCycle[goal.category]);
     beep(880, .13, "triangle");
@@ -633,6 +741,7 @@ function spawnHazard() {
 
 function update(delta) {
   if (state.paused) return;
+  updateRewardAnimation(delta);
   if (state.mode === "awakening") { updateAwakening(delta); return; }
   if (state.mode === "crash") {
     crashTimer -= delta;
@@ -645,6 +754,8 @@ function update(delta) {
     updateEffects(delta);
     return;
   }
+
+  if (state.runType === "tutorial") { updateTutorial(delta); return; }
 
   state.elapsed += delta;
   const phase = updateJourney();
@@ -702,6 +813,31 @@ function update(delta) {
   updateHud();
 }
 
+function updateTutorial(delta) {
+  const session = tutorialSession;
+  if (!session) return;
+  const stepIndex=session.step;
+  session.elapsed += delta;
+  const previousPlayer = playerPoint(), previousAngle = player.angle;
+  player.angle = normalize(player.angle + player.direction * orbitalTravel(session.elapsed - delta, delta));
+  player.flip = Math.max(0, player.flip - delta * 7);
+  trail.unshift({ ...playerPoint(), life: 1 }); trail = trail.slice(0, 14);
+  for (const point of trail) point.life -= delta * 1.9;
+  for (const gate of gates) {
+    gate.previousRadius = gate.radius; const gapBefore = gate.gap, ageBefore = gate.age || 0;
+    gate.radius -= gateDistance(gate, delta, ageBefore); gate.age = ageBefore + delta;
+    if (!gate.resolved && gate.previousRadius > orbitRadius && gate.radius <= orbitRadius) {
+      const travel = gateTravelTime(gate, gate.previousRadius - orbitRadius, ageBefore);
+      resolveGate(gate, normalize(previousAngle + player.direction * orbitalTravel(session.elapsed - delta, travel)), gapBefore);
+      if (!tutorialSession || tutorialSession !== session || session.step!==stepIndex || session.elapsed===0) return;
+    }
+  }
+  gates = gates.filter(gate => gate.radius > planetRadius - 25);
+  updateFragments(delta, 1, previousPlayer);
+  if(tutorialSession===session&&session.step===stepIndex&&session.elapsed>5&&stepIndex>0)resetTutorialStep();
+  updateEffects(delta); updateHud();
+}
+
 function updateSpawns(delta,phase) {
   if (state.runType === "campaign") {
     const level=currentCampaignLevel();
@@ -743,6 +879,7 @@ function updateFragments(delta,worldScale,previousPlayer) {
     if (sweptPickup(before,after,previousPlayer,ship,pickupRadius)) {
       fragment.collected = true;
       fragment.snapLife=.14;fragment.snapFrom=after;
+      if (state.runType === "tutorial") { if (fragment.tutorial) advanceTutorial(); continue; }
         state.runFragments += 1;
         state.runStars += 3;
         labels.push({ text: state.runFragments>3 ? "BONUS FRAGMENT +3" : `FRAGMENT ${state.runFragments}/3`, life: 1, max: 1, y: cy - orbitRadius - 28 });
@@ -761,6 +898,10 @@ function resolveGate(gate,crossingAngle=player.angle,crossingGap=gate.gap) {
   const distance = angleDistance(crossingAngle, crossingGap);
   const clearance = gate.opening / 2 - 0.105 - distance;
   if (clearance < 0) { beginCrash("gate"); return; }
+  if (state.runType === "tutorial") {
+    if (gate.tutorialKind === "perfect" && clearance >= perfectWindow(gate)) { resetTutorialStep(); return; }
+    advanceTutorial(); return;
+  }
   state.gatesPassed += 1;
   state.runStars += 1;
   updateGoals("gate", 1);
@@ -849,7 +990,7 @@ function draw() {
   drawRings();
   drawLabels(palette);
   if (state.mode === "crash") drawCrashCurtain(palette);
-  if (tutorial > 0 && state.mode === "run") drawTutorial(time, palette);
+  if (tutorialSession && state.mode === "run") drawTutorial(time, palette);
   if (state.fever > 0) drawFever(time, palette);
   if (flash > 0) {
     ctx.fillStyle = `rgba(242,207,99,${flash * 0.18})`;
@@ -879,6 +1020,7 @@ function drawAwakening(time,palette,behind=false) {
     ctx.fillStyle=palette.light;ctx.beginPath();ctx.moveTo(-planetRadius*.08,planetRadius*.2);ctx.quadraticCurveTo(-planetRadius*.14,-planetRadius*.08,0,-planetRadius*.48);ctx.quadraticCurveTo(planetRadius*.16,-planetRadius*.06,planetRadius*.08,planetRadius*.2);ctx.closePath();ctx.fill();
   }
   if(progress>.42){ctx.globalAlpha=Math.min(1,(progress-.42)*4);ctx.fillStyle=palette.light;ctx.font="900 22px Arial";ctx.textAlign="center";ctx.fillText("★".repeat(awakening.rating),0,-planetRadius-30);}
+  if(awakening.chapterComplete&&progress>.28){ctx.globalAlpha=Math.min(1,(progress-.28)*3);drawChapterEmblem(ctx,palette,planetRadius*.55);}
   ctx.restore();
 }
 
@@ -1200,15 +1342,22 @@ function drawTrail(palette) {
     const size = Math.max(1, (1 - i / trail.length) * (state.fever > 0 ? 9 : 5));
     ctx.globalAlpha = Math.max(0, point.life) * 0.52;
     ctx.fillStyle = i % 2 ? palette.accent : palette.gold;
-    if (state.selectedTrail === "bloom-wake") { ctx.save();ctx.translate(point.x,point.y);ctx.rotate(player.angle+i*.15);ctx.beginPath();ctx.ellipse(0,0,size*.72,size*1.5,.45,0,TAU);ctx.fill();ctx.restore(); }
-    else if (state.selectedTrail === "pollen") { ctx.beginPath(); ctx.arc(point.x, point.y, size * .65, 0, TAU); ctx.fill(); }
-    else if (state.selectedTrail === "spark") { paperDiamond(point.x, point.y, size * 1.25, player.angle + i); }
-    else if (state.selectedTrail === "ribbon") { ctx.fillRect(point.x - size * 1.5, point.y - 1, size * 3, 2); }
-    else if (state.selectedTrail === "echo") { ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(point.x, point.y, size, 0, TAU); ctx.stroke(); }
-    else if (state.selectedTrail === "crown") { paperDiamond(point.x, point.y, size, player.angle); paperDiamond(point.x, point.y, size * .55, player.angle + Math.PI / 2); }
-    else paperDiamond(point.x, point.y, size, player.angle);
+    drawTrailPiece(ctx,state.selectedTrail,point.x,point.y,size,player.angle,i);
   }
   ctx.restore();
+}
+
+function drawTrailPiece(target,id,x,y,size,angle,index) {
+  target.save();target.translate(x,y);
+  const diamond=(s,rotation)=>{target.save();target.rotate(rotation);target.beginPath();target.moveTo(0,-s);target.lineTo(s*.72,0);target.lineTo(0,s);target.lineTo(-s*.72,0);target.closePath();target.fill();target.restore();};
+  if(id==="bloom-wake"){target.rotate(angle+index*.15);target.beginPath();target.ellipse(0,0,size*.72,size*1.5,.45,0,TAU);target.fill();}
+  else if(id==="pollen"){target.beginPath();target.arc(0,0,size*.65,0,TAU);target.fill();}
+  else if(id==="spark")diamond(size*1.25,angle+index);
+  else if(id==="ribbon")target.fillRect(-size*1.5,-1,size*3,2);
+  else if(id==="echo"){target.strokeStyle=target.fillStyle;target.lineWidth=1.5;target.beginPath();target.arc(0,0,size,0,TAU);target.stroke();}
+  else if(id==="crown"){diamond(size,angle);diamond(size*.55,angle+Math.PI/2);}
+  else diamond(size,angle);
+  target.restore();
 }
 
 function drawPlayer(time, palette) {
@@ -1270,10 +1419,13 @@ function drawTutorial(time, palette) {
   const ghostAngle = normalize(player.angle - player.direction * 0.55);
   const gx = cx + Math.cos(ghostAngle) * orbitRadius;
   const gy = cy + Math.sin(ghostAngle) * orbitRadius;
+  const step = tutorialSteps[tutorialSession.step];
   ctx.save(); ctx.globalAlpha = 0.35 + Math.sin(time * 4) * 0.12;
   ctx.strokeStyle = palette.gold; ctx.lineWidth = 3; ctx.setLineDash([5, 6]);
   ctx.beginPath(); ctx.arc(cx, cy, orbitRadius, Math.min(player.angle, ghostAngle), Math.max(player.angle, ghostAngle)); ctx.stroke();
   ctx.fillStyle = palette.gold; paperDiamond(gx, gy, 9, ghostAngle);
+  const target = gates[0] ? { x: cx + Math.cos(gates[0].gap) * gates[0].radius, y: cy + Math.sin(gates[0].gap) * gates[0].radius } : fragments[0] ? { x: cx + Math.cos(fragments[0].angle) * fragments[0].radius, y: cy + Math.sin(fragments[0].angle) * fragments[0].radius } : point;
+  if (step.kind !== "reverse") { ctx.globalAlpha = .18 + Math.sin(time * 6) * .08; ctx.fillStyle = palette.gold; ctx.beginPath(); ctx.arc(target.x, target.y, 24, 0, TAU); ctx.fill(); }
   ctx.fillStyle = palette.light; ctx.beginPath(); ctx.arc(point.x, point.y, 30 + Math.sin(time * 5) * 4, 0, TAU); ctx.globalAlpha = 0.08; ctx.fill();
   ctx.restore();
 }
@@ -1381,7 +1533,7 @@ function showScreen(name) {
   ui.shell.classList.remove("playing");
   ui.shell.classList.remove("crashing");
   stopMusic();
-  hideScreens();
+  hideScreens(); ui.tutorialPanel.hidden = true;
   ui[name].hidden = false;
   state.mode = name;
   if (name === "home") {
@@ -1470,6 +1622,16 @@ function renderGarage() {
   ui.garageStars.textContent = `${state.stars} stars`;
   ui.riderGrid.innerHTML = "";
   const palette = currentCosmetic();
+  if (purchasePreview) {
+    const rider = riders.find(item => item.id === purchasePreview);
+    if (rider) {
+      const reveal = document.createElement("div"); reveal.className = "purchase-reveal";
+      reveal.innerHTML = `<canvas width="180" height="92"></canvas><b>${rider.name}</b><button class="primary" type="button">Equip</button>`;
+      const mini = reveal.querySelector("canvas").getContext("2d"); mini.translate(90, 46); drawGlider(mini, rider, palette, 1.65, performance.now() / 1000, 0, false, .25);
+      reveal.querySelector("button").addEventListener("click", () => { state.selectedRider = rider.id; purchasePreview = null; save(); renderGarage(); updateHome(); });
+      ui.riderGrid.append(reveal);
+    }
+  }
   for (const rider of riders) {
     const owned = state.ownedRiders.includes(rider.id);
     const card = document.createElement("button");
@@ -1481,7 +1643,7 @@ function renderGarage() {
     card.addEventListener("click", () => {
       if (!owned) {
         if (state.stars < rider.price) { card.animate([{transform:"translateX(-3px)"},{transform:"translateX(3px)"},{transform:"none"}],{duration:180}); beep(120,.08,"square"); return; }
-        state.stars -= rider.price; state.ownedRiders.push(rider.id); beep(820,.14,"triangle"); vibrate(25);
+        state.stars -= rider.price; state.ownedRiders.push(rider.id); purchasePreview = rider.id; save(); beep(820,.14,"triangle"); vibrate(25); renderGarage(); updateHome(); return;
       }
       state.selectedRider = rider.id; save(); renderGarage(); updateHome();
     });
@@ -1640,7 +1802,7 @@ function frame(time) {
 
 window.addEventListener("resize", resize);
 canvas.addEventListener("pointerdown", () => awakening?.skippable ? finishAwakening() : reverse());
-document.querySelector("#play").addEventListener("click", () => showScreen("campaign"));
+document.querySelector("#play").addEventListener("click", () => state.tutorialSeen ? showScreen("campaign") : startTutorial());
 document.querySelector("#ascension").addEventListener("click", () => startRun("endless"));
 for(const button of document.querySelectorAll("[data-chapter]"))button.addEventListener("click",()=>{if(!button.disabled){window.OrbitArchipelago?.pulse();openChapter(button.dataset.chapter);}});
 document.querySelector("#retry").addEventListener("click", () => startRun(state.runType, state.levelId));
@@ -1652,6 +1814,10 @@ for (const button of document.querySelectorAll("[data-campaign]")) button.addEve
 ui.sound.addEventListener("change", () => { state.muted = !ui.sound.checked; save(); });
 ui.haptics.addEventListener("change", () => { state.haptics = ui.haptics.checked; save(); vibrate(15); });
 ui.effects.addEventListener("change", () => { state.reducedEffects = ui.effects.checked; save(); });
+ui.replayTutorial.addEventListener("click", startTutorial);
+ui.skipTutorial.addEventListener("click", skipTutorial);
+ui.continueRewards.addEventListener("click", () => { ui.rewardSeal.hidden = true; });
+ui.rewardPreview.addEventListener("click",()=>{if(state.runRewards.length)renderRewardSeal((rewardIndex+1)%state.runRewards.length);});
 ui.showReport.addEventListener("click", () => { ui.report.textContent = reportText(); ui.report.hidden = !ui.report.hidden; ui.copyReport.hidden = ui.report.hidden; });
 ui.copyReport.addEventListener("click", async () => {
   try { await navigator.clipboard.writeText(reportText()); ui.copyReport.textContent = "Copied"; setTimeout(() => { ui.copyReport.textContent = "Copy summary"; }, 1200); }
@@ -1664,7 +1830,7 @@ window.addEventListener("keydown", (event) => {
     event.preventDefault();
     if (state.mode === "run") reverse();
     else if (state.mode === "awakening" && awakening?.skippable) finishAwakening();
-    else if (state.mode === "home") showScreen("campaign");
+    else if (state.mode === "home") state.tutorialSeen ? showScreen("campaign") : startTutorial();
     else if (state.mode === "campaign") openChapter();
     else if (state.mode === "bloomChapter" && event.target===document.body) startRun("campaign", state.chapter==="ember"?"kindling":campaignLevels[Math.min(state.campaign.unlockedLevel-1,3)].id);
     else if (state.mode === "results") startRun(state.runType, state.levelId);
