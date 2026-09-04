@@ -10,19 +10,36 @@ let seed = Number(process.argv[2]) || 73;
 const math = Object.create(Math);
 math.random = () => (seed = seed * 16807 % 2147483647) / 2147483647;
 const context = new Proxy({}, { get: (_, key) => key === 'createRadialGradient' ? () => ({ addColorStop() {} }) : () => {} });
-const element = () => ({ clientWidth: logicalWidth, clientHeight: logicalHeight, width: logicalWidth, height: logicalHeight,
-  hidden: true, dataset:{}, style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {} },
-  getContext: () => context, setAttribute() {}, addEventListener(type,listener) { (this.listeners[type] ||= []).push(listener); },
-  listeners: {}, dispatchEvent(event) { for (const listener of this.listeners[event.type] || []) listener(event); },
-  append() {}, querySelector: () => element() });
+const element = () => {
+  const node = { clientWidth: logicalWidth, clientHeight: logicalHeight, width: logicalWidth, height: logicalHeight,
+    hidden: true, dataset:{}, style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {} },
+    getContext: () => context, setAttribute() {}, addEventListener(type,listener) { (this.listeners[type] ||= []).push(listener); },
+    listeners: {}, children: [], append(...items) { this.children.push(...items); },
+    dispatchEvent(event) { for (const listener of this.listeners[event.type] || []) listener(event); },
+    animate() {}, querySelectorAll(selector) { return selector === "span" ? this.children.filter(child => child.tagName === "SPAN") : []; }, querySelector(selector) {
+      if (selector === "canvas") return this.children.find(child => child.tagName === "CANVAS") || elementWithTag("CANVAS");
+      if (selector === "button") return this.children.find(child => child.tagName === "BUTTON") || elementWithTag("BUTTON");
+      return element();
+    } };
+  let html = "";
+  Object.defineProperty(node, "innerHTML", { get: () => html, set: value => {
+    html = String(value); node.children = [];
+    if (html.includes("<canvas")) node.append(elementWithTag("CANVAS"));
+    if (html.includes("<button")) node.append(elementWithTag("BUTTON"));
+    for (const match of html.matchAll(/<span\b/g)) node.append(elementWithTag("SPAN"));
+  } });
+  return node;
+};
+const elementWithTag = tagName => { const node = element(); node.tagName = tagName; return node; };
 const elements = new Map();
+let savedWrites = [];
 const sandbox = { console: { ...console, assert: (ok,message) => assert.ok(ok,message) }, Math: math, performance: { now: () => 1000 }, devicePixelRatio: 1,
   document: { hidden: false, querySelector(selector) { if (!elements.has(selector)) elements.set(selector, element()); return elements.get(selector); },
     querySelectorAll: () => [], createElement: element, addEventListener() {} },
-  window: { addEventListener() {}, OrbitArchipelago: { setActive(value) { mapActive = value; } },
+  window: { addEventListener() {}, OrbitArchipelago: { setActive(value) { mapActive = value; }, setCompleted() {}, setRestoration() {}, setEmberRestoration() {} },
     OrbitArt: { drawLivingPlanet() {} } },
-  localStorage: { getItem: () => '{"muted":true,"tutorialSeen":true,"campaign":{"completed":["crown-of-petals"],"unlockedLevel":4,"restoration":4}}', setItem() {} },
-  navigator: {}, requestAnimationFrame() {}, setTimeout() {}, setInterval() {}, clearInterval() {}, assert };
+  localStorage: { getItem: () => '{"muted":true,"tutorialSeen":true,"campaign":{"completed":["crown-of-petals"],"unlockedLevel":4,"restoration":4}}', setItem(key,value) { savedWrites.push(JSON.parse(value)); } },
+  navigator: {}, requestAnimationFrame() {}, setTimeout() {}, setInterval() {}, clearInterval() {}, savedWrites, assert };
 sandbox.OrbitArt = sandbox.window.OrbitArt;
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'game.js'), 'utf8'), sandbox);
@@ -190,6 +207,59 @@ vm.runInContext(`
   assert.equal(new Set(state.campaign.rewards).size,state.campaign.rewards.length,'Campaign rewards must stay unique');
   state.campaign.rewards=firstRewards;
 `,sandbox);
+
+vm.runInContext(`
+  const progressionSnapshot=()=>({stats:JSON.parse(JSON.stringify(state.stats)),goals:JSON.parse(JSON.stringify(state.goals)),goalsCompleted:state.goalsCompleted,stars:state.stars,best:state.best,record:ui.record.textContent});
+  const tutorialProgress=progressionSnapshot();
+  state.tutorialSeen=false;startTutorial();
+  assert.equal(tutorialSession.step,0);assert.equal(ui.tutorialStep.textContent,'Practice 1/4');
+  canvas.dispatchEvent({type:'pointerdown'});assert.equal(tutorialSession.step,1,'Pointer control advances tutorial step one');
+  assert.equal(gates[0].opening,2.25);assert.equal(gates[0].speed,80);assert.equal(gates[0].tutorialKind,'pass');
+  for(let i=0;i<30&&tutorialSession.step===1;i++)update(.1);
+  assert.equal(tutorialSession.step,2,'Generated wide gate advances tutorial step two');
+  fragments[0].angle=normalize(player.angle+Math.PI);
+  for(let i=0;i<=50;i++)update(.1);
+  assert.equal(tutorialSession.step,2,'Missing the fragment stays on the current step');
+  assert.equal(tutorialSession.elapsed,0,'Missing the fragment retries after the timeout');
+  fragments[0].angle=player.angle;fragments[0].radius=orbitRadius+45;updateFragments(.016,1,playerPoint());
+  assert.equal(tutorialSession.step,3,'Fragment advances tutorial step three');
+  const perfectGate=gates[0];assert.equal(perfectGate.opening,1.6);assert.equal(perfectGate.generous,true);assert.equal(perfectGate.tutorialKind,'perfect');
+  const edge=perfectGate.opening/2-.105-.12;resolveGate(perfectGate,normalize(perfectGate.gap+edge),perfectGate.gap);
+  assert.equal(tutorialSession,null);assert.equal(state.mode,'campaign');assert.equal(state.tutorialSeen,true);
+  assert.deepEqual(progressionSnapshot(),tutorialProgress,'Tutorial completion changes no stats, goals, stars, best, or record');
+  ui.replayTutorial.dispatchEvent({type:'click'});assert.equal(state.mode,'run');assert.equal(state.runType,'tutorial');assert.equal(state.tutorialSeen,true);
+  ui.skipTutorial.dispatchEvent({type:'click'});assert.equal(state.mode,'campaign');assert.equal(state.tutorialSeen,true);
+  state.tutorialSeen=false;ui.replayTutorial.dispatchEvent({type:'click'});ui.skipTutorial.dispatchEvent({type:'click'});
+  assert.equal(state.mode,'campaign');assert.equal(state.tutorialSeen,true);
+  assert.deepEqual(progressionSnapshot(),tutorialProgress,'Skip and replay return to campaign without progression changes');
+
+  state.runRewards=[{type:'trail',id:'spark',label:'spark trail'},{type:'relic',id:'bloom-crown',label:'Bloom Crown relic'}];
+  renderRewardSeal();assert.equal(ui.rewardSeal.hidden,false);assert.equal(ui.rewardChoices.children.length,2);
+  assert.equal(ui.rewardName.textContent,'spark trail');ui.rewardChoices.children[1].dispatchEvent({type:'click'});
+  assert.equal(ui.rewardName.textContent,'Bloom Crown relic','Grouped rewards select the clicked item');
+  ui.continueRewards.dispatchEvent({type:'click'});assert.equal(ui.rewardSeal.hidden,true,'Continue dismisses grouped rewards');
+  state.mode='results';state.paused=false;animateRating(2,true);const animationStart=rewardAnimation.elapsed;update(.2);assert.ok(rewardAnimation.elapsed>animationStart,'Reward animation advances from update(delta)');
+  state.paused=true;const pausedAnimation=rewardAnimation.elapsed;update(1);assert.equal(rewardAnimation.elapsed,pausedAnimation,'Paused results freeze reward animation');state.paused=false;
+
+  state.campaign.completed=state.campaign.completed.filter(id=>id!=='first-light');state.campaign.rewards=[];
+  startRun('campaign','first-light');state.levelComplete=true;state.runFragments=6;state.perfects=2;finishRun();
+  const campaignRewards=state.campaign.rewards.slice(),replayBaselineStars=state.stars;
+  startRun('campaign','first-light');state.levelComplete=true;finishRun();
+  assert.deepEqual(state.campaign.rewards,campaignRewards,'Replay does not duplicate campaign rewards');
+  assert.equal(state.stars,replayBaselineStars,'Replay does not duplicate first-clear stars');
+  assert.equal(new Set(state.campaign.rewards).size,state.campaign.rewards.length,'Campaign rewards remain unique');
+
+  let writesBeforeGarage=savedWrites.length;state.stars=39;state.ownedRiders=['manta'];state.selectedRider='manta';purchasePreview=null;renderGarage();
+  const lockedDart=ui.riderGrid.children.find(card=>card.innerHTML.includes('Dart'));lockedDart.dispatchEvent({type:'click'});
+  assert.equal(state.stars,39);assert.deepEqual(state.ownedRiders,['manta']);assert.equal(savedWrites.length,writesBeforeGarage,'Insufficient funds do not save a purchase');
+  state.stars=40;renderGarage();const dart=ui.riderGrid.children.find(card=>card.innerHTML.includes('Dart'));dart.dispatchEvent({type:'click'});
+  const purchasedSave=savedWrites[savedWrites.length-1];
+  assert.equal(state.stars,0);assert.ok(state.ownedRiders.includes('dart'));assert.equal(state.selectedRider,'manta');
+  assert.equal(purchasedSave.stars,0);assert.ok(purchasedSave.ownedRiders.includes('dart'));assert.equal(purchasedSave.selectedRider,'manta','Purchase persists before equip');
+  ui.riderGrid.children[0].querySelector('button').dispatchEvent({type:'click'});
+  const equippedSave=savedWrites[savedWrites.length-1];assert.equal(state.selectedRider,'dart');assert.equal(equippedSave.selectedRider,'dart');
+`,sandbox);
+console.log('PASS: tutorial four-step retry/skip/replay, grouped rewards, duplicate-safe replay, and garage purchase persistence');
 console.log('PASS: sequential Ember locks and duplicate-safe first-clear rewards');
 vm.runInContext(`
   performance.now=()=>1000+state.elapsed*1000;
