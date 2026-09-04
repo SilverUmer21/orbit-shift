@@ -26,6 +26,12 @@ Each offers six fragments with an objective of three. Complete the preceding lev
 
 World Awakening is approved and merged: a short campaign-clear celebration before the existing results. Paper rays unfold from the planet, Bloom blossoms or Ember ignites, and earned rating stars appear. Repeat clears can skip the celebration; reduced effects keep it restrained.
 
+## Onboarding and rewards review
+
+The `onboarding-rewards` branch adds a four-step practice introduction: reverse, pass a wide opening, collect a fragment, and thread a marked perfect. Practice uses real controls but does not grant stars, records, goals, or run statistics. New players enter from Play; returning players can replay from Settings. Skip or completion returns to the campaign map.
+
+New rewards appear together in a papercut reveal using the actual cosmetic previews. Garage purchases preview the purchased ship before equipping. Rewards are saved before their animation, and repeat clears do not grant duplicate unlocks. This branch includes the approved removal of the large red Bloom Awakening petals. Android and Void remain deferred; do not merge before review.
+
 ## Play locally
 
 From this folder:
