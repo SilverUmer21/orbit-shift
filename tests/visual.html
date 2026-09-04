@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><meta charset="utf-8"><title>Orbit Shift visual checks</title>
 <style>body{margin:12px;background:#ddd;font:14px system-ui}nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}button,select{padding:8px}iframe{display:block;border:0;background:#07171b}output{display:block;margin:8px 0;max-width:700px}</style>
-<nav><select id="size" aria-label="Phone size"><option>320x568</option><option selected>390x844</option><option>430x932</option></select><select id="scene" aria-label="Scene"><option>Kindling play</option><option>Kindling</option><option>Heat warning</option><option>Ember chapter</option><option>Kindling results</option><option>Awakening Bloom</option><option>Awakening Ember</option><option>Map</option><option>Normal</option><option>Fever</option><option>Guardian</option><option>Chapter</option><option>Results</option><option>Garage</option><option>Settings</option></select><label><input id="reduced" type="checkbox">Reduced effects</label><button id="playKindling">Play Kindling</button><button id="profile">Measure drawing</button></nav>
+<nav><select id="size" aria-label="Phone size"><option>320x568</option><option selected>390x844</option><option>430x932</option></select><select id="scene" aria-label="Scene"><option>Kindling play</option><option>Kindling</option><option>Heat warning</option><option>Cinder</option><option>Furnace</option><option>Solar</option><option>Ember chapter</option><option>Kindling results</option><option>Awakening Bloom</option><option>Awakening Ember</option><option>Map</option><option>Normal</option><option>Fever</option><option>Guardian</option><option>Chapter</option><option>Results</option><option>Garage</option><option>Settings</option></select><label><input id="reduced" type="checkbox">Reduced effects</label><button id="playKindling">Play Kindling</button><button id="profile">Measure drawing</button></nav>
 <output id="report">Disposable save. No real player progress is read or written.</output><iframe id="preview" title="Game preview"></iframe>
 <script>
 const preview=document.querySelector('#preview'),size=document.querySelector('#size');
@@ -13,7 +13,7 @@ document.querySelector('#profile').onclick=()=>document.querySelector('#report')
 fetch('../index.html').then(r=>r.text()).then(html=>{
   for(const asset of ['styles.css','journey.css','game.js','art-renderers.js'])html=html.replaceAll('="'+asset+'"','="'+asset+'?check='+Date.now()+'"');
   resize();preview.onload=scene;
-  const isolation='<base href="../"><script>let testSave=JSON.stringify({muted:true,tutorialSeen:true,campaign:{completed:["first-light","pollen-path","tangled-orbit","crown-of-petals"],unlockedLevel:4,restoration:4}});Object.defineProperty(window,"localStorage",{value:{getItem:()=>testSave,setItem:(key,value)=>{testSave=value;}}});<\/script>';
+  const isolation='<base href="../"><script>let testSave=JSON.stringify({muted:true,tutorialSeen:true,campaign:{completed:["first-light","pollen-path","tangled-orbit","crown-of-petals","kindling","cinder-step","furnace-heart"],unlockedLevel:4,restoration:4,emberRestoration:3}});Object.defineProperty(window,"localStorage",{value:{getItem:()=>testSave,setItem:(key,value)=>{testSave=value;}}});<\/script>';
   preview.srcdoc=html.replace('<head>','<head>'+isolation).replace('</body>','<script src="tests/visual-scenes.js"><\/script></body>');
 });
 </script></html>
