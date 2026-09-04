@@ -53,7 +53,9 @@ vm.runInContext(`
 `, sandbox);
 console.log('PASS: '+logicalWidth+'x'+logicalHeight+' map suspension, 120-second Ascension at 20/30/60/120 FPS, particle cap, continuous perfect movement, pause and bounded catch-up');
 vm.runInContext(`
-  assert.deepEqual(Array.from(campaignLevels,l=>l.perfectTarget),[2,2,3,3,2]);
+  assert.equal(campaignLevels.length,8,'Campaign must expose four Bloom and four Ember levels');
+  assert.deepEqual(Array.from(campaignLevels,l=>l.id),['first-light','pollen-path','tangled-orbit','crown-of-petals','kindling','cinder-step','furnace-heart','solar-forge']);
+  assert.deepEqual(Array.from(campaignLevels,l=>l.perfectTarget),[2,2,3,3,2,2,3,3]);
   for(const level of campaignLevels)assert.equal(level.fragmentTimes.length,6);
   for(const elapsed of [0,30,87,110])for(const fever of [0,.4,6])for(const spacing of [0,58]){
     const snapshot={index:8,elapsed,fever,angle:1,direction:-1,orbitRadius:150,shortSide:390,pairSpacing:spacing,settings:[72,1.18,.24],phase:phases[0]};
@@ -147,15 +149,48 @@ vm.runInContext(`
     assert.ok(Math.abs(gateDistance(gate,worldAdvanced)-180)<.00001,'Fever expiration preserves pulse crossing');
   }
 `,sandbox);
-for(const completed of [[],['first-light'],['first-light','pollen-path','tangled-orbit','crown-of-petals']]){
-  let written;
-  const fixture={version:4,best:800,stars:123,ownedRiders:['manta','dart'],selectedRider:'dart',selected:'void',unlocked:['bloom','ember','void'],muted:true,haptics:false,reducedEffects:true,tutorialSeen:true,stats:{sessions:3,runs:8,totalMs:1000,longestMs:1000,deaths:{gate:2,hazard:1},acts:[2,1,0],guardians:1,goals:2,dates:[]},campaign:{completed,ratings:{'first-light':3},fragments:{'first-light':6},rewards:['bloom-wake'],restoration:completed.length,unlockedLevel:Math.min(4,completed.length+1)}};
+ const bloomIds=['first-light','pollen-path','tangled-orbit','crown-of-petals'];
+ for(const restoration of [0,1,2,3,4]){
+   const completed=bloomIds.slice(0,restoration);
+   let written;
+   const fixture={version:4,best:800,stars:123,ownedRiders:['manta','dart'],selectedRider:'dart',selected:'void',unlocked:['bloom','ember','void'],muted:true,haptics:false,reducedEffects:true,tutorialSeen:true,stats:{sessions:3,runs:8,totalMs:1000,longestMs:1000,deaths:{gate:2,hazard:1},acts:[2,1,0],guardians:1,goals:2,dates:[]},campaign:{completed,ratings:{'first-light':3},fragments:{'first-light':6},rewards:['bloom-wake'],restoration:completed.length,unlockedLevel:Math.min(4,completed.length+1)}};
   const migration={...sandbox,localStorage:{getItem:()=>JSON.stringify(fixture),setItem:(key,value)=>{written=JSON.parse(value);}}};
   vm.createContext(migration);vm.runInContext(fs.readFileSync(path.join(__dirname,'..','game.js'),'utf8'),migration);
-  assert.equal(written.version,5);assert.equal(written.stars,123);assert.equal(written.selected,'void');assert.equal(written.selectedRider,'dart');assert.equal(written.haptics,false);assert.equal(written.reducedEffects,true);assert.equal(written.stats.runs,8);assert.deepEqual(written.campaign.completed,completed);assert.equal(written.campaign.fragments['first-light'],6);
+   assert.equal(written.version,5);assert.equal(written.stars,123);assert.equal(written.selected,'void');assert.equal(written.selectedRider,'dart');assert.equal(written.haptics,false);assert.equal(written.reducedEffects,true);assert.equal(written.stats.runs,8);assert.deepEqual(written.campaign.completed,completed);assert.equal(written.campaign.fragments['first-light'],6);assert.equal(written.campaign.restoration,restoration);assert.equal(written.campaign.emberRestoration,0);
   assert.equal(vm.runInContext('isLevelUnlocked("kindling")',migration),completed.includes('crown-of-petals'));
 }
 console.log('PASS: Kindling access, chapter rewards, palette restoration, v4 migration, heat integral and fever boundaries');
+vm.runInContext(`
+  const emberIds=['kindling','cinder-step','furnace-heart','solar-forge'];
+  const savedCompleted=state.campaign.completed.slice();
+  state.campaign.completed=[];
+  for(const id of ['kindling','cinder-step','furnace-heart','solar-forge'])assert.equal(isLevelUnlocked(id),false,id+' must start locked');
+  state.campaign.completed.push('crown-of-petals');
+  assert.equal(isLevelUnlocked('kindling'),true);assert.equal(isLevelUnlocked('cinder-step'),false);
+  for(const [index,id] of emberIds.entries()){
+    assert.equal(isLevelUnlocked(id),true,id+' must unlock after its prerequisite clear');
+    if(index<emberIds.length-1)assert.equal(isLevelUnlocked(emberIds[index+1]),false,id+' must be the only newly unlocked Ember level');
+    state.campaign.completed.push(id);
+    if(index<emberIds.length-1)assert.equal(isLevelUnlocked(emberIds[index+1]),true,emberIds[index+1]+' must unlock next');
+  }
+  state.campaign.completed=savedCompleted;
+  const solar=campaignLevels.find(level=>level.id==='solar-forge'),guardian=solar.phases.find(phase=>phase.guardian);
+  const guardianSnapshot={elapsed:60,angle:1,direction:1,fever:0,turns:[],constraints:[],hazards:[],index:11,orbitRadius:150,shortSide:390,phase:guardian,settings:solar.guardianMotion,pairSpacing:58};
+  const guardianPlan=buildGatePlan(guardianSnapshot,()=>.73);
+  const guardianMotion={speed:guardianPlan.speed,heat:guardianPlan.heat},pairTravel=gateTravelTime(guardianMotion,guardianPlan.radius-150+58),pairFlight=crossingTime(pairTravel,guardianSnapshot.fever);
+  assert.ok(Number.isFinite(guardianPlan.pairGap),'Solar guardian must plan paired gates');
+  assert.ok(angleDistance(routeAngle(guardianSnapshot,pairFlight,guardianPlan.turns),normalize(guardianPlan.pairGap+guardianPlan.rotation*pairTravel))<.001,'Solar guardian pair must remain reachable');
+  const firstRewards=state.campaign.rewards.slice();
+  state.campaign.completed=state.campaign.completed.filter(id=>id!=='first-light');
+  startRun('campaign','first-light');state.levelComplete=true;state.runFragments=6;state.perfects=2;finishRun();
+  const rewardCount=state.campaign.rewards.length,rewardStars=state.stars;
+  startRun('campaign','first-light');state.levelComplete=true;finishRun();
+  assert.equal(state.campaign.rewards.length,rewardCount,'Replay must not duplicate campaign rewards');
+  assert.equal(state.stars,rewardStars,'Replay must not duplicate first-clear stars');
+  assert.equal(new Set(state.campaign.rewards).size,state.campaign.rewards.length,'Campaign rewards must stay unique');
+  state.campaign.rewards=firstRewards;
+`,sandbox);
+console.log('PASS: sequential Ember locks and duplicate-safe first-clear rewards');
 vm.runInContext(`
   performance.now=()=>1000+state.elapsed*1000;
   for(const fps of [20,30,60,120])for(const feverAt of [6.9,12.8]){
@@ -193,7 +228,14 @@ vm.runInContext(`
   const actualCrash=beginCrash;
   beginCrash=(cause)=>{if(state.mode==='run'&&!state.shield&&state.invulnerable<=0)console.log('Route collision',JSON.stringify({cause,time:state.elapsed,angle:player.angle,turns:plannedTurns,fever:state.fever,hazards:hazards.map(h=>({age:h.age,angle:h.angle,distance:angleDistance(h.angle,player.angle)})),gates:gates.filter(g=>!g.resolved).map(g=>({radius:g.radius,angle:g.gap,opening:g.opening}))}));actualCrash(cause);};
   const simulationResults=[];
+  const routeFailures=[];
+  state.campaign.completed.push('kindling','cinder-step','furnace-heart','solar-forge');
+  const newEmberIds=['cinder-step','furnace-heart','solar-forge'];
   for(const fps of [20,30,60,120]) for(const level of [null,...campaignLevels]){
+    const guardianRunsBefore=state.stats.guardians;
+    let solarGuardianPair=false;
+    const actualSpawn=spawnGate;
+    spawnGate=()=>{const before=gates.length,ok=actualSpawn();if(ok&&level?.id==='solar-forge')solarGuardianPair ||= gates.slice(before).some(g=>g.guardian&&g.pair);return ok;};
     startRun(level?'campaign':'endless',level?.id);
     const duration=level?.duration||120;
     let frames=0;
@@ -206,13 +248,31 @@ vm.runInContext(`
         if(dt<1e-9)break;
         update(dt);remaining-=dt;
       }
-      assert.ok(++frames<fps*(duration+1),'Simulation must progress');
+      if(++frames>=fps*(duration+1)){routeFailures.push((level?.id||'endless')+'@'+fps+' FPS: simulation did not progress');break;}
     }
-    assert.notEqual(state.mode,'crash',(level?.id||'endless')+' planned route collided at '+state.elapsed+' ('+fps+' FPS)');
-    assert.ok(state.elapsed>=duration-.01,'Planned route must finish');
-    if(level){assert.equal(campaignFragmentIndex,6,level.id+' must offer six pickups');assert.ok(state.runFragments>=3,level.id+' planned route must meet pickup target');assert.equal(campaignHazardIndex,level.hazardTimes.length,'Deferred hazard must eventually spawn');}
+    if(level&&state.mode==='run')update(Math.max(1e-6,duration-state.elapsed));
+    spawnGate=actualSpawn;
+    if(state.mode==='crash')routeFailures.push((level?.id||'endless')+'@'+fps+' FPS: planned route collided at '+state.elapsed.toFixed(3));
+    if(state.elapsed<duration-.01)routeFailures.push((level?.id||'endless')+'@'+fps+' FPS: planned route stopped at '+state.elapsed.toFixed(3)+' before '+duration);
+    if(level){
+      if(!state.levelComplete)routeFailures.push(level.id+'@'+fps+' FPS: campaign did not mark levelComplete');
+      if(!['awakening','results'].includes(state.mode))routeFailures.push(level.id+'@'+fps+' FPS: campaign ended in '+state.mode+' instead of awakening/results');
+      if(campaignFragmentIndex!==6)routeFailures.push(level.id+'@'+fps+' FPS: offered '+campaignFragmentIndex+'/6 fragments');
+      if(state.runFragments<3)routeFailures.push(level.id+'@'+fps+' FPS: collected '+state.runFragments+'/3 required fragments');
+      if(campaignHazardIndex!==level.hazardTimes.length)routeFailures.push(level.id+'@'+fps+' FPS: resolved '+campaignHazardIndex+'/'+level.hazardTimes.length+' hazards');
+      if(campaignGateIndex!==level.gateTimes.length)routeFailures.push(level.id+'@'+fps+' FPS: scheduled '+campaignGateIndex+'/'+level.gateTimes.length+' gates');
+      if(newEmberIds.includes(level.id)){
+        if(gates.filter(g=>!g.resolved).length!==0)routeFailures.push(level.id+'@'+fps+' FPS: active gates remain at completion');
+        if(state.gatesPassed<level.gateTimes.length)routeFailures.push(level.id+'@'+fps+' FPS: cleared '+state.gatesPassed+'/'+level.gateTimes.length+' scheduled gates');
+      }
+      if(level.id==='solar-forge'){
+        if(!solarGuardianPair)routeFailures.push(level.id+'@'+fps+' FPS: no paired guardian gate spawned');
+        if(state.stats.guardians!==guardianRunsBefore+1)routeFailures.push(level.id+'@'+fps+' FPS: guardian clears '+(state.stats.guardians-guardianRunsBefore)+'/1 before completion');
+      }
+    }
     if(level?.id==='kindling'){assert.equal(campaignGateIndex,10);assert.equal(state.gatesPassed,10,'All Kindling gates must clear before completion');}
     simulationResults.push({level:level?.id||'endless',fps,gates:state.gatesPassed,fragments:state.runFragments});
   }
+  assert.equal(routeFailures.length,0,routeFailures.join('\\n'));
   console.log(JSON.stringify(simulationResults));
 `,sandbox);
