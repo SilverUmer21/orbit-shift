@@ -12,7 +12,9 @@ math.random = () => (seed = seed * 16807 % 2147483647) / 2147483647;
 const context = new Proxy({}, { get: (_, key) => key === 'createRadialGradient' ? () => ({ addColorStop() {} }) : () => {} });
 const element = () => ({ clientWidth: logicalWidth, clientHeight: logicalHeight, width: logicalWidth, height: logicalHeight,
   hidden: true, dataset:{}, style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {} },
-  getContext: () => context, setAttribute() {}, addEventListener() {}, append() {}, querySelector: () => element() });
+  getContext: () => context, setAttribute() {}, addEventListener(type,listener) { (this.listeners[type] ||= []).push(listener); },
+  listeners: {}, dispatchEvent(event) { for (const listener of this.listeners[event.type] || []) listener(event); },
+  append() {}, querySelector: () => element() });
 const elements = new Map();
 const sandbox = { console: { ...console, assert: (ok,message) => assert.ok(ok,message) }, Math: math, performance: { now: () => 1000 }, devicePixelRatio: 1,
   document: { hidden: false, querySelector(selector) { if (!elements.has(selector)) elements.set(selector, element()); return elements.get(selector); },
@@ -118,6 +120,21 @@ vm.runInContext(`
   startRun('campaign','kindling');state.levelComplete=true;finishRun();assert.equal(state.runStars,0,'First clear reward is not repeated');
   assert.equal(state.campaign.ratings.kindling,3,'Lower replay rating cannot erase a best rating');
   showScreen('home');assert.equal(currentCosmetic().id,'void');assert.equal(state.selected,'void');
+  state.campaign.completed=state.campaign.completed.filter(id=>id!=='first-light');
+  state.campaign.ratings['first-light']=0;state.campaign.fragments['first-light']=0;state.campaign.unlockedLevel=4;
+  startRun('campaign','first-light');state.levelComplete=true;state.runFragments=6;state.perfects=2;
+  const firstClearStars=state.stars;beginAwakening();
+  assert.equal(state.mode,'awakening');assert.equal(awakening.life,1.5);assert.equal(awakening.skippable,false);
+  assert.equal(state.stars-firstClearStars,15,'First clear pays once before awakening');
+  canvas.dispatchEvent({type:'pointerdown'});assert.equal(state.mode,'awakening','First clear cannot skip awakening');
+  update(.75);assert.ok(Math.abs(awakening.life-.75)<1e-9);
+  state.paused=true;const pausedLife=awakening.life;update(2);assert.equal(awakening.life,pausedLife,'Paused awakening timer must freeze');
+  state.paused=false;update(1.01);assert.equal(state.mode,'results','Awakening reaches results after 1.5 seconds');
+  const settledStars=state.stars;beginAwakening();finishAwakening();assert.equal(state.stars,settledStars,'Awakening cannot double reward');
+  startRun('campaign','first-light');state.levelComplete=true;state.runFragments=0;state.perfects=0;beginAwakening();
+  assert.equal(awakening.skippable,true);assert.equal(awakening.rating,1);assert.equal(state.campaign.ratings['first-light'],3,'Stored 3-star rating survives a 1-star replay');
+  const replayStars=state.stars;canvas.dispatchEvent({type:'pointerdown'});assert.equal(state.mode,'results','Repeat clear can skip awakening');assert.equal(state.stars,replayStars,'Repeat clear pays no stars');
+  startRun(state.runType,state.levelId);assert.equal(state.mode,'run');assert.equal(state.elapsed,0);assert.equal(state.runFragments,0);assert.equal(state.perfects,0);assert.equal(state.runStars,0);assert.equal(state.paused,false,'Retry resets run state');
   for(const age of [0,.59,.6,1.19,1.2,1.4,1.6,2])for(const distance of [1,40,200]){
     const gate={speed:62,heat:true,age},duration=gateTravelTime(gate,distance);
     assert.ok(Math.abs(gateDistance(gate,duration)-distance)<.00001,'Heat integral and inverse agree at every boundary');
@@ -161,6 +178,7 @@ vm.runInContext(`
       assert.ok(++steps<20000,'Fever scenario must advance');
     }
     spawnGate=actualSpawn;
+    if(state.runType==='campaign'&&state.mode==='awakening')update(1.51);
     assert.equal(state.mode,'results');assert.equal(state.levelComplete,true);
     assert.equal(state.shield,true,'Planned route must not rely on its shield');
     assert.equal(state.fever,0);assert.equal(campaignGateIndex,10);assert.equal(campaignFragmentIndex,6);assert.ok(state.runFragments>=3);
