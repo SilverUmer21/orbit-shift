@@ -163,6 +163,7 @@ let tutorialSession = null;
 let purchasePreview = null;
 let rewardAnimation = null;
 let rewardIndex = 0;
+let rewardChapterComplete = false;
 
 const today = new Date().toISOString().slice(0, 10);
 state.stats.sessions += 1;
@@ -478,6 +479,8 @@ function renderRewardSeal(index = 0) {
   if (!rewards.length) return;
   const reward = rewards[Math.min(index, rewards.length - 1)];
   const name = rewardDisplayName(reward), palette = rewardPalette(reward);
+  rewardChapterComplete = state.runType === "campaign" && state.levelComplete && ["crown-of-petals", "solar-forge"].includes(state.levelId);
+  ui.rewardSeal.classList.toggle("chapter-awakening", rewardChapterComplete);
   ui.rewardName.textContent = name;
   ui.rewardPreview.setAttribute("aria-label", `Show next reward. Current reward: ${name}`);
   ui.rewardSeal.style.setProperty("--reward-ink", palette.ink);
@@ -487,12 +490,14 @@ function renderRewardSeal(index = 0) {
   ui.rewardChoices.innerHTML = "";
   ui.rewardChoices.hidden = rewards.length < 2;
   rewards.forEach((item, itemIndex) => {
-    const button = document.createElement("button"), itemName = rewardDisplayName(item); button.type = "button"; button.textContent = String(itemIndex+1); button.title=itemName;button.setAttribute("aria-label",`Reward ${itemIndex + 1}: ${itemName}`);button.setAttribute("aria-pressed",String(itemIndex===index));
+    const button = document.createElement("button"), itemName = rewardDisplayName(item); button.type = "button"; button.innerHTML = `<span aria-hidden="true">${rewardGlyph(item)}</span>`; button.title=itemName;button.setAttribute("aria-label",`Reward ${itemIndex + 1}: ${itemName}`);button.setAttribute("aria-pressed",String(itemIndex===index));
     button.className = itemIndex === index ? "selected" : ""; button.addEventListener("click", () => renderRewardSeal(itemIndex)); ui.rewardChoices.append(button);
   });
   ui.rewardSeal.style.setProperty("--unfold",state.reducedEffects?"1":"0");
   drawRewardPreview();
 }
+
+function rewardGlyph(reward) { return reward.type === "trail" ? "~" : reward.type === "relic" ? "◆" : reward.type === "biome" ? "●" : "✦"; }
 
 function rewardDisplayName(reward) {
   const label = reward.label.replace(/\s+(trail|relic)$/i, "");
@@ -511,8 +516,15 @@ function rewardPalette(reward) {
 
 function drawRewardPreview() {
   const reward=state.runRewards[rewardIndex]; if(!reward)return;
-  const target = ui.rewardPreview.querySelector("canvas").getContext("2d"), palette=rewardPalette(reward),time=rewardAnimation?.elapsed||0;
-  target.clearRect(0, 0, 180, 76); drawRewardSurface(target,palette,time); target.save(); target.translate(90, 39);
+  const stage=rewardChapterComplete,canvas=ui.rewardPreview.querySelector("canvas"),palette=rewardPalette(reward),time=rewardAnimation?.elapsed||0;
+  const width=stage?220:180,height=stage?142:76;
+  if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
+  const target = canvas.getContext("2d"); target.clearRect(0,0,width,height);
+  if(stage){drawChapterRewardStage(target,reward,palette,time);return;}
+  drawRewardSurface(target,palette,time); target.save(); target.translate(90, 39); drawRewardMark(target,reward,palette,time); target.restore();
+}
+
+function drawRewardMark(target,reward,palette,time) {
   if (reward.type === "trail") {
     for(let i=0;i<12;i++){target.globalAlpha=1-i/12;target.fillStyle=i%2?palette.accent:palette.gold;drawTrailPiece(target,reward.id,48-i*9,Math.sin(i*.3-time)*8,5,0,i);}
   } else if (reward.type === "biome") {
@@ -522,7 +534,19 @@ function drawRewardPreview() {
     OrbitArt.drawLivingPlanet(target,biome === "ember" ? "ember-furnace" : "bloom-crown",{x:0,y:2,radius:27,paletteId:biome,time,reduced:state.reducedEffects});
     drawRewardCompletion(target,palette);
   } else drawRelicMedallion(target,palette,time);
-  target.restore();
+}
+
+function drawChapterRewardStage(target,reward,palette,time) {
+  const reduced=state.reducedEffects,w=220,h=142;
+  target.fillStyle=palette.ink;target.fillRect(0,0,w,h);
+  target.fillStyle=palette.light;target.globalAlpha=.16;target.fillRect(0,0,w,68);target.globalAlpha=1;
+  target.save();target.translate(w/2,53);target.strokeStyle=palette.gold;target.lineWidth=2;target.globalAlpha=.35;
+  const rayCount=reduced?5:9;for(let i=0;i<rayCount;i++){target.rotate(TAU/rayCount);target.beginPath();target.moveTo(0,0);target.lineTo(0,-46);target.stroke();}target.restore();
+  target.save();target.translate(w/2,83);target.fillStyle=palette.paper;
+  for(const layer of [[-74,17,22],[-61,8,16],[-49,0,10]]){target.beginPath();target.moveTo(layer[0],layer[1]);target.lineTo(-31,layer[1]-layer[2]);target.lineTo(0,layer[1]-6);target.lineTo(34,layer[1]-layer[2]);target.lineTo(-layer[0],layer[1]);target.lineTo(-layer[0]+8,layer[1]+17);target.lineTo(-70,layer[1]+14);target.closePath();target.globalAlpha=.4+(layer[2]/40);target.fill();}target.globalAlpha=1;
+  OrbitArt.drawLivingPlanet(target,state.levelId==="solar-forge"?"ember-furnace":"bloom-crown",{x:0,y:-5,radius:27,paletteId:state.levelId==="solar-forge"?"ember":"bloom",time,reduced});drawChapterEmblem(target,palette,18);target.restore();
+  target.save();target.translate(w/2,111);target.scale(.55,.55);drawRewardMark(target,reward,palette,time);target.restore();
+  window.OrbitArt.helpers?.paperGrain?.(target,w,h,palette.light,.06);
 }
 
 function drawRewardSurface(target,palette,time) {
