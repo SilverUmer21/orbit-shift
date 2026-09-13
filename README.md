@@ -126,3 +126,5 @@ The intended loop is earn, return, connect, and transform. No Constellation Weav
 - Record that the PixiJS campaign map remains the map integration target.
 
 - Clarify that authored raster art should carry focal presentation assets.
+
+- Mention that interface text should remain editable in code where possible.
