@@ -122,3 +122,5 @@ The intended loop is earn, return, connect, and transform. No Constellation Weav
 - Document that the current gameplay loop remains Canvas-based for review.
 
 - Note that DOM screens are the intended shell for menus and overlays.
+
+- Record that the PixiJS campaign map remains the map integration target.
