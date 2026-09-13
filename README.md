@@ -120,3 +120,5 @@ The intended loop is earn, return, connect, and transform. No Constellation Weav
 ## Maintenance notes
 
 - Document that the current gameplay loop remains Canvas-based for review.
+
+- Note that DOM screens are the intended shell for menus and overlays.
