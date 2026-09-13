@@ -136,3 +136,5 @@ The intended loop is earn, return, connect, and transform. No Constellation Weav
 - Note that reduced-effects behavior should stay available for celebrations.
 
 - Mention that gameplay timing and gate reachability tests guard progression.
+
+- Record that preview builds should avoid mutating real player saves.
