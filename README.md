@@ -132,3 +132,5 @@ The intended loop is earn, return, connect, and transform. No Constellation Weav
 - Track mobile portrait sizes used for menu and map review.
 
 - Record that save compatibility must be checked before UI integration ships.
+
+- Note that reduced-effects behavior should stay available for celebrations.
