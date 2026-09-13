@@ -128,3 +128,5 @@ The intended loop is earn, return, connect, and transform. No Constellation Weav
 - Clarify that authored raster art should carry focal presentation assets.
 
 - Mention that interface text should remain editable in code where possible.
+
+- Track mobile portrait sizes used for menu and map review.
