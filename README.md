@@ -116,3 +116,7 @@ The intended loop is earn, return, connect, and transform. No Constellation Weav
 - Angular checks -> collision and signal handling
 - DOM panels -> Control nodes
 - `localStorage` -> `ConfigFile` or local save resource
+
+## Maintenance notes
+
+- Document that the current gameplay loop remains Canvas-based for review.
