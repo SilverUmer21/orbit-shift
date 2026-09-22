@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07171b">
+  <title>Luna Graphics Lab · Orbit Shift</title>
+  <link rel="stylesheet" href="luna-graphics.css">
+</head>
+<body>
+  <main class="lab-shell">
+    <header class="lab-header">
+      <div>
+        <p class="eyebrow">Orbit Shift · visual lab</p>
+        <h1>Luna Graphics</h1>
+      </div>
+      <a href="index.html">Back to game</a>
+    </header>
+
+    <section class="intro" aria-labelledby="intro-title">
+      <p class="eyebrow">Plane behavior study</p>
+      <h2 id="intro-title">Same orbit. Different hands.</h2>
+      <p>Tap the orbit to reverse. Switch planes to compare how the same gate feels when the glider drifts, echoes, or simply stays honest.</p>
+    </section>
+
+    <section class="hero-card" aria-labelledby="plane-title">
+      <div class="hero-stage">
+        <canvas id="heroCanvas" width="390" height="430" aria-label="Interactive plane behavior demo"></canvas>
+        <div class="stage-hint" id="stageHint">Tap the orbit to reverse</div>
+      </div>
+      <div class="hero-copy">
+        <div>
+          <p class="eyebrow" id="planeRole">Baseline</p>
+          <h2 id="planeTitle">Manta</h2>
+        </div>
+        <p id="planeDescription">The clean reference plane. No trick, no rescue—just read the opening and turn.</p>
+        <div class="behavior-readout" aria-live="polite">
+          <span>Current state</span>
+          <strong id="behaviorReadout">steady orbit</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="plane-grid" aria-label="Plane demos">
+      <button class="plane-card selected" type="button" data-plane="manta">
+        <canvas width="150" height="92" aria-hidden="true"></canvas>
+        <span class="eyebrow">Baseline</span>
+        <strong>Manta</strong>
+        <small>Read the route</small>
+      </button>
+      <button class="plane-card" type="button" data-plane="crescent">
+        <canvas width="150" height="92" aria-hidden="true"></canvas>
+        <span class="eyebrow">Recovery</span>
+        <strong>Crescent</strong>
+        <small>Hold a soft turn</small>
+      </button>
+      <button class="plane-card" type="button" data-plane="splitwing">
+        <canvas width="150" height="92" aria-hidden="true"></canvas>
+        <span class="eyebrow">Rhythm</span>
+        <strong>Splitwing</strong>
+        <small>Catch the echo</small>
+      </button>
+    </section>
+
+    <section class="notes" aria-labelledby="notes-title">
+      <div>
+        <p class="eyebrow">Review notes</p>
+        <h2 id="notes-title">What to look for</h2>
+      </div>
+      <ul>
+        <li>Does the silhouette stay readable at the orbit scale?</li>
+        <li>Can you understand the plane's behavior from the motion alone?</li>
+        <li>Does the tradeoff make you want to try another run?</li>
+      </ul>
+    </section>
+  </main>
+  <script src="art-renderers.js"></script>
+  <script src="luna-graphics.js"></script>
+</body>
+</html>
