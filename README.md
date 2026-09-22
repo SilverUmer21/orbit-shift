@@ -2,6 +2,8 @@
 
 A dependency-free mobile Canvas arcade journey with authored Luminous Papercut worlds and a six-ship Cosmic Glider collection. Tap to reverse around a living planet, pass through contracting gates, chain perfect dodges, earn a flow shield, and trigger fever mode.
 
+The `luna_graphics` branch contains an isolated plane-behavior lab at `luna-graphics.html`. It is a review demo, not merged gameplay: compare the Manta baseline with Crescent drift and Splitwing echo before approving any plane mechanics.
+
 Version 1 adds a four-level Bloom chapter to the Cosmic Islands campaign. **First Light**, **Pollen Path**, **Tangled Orbit**, and **Crown of Petals** grow from a 45-second introduction into a 75-second Budkeeper finale. The island visibly restores after each clear, while the original continuous journey remains available as Ascension.
 
 The approved Bloom chapter and Ember's Kindling level are on `main`. The `ember-chapter` review branch completes Ember with Cinder Step, Furnace Heart, and Solar Forge. Void remains deferred.
@@ -45,6 +47,8 @@ Open `http://127.0.0.1:3000/` on the computer.
 Open `http://127.0.0.1:3000/art-lab.html` to compare the earlier code-native campaign maps and living planets.
 
 Open `http://127.0.0.1:3000/archipelago-lab.html` to inspect the production Orbit Archipelago renderer in isolation. The campaign uses this same shared renderer, authored SVG assets, and locally vendored PixiJS runtime.
+
+Open `http://127.0.0.1:3000/luna-graphics.html` to review the Luna plane demos. Tap the hero orbit to reverse, or use Space, Up, or Enter. Select a plane card to compare the behavior and read the review notes below the demo.
 
 For a phone test:
 
