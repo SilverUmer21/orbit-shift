@@ -27,6 +27,7 @@
   const demo = {
     planeId: "manta", angle: -Math.PI / 2, direction: 1, time: 0,
     lastFrame: performance.now(), pulse: 0, drift: 0, echo: 0, echoAngle: 0,
+    readout: "steady orbit", readoutTime: 0,
   };
 
   function alpha(hex, opacity) {
@@ -127,12 +128,39 @@
     document.querySelector("#planeRole").textContent = plane.role;
     document.querySelector("#planeTitle").textContent = plane.title;
     document.querySelector("#planeDescription").textContent = plane.description;
-    document.querySelector("#behaviorReadout").textContent = demo.planeId === "manta" ? "steady orbit" : demo.planeId === "crescent" ? "soft turn ready" : "echo waiting";
+    document.querySelector("#behaviorReadout").textContent = demo.readout;
+    document.querySelector("#stageHint").textContent = demo.planeId === "manta" ? "Tap the orbit to reverse" : `Tap to test ${plane.title}`;
   }
+
+  function setReadout(text, duration = 0) {
+    demo.readout = text; demo.readoutTime = duration; renderText();
+  }
+
+  function selectPlane(planeId) {
+    if (!planes[planeId]) return;
+    demo.planeId = planeId; demo.echo = 0; demo.drift = 0; demo.pulse = .4;
+    document.querySelectorAll(".plane-card").forEach((card) => card.classList.toggle("selected", card.dataset.plane === planeId));
+    setReadout(planeId === "manta" ? "steady orbit" : planeId === "crescent" ? "soft turn ready" : "echo waiting");
+  }
+
+  function reverse() {
+    demo.direction *= -1; demo.pulse = 1;
+    if (demo.planeId === "manta") setReadout("reversal committed", .5);
+    if (demo.planeId === "crescent") { demo.drift = 1; setReadout("drift in motion", .8); }
+    if (demo.planeId === "splitwing") { demo.echo = 1; demo.echoAngle = demo.angle - demo.direction * .62; setReadout("echo released", 1.2); }
+  }
+
+  document.querySelectorAll(".plane-card").forEach((card) => card.addEventListener("click", () => selectPlane(card.dataset.plane)));
+  canvas.addEventListener("pointerdown", reverse);
+  window.addEventListener("keydown", (event) => {
+    if (["Space", "ArrowUp", "Enter"].includes(event.code)) { event.preventDefault(); reverse(); }
+  });
 
   function loop(now) {
     const delta = Math.min(.04, (now - demo.lastFrame) / 1000); demo.lastFrame = now; demo.time += delta;
     demo.angle += demo.direction * delta * 1.42; demo.pulse = Math.max(0, demo.pulse - delta * 3.8); demo.drift = Math.max(0, demo.drift - delta * 1.8); demo.echo = Math.max(0, demo.echo - delta * .55);
+    demo.readoutTime = Math.max(0, demo.readoutTime - delta);
+    if (!demo.readoutTime && demo.readout !== (demo.planeId === "manta" ? "steady orbit" : demo.planeId === "crescent" ? "soft turn ready" : "echo waiting")) setReadout(demo.planeId === "manta" ? "steady orbit" : demo.planeId === "crescent" ? "soft turn ready" : demo.echo > 0 ? "echo waiting" : "echo expired");
     drawHero(demo.time); requestAnimationFrame(loop);
   }
 
