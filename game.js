@@ -1519,7 +1519,8 @@ function burst(point, color, count, speed, shape) {
 function drawGlider(target, rider, palette, scale = 1, time = 0, flip = 0, fever = false, glow = 0) {
   const wing = (fever ? 1.16 : 1) * (1 - flip * 0.14);
   target.save(); target.scale(scale, scale * wing);
-  target.fillStyle = "rgba(0,0,0,.28)"; target.beginPath(); target.ellipse(-2, 4, 30, 17, 0, 0, TAU); target.fill();
+  const compact = rider.shape === "splitwing";
+  target.fillStyle = "rgba(0,0,0,.28)"; target.beginPath(); target.ellipse(-2, 4, compact ? 27 : 30, compact ? 11 : 17, 0, 0, TAU); target.fill();
   const path = () => {
     target.beginPath();
     if (rider.shape === "manta") { target.moveTo(31,0); target.lineTo(5,-7); target.lineTo(-17,-24); target.lineTo(-29,-18); target.lineTo(-20,0); target.lineTo(-29,18); target.lineTo(-17,24); target.lineTo(5,7); }
@@ -1531,7 +1532,12 @@ function drawGlider(target, rider, palette, scale = 1, time = 0, flip = 0, fever
       target.quadraticCurveTo(-27,.5,-20,1); target.lineTo(-8,2); target.bezierCurveTo(-13,3,-19,4,-24,7); target.quadraticCurveTo(-29,11,-23,13);
       target.bezierCurveTo(-14,15,-4,12,4,7); target.bezierCurveTo(11,4,19,1,31,0);
     }
-    else if (rider.shape === "splitwing") { target.moveTo(32,0); target.lineTo(-25,-22); target.lineTo(-8,-3); target.lineTo(-28,0); target.lineTo(-8,3); target.lineTo(-25,22); }
+    // Kitefin: compact Splitwing art. Its shallow fork and small folded kites stay readable without a long body.
+    else if (rider.shape === "splitwing") {
+      target.moveTo(31,0); target.lineTo(20,-2.7); target.lineTo(11,-3.4); target.lineTo(5,-5.7); target.lineTo(-2,-7.6); target.lineTo(-8,-4.2);
+      target.lineTo(-19,-6.1); target.lineTo(-32,-6.8); target.lineTo(-27,-2.3); target.lineTo(-36,0); target.lineTo(-27,2.3); target.lineTo(-32,6.8);
+      target.lineTo(-19,6.1); target.lineTo(-8,4.2); target.lineTo(-2,7.6); target.lineTo(5,5.7); target.lineTo(11,3.4); target.lineTo(20,2.7);
+    }
     else if (rider.shape === "shuttle") { target.moveTo(30,0); target.lineTo(12,-9); target.lineTo(-20,-17); target.lineTo(-28,-8); target.lineTo(-24,0); target.lineTo(-28,8); target.lineTo(-20,17); target.lineTo(12,9); }
     else { target.moveTo(31,0); target.lineTo(5,-7); target.arc(-8,0,22,-.3,TAU+.3); target.lineTo(5,7); }
     target.closePath();
@@ -1547,6 +1553,15 @@ function drawGlider(target, rider, palette, scale = 1, time = 0, flip = 0, fever
     target.fillStyle=palette.mid; sailFace(); target.save(); target.scale(1,-1); sailFace(); target.restore();
     const cut = () => { target.beginPath(); target.ellipse(-12,-4.6,3.7,1.05,-.35,0,TAU); target.fill(); };
     target.fillStyle=palette.bg; cut(); target.save(); target.scale(1,-1); cut(); target.restore();
+  }
+  if (rider.shape === "splitwing") {
+    const foldedKite = () => {
+      target.beginPath(); target.moveTo(11,-2.7); target.lineTo(4,-5.4); target.lineTo(-2,-6.8); target.lineTo(-8,-3.6); target.lineTo(-19,-5.1); target.lineTo(-24,-4.1); target.lineTo(-15,-2); target.closePath(); target.fill();
+      target.strokeStyle="rgba(230,227,179,.66)"; target.lineWidth=.7; target.beginPath(); target.moveTo(11,-2.4); target.lineTo(-8,-3.6); target.lineTo(-20,-5); target.stroke();
+    };
+    target.fillStyle=palette.paper; foldedKite(); target.save(); target.scale(1,-1); foldedKite(); target.restore();
+    const foreKite = () => { target.beginPath(); target.moveTo(20,-2.6); target.lineTo(14,-5); target.lineTo(8,-3.3); target.lineTo(12,-1.35); target.closePath(); target.fill(); };
+    target.fillStyle=palette.gold; foreKite(); target.save(); target.scale(1,-1); foreKite(); target.restore();
   }
   target.fillStyle = palette.paper; target.beginPath(); target.moveTo(29,0); target.lineTo(2,-7); target.lineTo(-12,0); target.lineTo(2,7); target.closePath(); target.fill();
   target.fillStyle = palette.accent; target.beginPath(); target.moveTo(14,0); target.lineTo(-8,-5); target.lineTo(-17,0); target.lineTo(-8,5); target.closePath(); target.fill();
