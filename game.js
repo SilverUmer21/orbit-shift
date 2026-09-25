@@ -1524,7 +1524,13 @@ function drawGlider(target, rider, palette, scale = 1, time = 0, flip = 0, fever
     target.beginPath();
     if (rider.shape === "manta") { target.moveTo(31,0); target.lineTo(5,-7); target.lineTo(-17,-24); target.lineTo(-29,-18); target.lineTo(-20,0); target.lineTo(-29,18); target.lineTo(-17,24); target.lineTo(5,7); }
     else if (rider.shape === "dart") { target.moveTo(32,0); target.lineTo(-17,-23); target.lineTo(-8,-5); target.lineTo(-30,-10); target.lineTo(-19,0); target.lineTo(-30,10); target.lineTo(-8,5); target.lineTo(-17,23); }
-    else if (rider.shape === "crescent") { target.moveTo(31,0); target.quadraticCurveTo(-4,-7,-25,-24); target.quadraticCurveTo(-36,-5,-16,0); target.quadraticCurveTo(-36,5,-25,24); target.quadraticCurveTo(-4,7,31,0); }
+    // Ribbonwake: approved Crescent art. Curled sails stay narrow so the long center spear survives at game scale.
+    else if (rider.shape === "crescent") {
+      target.moveTo(31,0); target.bezierCurveTo(19,-1,11,-4,4,-7); target.bezierCurveTo(-4,-12,-14,-15,-23,-13);
+      target.quadraticCurveTo(-29,-11,-24,-7); target.bezierCurveTo(-19,-4,-13,-3,-8,-2); target.lineTo(-20,-1); target.quadraticCurveTo(-27,-.5,-29,0);
+      target.quadraticCurveTo(-27,.5,-20,1); target.lineTo(-8,2); target.bezierCurveTo(-13,3,-19,4,-24,7); target.quadraticCurveTo(-29,11,-23,13);
+      target.bezierCurveTo(-14,15,-4,12,4,7); target.bezierCurveTo(11,4,19,1,31,0);
+    }
     else if (rider.shape === "splitwing") { target.moveTo(32,0); target.lineTo(-25,-22); target.lineTo(-8,-3); target.lineTo(-28,0); target.lineTo(-8,3); target.lineTo(-25,22); }
     else if (rider.shape === "shuttle") { target.moveTo(30,0); target.lineTo(12,-9); target.lineTo(-20,-17); target.lineTo(-28,-8); target.lineTo(-24,0); target.lineTo(-28,8); target.lineTo(-20,17); target.lineTo(12,9); }
     else { target.moveTo(31,0); target.lineTo(5,-7); target.arc(-8,0,22,-.3,TAU+.3); target.lineTo(5,7); }
@@ -1532,6 +1538,16 @@ function drawGlider(target, rider, palette, scale = 1, time = 0, flip = 0, fever
   };
   target.fillStyle = palette.ink; path(); target.fill();
   target.save(); target.scale(.91,.82); target.fillStyle = palette.light; path(); target.fill(); target.restore();
+  if (rider.shape === "crescent") {
+    const sailFace = () => {
+      target.beginPath(); target.moveTo(8,-2); target.bezierCurveTo(-1,-6,-11,-10,-20,-10); target.quadraticCurveTo(-23,-9,-19,-7);
+      target.bezierCurveTo(-13,-4,-8,-3,-3,-2); target.closePath(); target.fill();
+      target.strokeStyle="rgba(230,227,179,.66)"; target.lineWidth=.7; target.beginPath(); target.moveTo(8,-2); target.lineTo(-4,-7); target.lineTo(-18,-9); target.stroke();
+    };
+    target.fillStyle=palette.mid; sailFace(); target.save(); target.scale(1,-1); sailFace(); target.restore();
+    const cut = () => { target.beginPath(); target.ellipse(-12,-4.6,3.7,1.05,-.35,0,TAU); target.fill(); };
+    target.fillStyle=palette.bg; cut(); target.save(); target.scale(1,-1); cut(); target.restore();
+  }
   target.fillStyle = palette.paper; target.beginPath(); target.moveTo(29,0); target.lineTo(2,-7); target.lineTo(-12,0); target.lineTo(2,7); target.closePath(); target.fill();
   target.fillStyle = palette.accent; target.beginPath(); target.moveTo(14,0); target.lineTo(-8,-5); target.lineTo(-17,0); target.lineTo(-8,5); target.closePath(); target.fill();
   target.fillStyle = palette.gold; target.beginPath(); target.moveTo(-20,-5); target.lineTo(-31-(fever?7:0),0); target.lineTo(-20,5); target.closePath(); target.fill();
