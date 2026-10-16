@@ -1264,20 +1264,13 @@ function drawGates(time, palette) {
     const end = gate.gap + TAU - half;
     ctx.save();
     ctx.globalAlpha = Math.max(0.12, alpha);
-    const band = gate.guardian ? 13 : gate.type === 3 ? 11 : 9;
+    ctx.strokeStyle = palette.ink;
+    ctx.lineWidth = gate.guardian ? 18 : 13;
     ctx.lineCap = "round";
-    for (const [dx, dy, grow, shadow] of [[4, 7, 9, .1], [3, 5, 6, .16], [2, 3, 3.5, .22]]) {
-      ctx.strokeStyle = `rgba(0,0,0,${shadow})`; ctx.lineWidth = band + grow;
-      ctx.beginPath(); ctx.arc(cx + dx, cy + dy, gate.radius, start, end); ctx.stroke();
-    }
-    ctx.strokeStyle = palette.ink; ctx.lineWidth = band + 4;
-    ctx.beginPath(); ctx.arc(cx, cy + 1.5, gate.radius, start, end); ctx.stroke();
-    ctx.strokeStyle = shadeColor(color, -.34); ctx.lineWidth = band + 1.5;
-    ctx.beginPath(); ctx.arc(cx, cy + 1.5, gate.radius, start, end); ctx.stroke();
-    ctx.strokeStyle = color; ctx.lineWidth = band;
+    ctx.beginPath(); ctx.arc(cx + 2, cy + 3, gate.radius, start, end); ctx.stroke();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = gate.guardian ? 11 : gate.type === 3 ? 9 : 7;
     ctx.beginPath(); ctx.arc(cx, cy, gate.radius, start, end); ctx.stroke();
-    ctx.strokeStyle = shadeColor(color, .42); ctx.lineWidth = Math.max(1.6, band * .24); ctx.globalAlpha *= .75;
-    ctx.beginPath(); ctx.arc(cx, cy, gate.radius + band * .26, start + .02, end - .02); ctx.stroke(); ctx.globalAlpha /= .75;
     drawGateDetails(gate, start, end, color, palette, time);
     if(gate.heat)drawHeatWarning(gate,palette);
     if(gate.generous) drawPerfectPetals(gate,palette);
@@ -1818,7 +1811,10 @@ function updateHome() {
 }
 
 function renderGoals() {
-  ui.goals.innerHTML = state.goals.map((goal) => `<div class="voyage-goal"><b>${goal.label}</b><span>${Math.min(goal.progress,goal.target)}/${goal.target}</span><i style="--progress:${Math.min(100,goal.progress/goal.target*100)}%"></i></div>`).join("");
+  ui.goals.innerHTML = state.goals.map((goal) => {
+    const done = Math.min(goal.progress, goal.target), share = done / goal.target;
+    return `<div class="voyage-goal"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="dial-track" cx="24" cy="24" r="19"/><circle class="dial-fill" cx="24" cy="24" r="19" pathLength="100" stroke-dasharray="${(share * 100).toFixed(1)} 100"/><text x="24" y="28">${done}</text></svg><b>${goal.label}</b><span>of ${goal.target}</span></div>`;
+  }).join("");
 }
 
 function renderGarage() {
@@ -1997,7 +1993,7 @@ function frame(time) {
   // Catch up slower frames in small collision-safe steps, without a long resume jump.
   const steps = Math.max(1, Math.ceil(delta * 60));
   // the home hub lifts the world toward the title so the menu never covers the planet
-  const worldY = height * (state.mode === "home" ? (height < 650 ? 0.47 : 0.4) : 0.55);
+  const worldY = height * (state.mode === "home" ? (height < 650 ? 0.47 : 0.43) : 0.55);
   cy += (worldY - cy) * Math.min(1, delta * 7);
   for (let step = 0; step < steps; step += 1) update(delta / steps);
   draw();
