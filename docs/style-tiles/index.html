@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Orbit Shift Style Tiles</title>
+<style>
+@font-face{font-family:"Fraunces";font-weight:600 900;font-display:swap;src:url(fraunces.woff2) format("woff2")}
+@font-face{font-family:"Outfit";font-weight:500 800;font-display:swap;src:url(outfit.woff2) format("woff2")}
+*{box-sizing:border-box}html,body{margin:0;background:#03070a;color:#e6dba8;font-family:Outfit,system-ui,sans-serif}
+body{padding:16px;display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+.tile{position:relative;width:390px;height:640px;overflow:hidden;background:#08191d;border-radius:22px;box-shadow:0 14px 40px #000a;flex:none}
+.tile canvas{position:absolute;inset:0;width:390px;height:640px}
+.tile .ui{position:absolute;inset:0;width:390px;height:640px}
+.tile .cap{position:absolute;left:0;right:0;bottom:6px;text-align:center;font:700 9px Outfit;letter-spacing:.2em;color:rgba(230,219,168,.35);text-transform:uppercase}
+</style></head><body>
+<div class="tile" id="A" data-name=""></div><div class="tile" id="B" data-name=""></div><div class="tile" id="C" data-name=""></div>
+<script src="art-renderers.js"></script><script src="glider.js"></script><script src="helpers.js"></script><script src="tiles.js"></script>
+</body></html>
