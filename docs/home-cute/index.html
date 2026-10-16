@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Orbit Shift Home</title>
+<style>
+@font-face{font-family:"Lilita";font-display:swap;src:url(lilita.woff2) format("woff2")}
+:root{color-scheme:dark;--ink:#1b1440}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#0b0620;overflow:hidden}
+body{display:flex;justify-content:center;align-items:flex-start}
+.stage{position:relative;width:390px;height:844px;flex:none;transform-origin:top center}
+#phone{position:absolute;inset:0;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation;font-family:"Lilita",system-ui,sans-serif}
+#bg{position:absolute;inset:0;width:390px;height:844px}
+
+/* logo */
+.logo{position:absolute;left:0;top:70px;width:390px;height:190px;overflow:visible;pointer-events:none;animation:logoIn .9s cubic-bezier(.3,1.6,.5,1) both}
+.logo g.w{animation:wig 3.2s ease-in-out infinite;transform-origin:195px 110px;transform-box:view-box}
+@keyframes logoIn{0%{transform:translateY(-120px) scale(.6);opacity:0}100%{transform:none;opacity:1}}
+@keyframes wig{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(-1deg) translateY(-4px)}}
+.lt{font-family:"Lilita",sans-serif;paint-order:stroke;stroke:var(--ink);stroke-linejoin:round}
+
+/* hero */
+.hero{position:absolute;left:45px;top:290px;width:300px;height:300px;cursor:pointer;border:0;background:none;padding:0}
+.craft{position:absolute;left:10px;top:0;width:280px;height:280px;overflow:visible;animation:hover 2.6s ease-in-out infinite}
+@keyframes hover{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-14px) rotate(4deg)}}
+.craft .flame{transform-origin:100px 150px;transform-box:view-box;animation:flick .12s ease-in-out infinite alternate}
+@keyframes flick{to{transform:scaleY(.82) scaleX(1.08)}}
+.craft .lid{transform-origin:center;transform-box:fill-box;animation:blink 4s infinite}
+@keyframes blink{0%,92%,100%{transform:scaleY(0)}95%{transform:scaleY(1)}}
+.craft .ant{transform-origin:100px 52px;transform-box:view-box;animation:ant 1.3s ease-in-out infinite}
+@keyframes ant{50%{transform:rotate(12deg)}}
+.hero.happy .craft{animation:happy .6s cubic-bezier(.3,1.8,.5,1)}
+@keyframes happy{0%{transform:scale(1)}30%{transform:scale(1.18,.84)}60%{transform:scale(.92,1.1) translateY(-20px)}100%{transform:scale(1)}}
+.hero.happy .eyes{display:none}.hero .joy{display:none}.hero.happy .joy{display:inline}
+.shadow{display:none;position:absolute;left:100px;top:262px;width:100px;height:16px;border-radius:50%;background:rgba(10,4,30,.45);filter:blur(3px);animation:shad 2.6s ease-in-out infinite}
+@keyframes shad{50%{transform:scale(.8);opacity:.6}}
+
+/* play */
+.play{position:absolute;left:80px;top:676px;width:230px;height:88px;border:0;padding:0;background:none;cursor:pointer;animation:playIn .8s .35s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes playIn{from{transform:translateY(140px)}}
+.play .face{position:absolute;inset:0 0 10px;border-radius:26px;border:4px solid var(--ink);background:linear-gradient(#ffe36b,#ffc21a 60%,#ffab00);box-shadow:0 10px 0 #c87400,0 10px 0 4px var(--ink),0 22px 30px rgba(0,0,0,.45);overflow:hidden;display:grid;place-items:center;animation:pulse 1.6s ease-in-out infinite;transition:transform .08s}
+.play .face::before{content:"";position:absolute;left:10px;right:10px;top:6px;height:22px;border-radius:14px;background:rgba(255,255,255,.55)}
+.play .face::after{content:"";position:absolute;top:-20%;bottom:-20%;width:44px;left:-80px;background:rgba(255,255,255,.7);transform:skewX(-22deg);animation:shine 2.6s ease-in-out infinite}
+@keyframes shine{0%,55%{left:-80px}85%,100%{left:280px}}
+@keyframes pulse{50%{transform:scale(1.05)}}
+.play span{position:relative;font-family:"Lilita",sans-serif;font-size:50px;letter-spacing:3px;color:#fff;text-shadow:3px 0 var(--ink),-3px 0 var(--ink),0 3px var(--ink),0 -3px var(--ink),2px 2px var(--ink),-2px 2px var(--ink),2px -2px var(--ink),-2px -2px var(--ink),0 7px 0 var(--ink)}
+.play:active .face{animation:none;transform:translateY(8px);box-shadow:0 2px 0 #c87400,0 2px 0 4px var(--ink)}
+
+/* launch */
+#phone.launch .craft{animation:blast .9s cubic-bezier(.6,-.3,.7,1) forwards}
+@keyframes blast{0%{transform:none}25%{transform:translateY(16px) scale(1.1,.9)}100%{transform:translateY(-760px) scale(.6,1.4)}}
+#phone.launch .play,#phone.launch .logo{transition:.4s;opacity:0}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+#msg{position:absolute;left:0;right:0;top:400px;text-align:center;font-size:30px;color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke;opacity:0;transform:scale(.6);transition:.35s cubic-bezier(.3,1.6,.5,1);pointer-events:none}
+#msg.on{opacity:1;transform:none}
+.pop{position:absolute;pointer-events:none;font-size:22px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head>
+<body>
+<div class="stage" id="stage"><div id="phone">
+<canvas id="bg"></canvas>
+<svg class="logo" viewBox="0 0 390 190" aria-label="Orbit Shift"><g class="w">
+  <text x="199" y="94" text-anchor="middle" class="lt" font-size="84" fill="#1b1440" stroke-width="16">ORBIT</text>
+  <text x="195" y="88" text-anchor="middle" class="lt" font-size="84" fill="#ffffff" stroke-width="12">ORBIT</text>
+  <text x="203" y="176" text-anchor="middle" class="lt" font-size="92" fill="#1b1440" stroke-width="16">SHIFT</text>
+  <text x="199" y="170" text-anchor="middle" class="lt" font-size="92" fill="url(#lg)" stroke-width="12">SHIFT</text>
+  <defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset=".3" stop-color="#ffe36b"/><stop offset="1" stop-color="#ff9d1c"/></linearGradient></defs>
+  <path d="M42 40l5 11 11 5-11 5-5 11-5-11-11-5 11-5z" fill="#ffe36b" stroke="#1b1440" stroke-width="3"/><path d="M350 118l3.500 7.500 7.500 3.500-7.500 3.500-3.500 7.500-3.500-7.500-7.500-3.500 7.500-3.500z" fill="#5ef2ff" stroke="#1b1440" stroke-width="3"/>
+</g></svg>
+<button class="hero" id="hero" aria-label="Your craft"><div class="shadow"></div>
+<svg class="craft" viewBox="0 0 200 200">
+  <defs><linearGradient id="bd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8ff7d4"/><stop offset="1" stop-color="#1fae98"/></linearGradient>
+  <linearGradient id="fl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff59a"/><stop offset=".5" stop-color="#ffb21a"/><stop offset="1" stop-color="#ff5a3c"/></linearGradient></defs>
+  <path class="flame" d="M84 150C84 172 94 190 100 194C106 190 116 172 116 150Z" fill="url(#fl)" stroke="#1b1440" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M52 112C30 108 16 120 14 138C30 140 46 134 58 126Z" fill="#ff7a8a" stroke="#1b1440" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M148 112C170 108 184 120 186 138C170 140 154 134 142 126Z" fill="#ff7a8a" stroke="#1b1440" stroke-width="5" stroke-linejoin="round"/>
+  <g class="ant"><path d="M100 54V30" stroke="#1b1440" stroke-width="5" stroke-linecap="round"/><path d="M100 14l4 8 8 3-8 3-4 8-4-8-8-3 8-3z" fill="#ffe36b" stroke="#1b1440" stroke-width="3.500" stroke-linejoin="round"/></g>
+  <ellipse cx="100" cy="106" rx="54" ry="56" fill="url(#bd)" stroke="#1b1440" stroke-width="6"/>
+  <path d="M60 86C66 66 84 56 100 56" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="7" stroke-linecap="round"/>
+  <path d="M50 128C70 140 130 140 150 128" fill="none" stroke="#1b1440" stroke-opacity=".25" stroke-width="5" stroke-linecap="round"/>
+  <ellipse cx="100" cy="100" rx="38" ry="30" fill="#fff6e0" stroke="#1b1440" stroke-width="5"/>
+  <g class="eyes"><ellipse cx="86" cy="98" rx="7" ry="10" fill="#1b1440"/><ellipse cx="114" cy="98" rx="7" ry="10" fill="#1b1440"/><circle cx="88.500" cy="94" r="3" fill="#fff"/><circle cx="116.500" cy="94" r="3" fill="#fff"/>
+  <rect class="lid" x="76" y="86" width="20" height="22" rx="8" fill="#fff6e0"/><rect class="lid" x="104" y="86" width="20" height="22" rx="8" fill="#fff6e0"/></g>
+  <g class="joy"><path d="M79 100Q86 90 93 100M107 100Q114 90 121 100" fill="none" stroke="#1b1440" stroke-width="4.500" stroke-linecap="round"/></g>
+  <ellipse cx="74" cy="112" rx="6" ry="3.500" fill="#ff8fa3" opacity=".8"/><ellipse cx="126" cy="112" rx="6" ry="3.500" fill="#ff8fa3" opacity=".8"/>
+  <path d="M93 114Q100 120 107 114" fill="none" stroke="#1b1440" stroke-width="4" stroke-linecap="round"/>
+</svg></button>
+<button class="play" id="play" aria-label="Play"><div class="face"><span>PLAY</span></div></button>
+<div id="flash"></div><div id="msg">Game starts here!</div>
+</div></div>
+<script>
+const W=390,H=844,cv=document.getElementById('bg'),r=Math.min(devicePixelRatio||1,2);cv.width=W*r;cv.height=H*r;const c=cv.getContext('2d');c.setTransform(r,0,0,r,0,0);
+const PC={x:195,y:470};
+const shapes=Array.from({length:16},(_,i)=>({x:(i*97)%W,y:(i*173)%H,s:8+(i%4)*5,k:i%3,col:['#5ef2ff','#ff5fb8','#ffe36b','#8ff7d4'][i%4],sp:10+(i%5)*6,rot:i}));
+let boost=0;
+function draw(t){
+ const g=c.createRadialGradient(PC.x,PC.y,40,PC.x,PC.y,620);g.addColorStop(0,'#7a55ff');g.addColorStop(.45,'#3a1f9e');g.addColorStop(1,'#14093c');c.fillStyle=g;c.fillRect(0,0,W,H);
+ // sunburst
+ c.save();c.translate(PC.x,PC.y);c.rotate(t*.12);for(let i=0;i<14;i++){c.rotate(Math.PI*2/14);c.fillStyle='rgba(255,255,255,.055)';c.beginPath();c.moveTo(0,0);c.lineTo(-90,-700);c.lineTo(90,-700);c.closePath();c.fill();}c.restore();
+ // neon shapes drifting up
+ for(const s of shapes){const y=((s.y-t*s.sp*(1+boost*8))%(H+60)+H+60)%(H+60)-30;c.save();c.translate(s.x+Math.sin(t*.6+s.rot)*10,y);c.rotate(t*.5+s.rot);c.globalAlpha=.55;c.strokeStyle=s.col;c.lineWidth=3;c.shadowColor=s.col;c.shadowBlur=10;c.beginPath();
+  if(s.k===0){c.moveTo(0,-s.s);c.lineTo(s.s*.87,s.s*.5);c.lineTo(-s.s*.87,s.s*.5);c.closePath();}else if(s.k===1){c.rect(-s.s*.7,-s.s*.7,s.s*1.4,s.s*1.4);}else c.arc(0,0,s.s*.7,0,7);c.stroke();c.restore();}
+ // planet with ring behind the craft
+ const pr=96;c.save();c.translate(PC.x+70,PC.y+70);
+ c.strokeStyle='#1b1440';c.lineWidth=14;c.beginPath();c.ellipse(0,0,pr*1.55,pr*.36,-.22,Math.PI*1.02,Math.PI*1.98);c.stroke();c.strokeStyle='#ffb3d9';c.lineWidth=7;c.stroke();
+ const pg=c.createLinearGradient(0,-pr,0,pr);pg.addColorStop(0,'#ff8fd0');pg.addColorStop(1,'#a23ad6');c.fillStyle=pg;c.beginPath();c.arc(0,0,pr,0,7);c.fill();
+ c.save();c.clip();c.fillStyle='rgba(255,255,255,.14)';for(const [y,h] of [[-60,22],[-10,14],[40,26]]){c.fillRect(-pr,y,pr*2,h);}c.fillStyle='rgba(60,10,100,.25)';c.beginPath();c.arc(40,30,pr,0,7);c.fill();c.restore();
+ c.strokeStyle='#1b1440';c.lineWidth=6;c.beginPath();c.arc(0,0,pr,0,7);c.stroke();
+ c.fillStyle='rgba(255,255,255,.55)';c.beginPath();c.ellipse(-50,-62,24,10,-.6,0,7);c.fill();
+ c.strokeStyle='#1b1440';c.lineWidth=14;c.beginPath();c.ellipse(0,0,pr*1.55,pr*.36,-.22,-.02*Math.PI,Math.PI*1.02);c.stroke();c.strokeStyle='#ffb3d9';c.lineWidth=7;c.stroke();
+ c.restore();
+ // orbiting moons
+ for(let i=0;i<3;i++){const a=t*(.8+i*.25)+i*2.1,x=PC.x+Math.cos(a)*(165+i*10),y=PC.y+10+Math.sin(a)*(56+i*6);c.fillStyle=['#5ef2ff','#ffe36b','#8ff7d4'][i];c.strokeStyle='#1b1440';c.lineWidth=3;c.beginPath();c.arc(x,y,6+i*2,0,7);c.fill();c.stroke();}
+ boost=Math.max(0,boost-.01);requestAnimationFrame(tt=>draw(tt/1000));
+}
+requestAnimationFrame(tt=>draw(tt/1000));
+const phone=document.getElementById('phone'),hero=document.getElementById('hero');
+hero.onclick=e=>{hero.classList.remove('happy');void hero.offsetWidth;hero.classList.add('happy');for(let i=0;i<5;i++){const p=document.createElement('div');p.className='pop';p.textContent=['♥','★','♥','✦','♥'][i];p.style.color=['#ff5fb8','#ffe36b','#ff8fa3','#5ef2ff','#ff5fb8'][i];p.style.left=(195+(i-2)*22)+'px';p.style.top='330px';phone.appendChild(p);p.animate([{transform:'translateY(0) scale(.5)',opacity:1},{transform:`translate(${(i-2)*14}px,-90px) scale(1.3)`,opacity:0}],{duration:900,easing:'ease-out'}).onfinish=()=>p.remove();}setTimeout(()=>hero.classList.remove('happy'),650);};
+document.getElementById('play').onclick=()=>{if(phone.classList.contains('launch'))return;phone.classList.add('launch');boost=1;
+ setTimeout(()=>{document.getElementById('flash').animate([{opacity:0},{opacity:.85},{opacity:0}],{duration:500});document.getElementById('msg').classList.add('on');},700);
+ setTimeout(()=>{phone.classList.remove('launch');document.getElementById('msg').classList.remove('on');},2600);};
+const stage=document.getElementById('stage'),fit=()=>{const s=Math.min(1,innerHeight/H,innerWidth/W);stage.style.transform=`scale(${s})`;};addEventListener('resize',fit);fit();
+</script>
+</body></html>
