@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orbit Shift style demo</title>
+<style>
+body{margin:0;background:#050b10;color:#e9e4c4;font:15px/1.4 system-ui,sans-serif;padding:24px 16px;text-align:center}
+h1{margin:0 0 4px;font-size:22px}p{margin:0 0 24px;color:#9fb8b0}
+.row{display:flex;flex-wrap:wrap;gap:28px;justify-content:center}
+figure{margin:0}figcaption{margin-top:10px;font-weight:600}
+svg{width:300px;height:650px;border-radius:28px;box-shadow:0 20px 60px #000a;display:block}
+</style></head><body>
+<h1>Orbit Shift: two directions</h1><p>Same home screen, same layout. Left is the recommended direction.</p>
+<div class="row">
+
+<figure><svg viewBox="0 0 300 650" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<radialGradient id="pbg" cx="50%" cy="48%" r="75%"><stop offset="0" stop-color="#14403f"/><stop offset=".6" stop-color="#08191d"/><stop offset="1" stop-color="#030a0e"/></radialGradient>
+<filter id="pshadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#000" flood-opacity=".55"/></filter>
+<filter id="pglow"><feGaussianBlur stdDeviation="5"/></filter>
+<filter id="grain"><feTurbulence baseFrequency=".9" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 .9  0 0 0 .07 0"/></filter>
+<linearGradient id="pshipA" x1="0" x2="1"><stop offset="0" stop-color="#f2e9b8"/><stop offset="1" stop-color="#c9bf86"/></linearGradient>
+</defs>
+<rect width="300" height="650" fill="url(#pbg)"/>
+<!-- distant paper hills -->
+<path d="M0 560 Q60 520 120 548 T300 530 V650 H0Z" fill="#0b2a2c" filter="url(#pshadow)"/>
+<path d="M0 590 Q80 560 160 585 T300 570 V650 H0Z" fill="#071b1f" filter="url(#pshadow)"/>
+<!-- orbit ring -->
+<circle cx="150" cy="330" r="118" fill="none" stroke="#e6e3b3" stroke-opacity=".35" stroke-dasharray="2 7" stroke-linecap="round"/>
+<!-- planet layers -->
+<g filter="url(#pshadow)">
+<path d="M150 232 C198 228 232 262 236 306 C240 356 208 396 156 400 C106 404 66 372 64 322 C62 272 100 236 150 232Z" fill="#2c7f6c"/>
+</g>
+<g filter="url(#pshadow)">
+<path d="M150 250 C190 248 218 274 220 310 C222 350 196 382 156 384 C116 386 84 358 82 322 C80 284 110 252 150 250Z" fill="#4fae91"/>
+</g>
+<g filter="url(#pshadow)">
+<path d="M150 272 C178 271 198 290 199 314 C200 340 182 362 154 363 C126 364 104 345 103 321 C102 295 122 273 150 272Z" fill="#0d3a3b"/>
+</g>
+<g transform="translate(150 318)" filter="url(#pshadow)">
+<g fill="#f2e9b8"><ellipse rx="9" ry="22" transform="rotate(0) translate(0 -18)"/><ellipse rx="9" ry="22" transform="rotate(72) translate(0 -18)"/><ellipse rx="9" ry="22" transform="rotate(144) translate(0 -18)"/><ellipse rx="9" ry="22" transform="rotate(216) translate(0 -18)"/><ellipse rx="9" ry="22" transform="rotate(288) translate(0 -18)"/></g>
+<circle r="9" fill="#edca62"/></g>
+<!-- ship: layered folds with glowing cut edge -->
+<g transform="translate(228 246) rotate(-35)" filter="url(#pshadow)">
+<path d="M-16 0 L-30 -16 L24 0 L-30 16Z" fill="#e8dca2" stroke="#fff6c8" stroke-width=".8"/>
+<path d="M-16 0 L24 0 L-30 16Z" fill="#c8bd82"/>
+<path d="M-4 0 L24 0 L-10 -6Z" fill="#4fae91"/><path d="M-26 -10 L-34 0 L-26 10 L-20 0Z" fill="#ef6e67"/>
+<ellipse cx="-36" cy="0" rx="9" ry="3" fill="#7be0c0" opacity=".8" filter="url(#pglow)"/>
+</g>
+<!-- title as cut paper -->
+<g filter="url(#pshadow)" text-anchor="middle" font-family="Georgia,serif" font-weight="800">
+<text x="152" y="82" font-size="46" fill="#102c30">ORBIT</text><text x="150" y="80" font-size="46" fill="#f4eccb">ORBIT</text>
+<text x="152" y="128" font-size="46" fill="#102c30">SHIFT</text><text x="150" y="126" font-size="46" fill="#edca62">SHIFT</text>
+</g>
+<text x="150" y="30" text-anchor="middle" font-size="9" fill="#77d5aa" letter-spacing="3" font-family="system-ui">A TINY WORLD IN MOTION</text>
+<!-- diegetic buttons: planet-node dock -->
+<g filter="url(#pshadow)" font-family="system-ui" font-weight="700" text-anchor="middle">
+<path d="M70 498 L230 498 L240 530 L60 530Z" fill="#edca62"/><path d="M70 498 L230 498 L226 505 L74 505Z" fill="#f7e08e"/>
+<text x="150" y="520" font-size="17" fill="#10262a">PLAY</text>
+<circle cx="80" cy="580" r="26" fill="#14403f" stroke="#77d5aa" stroke-opacity=".6"/><text x="80" y="584" font-size="9" fill="#e6e3b3">GARAGE</text>
+<circle cx="150" cy="590" r="20" fill="#14403f" stroke="#77d5aa" stroke-opacity=".6"/><text x="150" y="594" font-size="8" fill="#e6e3b3">GOALS</text>
+<circle cx="220" cy="580" r="26" fill="#14403f" stroke="#77d5aa" stroke-opacity=".6"/><text x="220" y="584" font-size="9" fill="#e6e3b3">SETTINGS</text>
+</g>
+<text x="150" y="458" text-anchor="middle" font-size="11" fill="#9fb8b0" font-family="system-ui">BEST 0  ·  STARS 0</text>
+<rect width="300" height="650" filter="url(#grain)" opacity=".9"/>
+</svg><figcaption>A. Luminous papercut, deepened</figcaption></figure>
+
+<figure><svg viewBox="0 0 300 650" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<radialGradient id="nbg" cx="50%" cy="48%" r="75%"><stop offset="0" stop-color="#101a3a"/><stop offset=".6" stop-color="#070b1c"/><stop offset="1" stop-color="#02030a"/></radialGradient>
+<filter id="nglow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<linearGradient id="nplanet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3cf5d0"/><stop offset="1" stop-color="#7a4dff"/></linearGradient>
+</defs>
+<rect width="300" height="650" fill="url(#nbg)"/>
+<g fill="#9ff" opacity=".6"><circle cx="40" cy="190" r="1"/><circle cx="260" cy="150" r="1.4"/><circle cx="60" cy="440" r="1"/><circle cx="250" cy="420" r="1"/><circle cx="210" cy="60" r="1"/></g>
+<circle cx="150" cy="330" r="118" fill="none" stroke="#3cf5d0" stroke-opacity=".5" filter="url(#nglow)"/>
+<circle cx="150" cy="330" r="118" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width=".6"/>
+<circle cx="150" cy="330" r="78" fill="#0a1030" stroke="url(#nplanet)" stroke-width="3" filter="url(#nglow)"/>
+<g stroke="url(#nplanet)" fill="none" stroke-width="1.4" opacity=".9"><circle cx="150" cy="330" r="56"/><circle cx="150" cy="330" r="34"/><path d="M150 252V408M72 330H228M95 275L205 385M205 275L95 385" opacity=".5"/></g>
+<circle cx="150" cy="330" r="12" fill="#ffd36b" filter="url(#nglow)"/>
+<g transform="translate(228 246) rotate(-35)" filter="url(#nglow)"><path d="M-30 -14 L24 0 L-30 14 L-20 0Z" fill="none" stroke="#fff" stroke-width="2"/><path d="M-30 -14 L24 0 L-30 14 L-20 0Z" fill="#3cf5d0" opacity=".25"/></g>
+<g text-anchor="middle" font-family="system-ui" font-weight="800" letter-spacing="6" filter="url(#nglow)">
+<text x="150" y="80" font-size="40" fill="none" stroke="#3cf5d0" stroke-width="1.5">ORBIT</text><text x="150" y="126" font-size="40" fill="none" stroke="#ff4fa8" stroke-width="1.5">SHIFT</text></g>
+<text x="150" y="30" text-anchor="middle" font-size="9" fill="#7a4dff" letter-spacing="3" font-family="system-ui">A TINY WORLD IN MOTION</text>
+<g font-family="system-ui" font-weight="700" text-anchor="middle">
+<rect x="60" y="494" width="180" height="40" rx="20" fill="none" stroke="#ffd36b" stroke-width="2" filter="url(#nglow)"/><text x="150" y="520" font-size="16" fill="#ffd36b">PLAY</text>
+<rect x="55" y="556" width="90" height="36" rx="18" fill="none" stroke="#3cf5d0" stroke-opacity=".7"/><text x="100" y="578" font-size="11" fill="#bffcf0">GARAGE</text>
+<rect x="155" y="556" width="90" height="36" rx="18" fill="none" stroke="#3cf5d0" stroke-opacity=".7"/><text x="200" y="578" font-size="11" fill="#bffcf0">SETTINGS</text></g>
+<text x="150" y="458" text-anchor="middle" font-size="11" fill="#8aa0d0" font-family="system-ui">BEST 0  ·  STARS 0</text>
+</svg><figcaption>B. Neon cosmic glass</figcaption></figure>
+
+</div></body></html>
