@@ -21,9 +21,9 @@ h1,h2{font-family:var(--display);font-variation-settings:"SOFT" 0,"WONK" 0,"opsz
 .shell::after{content:"";position:absolute;inset:0;z-index:30;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%,transparent 58%,rgba(0,0,0,.45)),var(--grain);background-size:100% 100%,180px 180px;mix-blend-mode:soft-light;opacity:.5}
 
 /* ───── plate construction: ::before is the chamfered face, ::after is the hard under-sheet ───── */
-button:not(.launch):not(.cosmetic):not(.trail):not(.reward-choices *):not(.reward-seal>button:first-child),.rider-card,.setting-list label,.chapter-level,.island span,.earned,.purchase-reveal{position:relative;isolation:isolate;;;;filter:none}
-button:not(.launch):not(.cosmetic):not(.trail):not(.reward-choices *):not(.reward-seal>button:first-child)::before,.rider-card::before,.setting-list label::before,.chapter-level::before,.island span::before,.earned::before,.purchase-reveal::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(var(--edge-lit),var(--edge-lit)) top/100% 1px no-repeat,var(--face,var(--plate-hi));clip-path:var(--cut)}
-button:not(.launch):not(.cosmetic):not(.trail):not(.reward-choices *):not(.reward-seal>button:first-child)::after,.rider-card::after,.setting-list label::after,.chapter-level::after,.island span::after,.earned::after,.purchase-reveal::after{content:"";position:absolute;inset:0;z-index:-2;background:var(--under,rgba(0,0,0,.45));clip-path:var(--cut);transform:translate(3px,4px)}
+button:not(.launch):not(.cosmetic):not(.trail):not(.island):not(.reward-choices *):not(.reward-seal>button:first-child),.rider-card,.setting-list label,.chapter-level,.island span,.earned,.purchase-reveal{position:relative;isolation:isolate;;;;filter:none}
+button:not(.launch):not(.cosmetic):not(.trail):not(.island):not(.reward-choices *):not(.reward-seal>button:first-child)::before,.rider-card::before,.setting-list label::before,.chapter-level::before,.island span::before,.earned::before,.purchase-reveal::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(var(--edge-lit),var(--edge-lit)) top/100% 1px no-repeat,var(--face,var(--plate-hi));clip-path:var(--cut)}
+button:not(.launch):not(.cosmetic):not(.trail):not(.island):not(.reward-choices *):not(.reward-seal>button:first-child)::after,.rider-card::after,.setting-list label::after,.chapter-level::after,.island span::after,.earned::after,.purchase-reveal::after{content:"";position:absolute;inset:0;z-index:-2;background:var(--under,rgba(0,0,0,.45));clip-path:var(--cut);transform:translate(3px,4px)}
 .primary{--face:var(--gold);--under:var(--coral-d)}
 .secondary{--face:rgba(10,32,36,.9)}
 .back,.drawer>header>strong,.campaign>header>strong,.bloom-chapter>header>strong{--face:rgba(8,28,32,.92)}
@@ -225,3 +225,8 @@ input[type=checkbox]:checked::after{transform:translateX(24px);background:var(--
   .logo{font-size:42px}
   .voyage-goals{display:none}
 }
+
+/* the map positions its own labels and button, so plates must not take that over */
+.island span{position:absolute}
+.ascension{position:absolute!important}
+.island b{text-transform:none;letter-spacing:0}
