@@ -203,9 +203,9 @@ function resize() {
   canvas.width = Math.floor(width * ratio);
   canvas.height = Math.floor(height * ratio);
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  stars = Array.from({ length: 24 }, (_, i) => ({
+  stars = Array.from({ length: 34 }, (_, i) => ({
     x: ((i * 83) % 997) / 997 * width, y: ((i * 47) % 991) / 991 * height,
-    size: 1 + (i % 3) * 0.4, phase: i * 0.63,
+    size: .9 + (i % 4) * 0.34, phase: i * 0.63,
   }));
   grain = Array.from({ length: 70 }, (_, i) => ({
     x: (((i * 71) % 197) / 197 - 0.5) * 1.65,
@@ -1095,25 +1095,50 @@ function drawFragments(time, palette) {
     const ship=playerPoint(),progress=fragment.collected?1-(fragment.snapLife/.14)**2:0;
     const x = fragment.collected ? fragment.snapFrom.x+(ship.x-fragment.snapFrom.x)*progress : cx + Math.cos(fragment.angle) * fragment.radius;
     const y = fragment.collected ? fragment.snapFrom.y+(ship.y-fragment.snapFrom.y)*progress : cy + Math.sin(fragment.angle) * fragment.radius;
-    ctx.save(); ctx.translate(x, y); ctx.rotate(fragment.spin); ctx.shadowColor = palette.gold; ctx.shadowBlur = state.reducedEffects ? 3 : 12;
-    ctx.fillStyle = palette.gold; paperDiamond(0, 0, 9 + Math.sin(time * 5 + fragment.spin) * 1.2, 0);
-    ctx.fillStyle = palette.light; paperDiamond(0, 0, 4, Math.PI / 4); ctx.restore();
+    const pulse = Math.sin(time * 5 + fragment.spin), size = 10 + pulse * 1.1;
+    ctx.save(); ctx.translate(x, y);
+    const halo = ctx.createRadialGradient(0, 0, 2, 0, 0, size * 2.6);
+    halo.addColorStop(0, colorAlpha(palette.gold, state.reducedEffects ? .22 : .42)); halo.addColorStop(1, colorAlpha(palette.gold, 0));
+    ctx.fillStyle = halo; ctx.fillRect(-size * 2.6, -size * 2.6, size * 5.2, size * 5.2);
+    ctx.rotate(fragment.spin * .35 + time * .6);
+    ctx.fillStyle = "rgba(0,0,0,.3)"; paperDiamond(1.5, 4, size, 0);
+    ctx.fillStyle = palette.ink; paperDiamond(0, 0, size + 1.6, 0);
+    // four folded facets: lit top-left, shaded bottom-right
+    const facets = [[[0, -size], [size * .72, 0], [0, 0], .12], [[size * .72, 0], [0, size], [0, 0], -.22], [[0, size], [-size * .72, 0], [0, 0], -.1], [[-size * .72, 0], [0, -size], [0, 0], .3]];
+    for (const [a, b, c, shade] of facets) { ctx.fillStyle = shadeColor(palette.gold, shade); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c[0], c[1]); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle = "rgba(255,252,230,.8)"; paperDiamond(-size * .18, -size * .22, size * .2, 0);
+    ctx.restore();
   }
 }
 
 function drawBackground(time, palette) {
-  ctx.fillStyle = palette.bg;
-  ctx.fillRect(0, 0, width, height);
-  const glow = ctx.createRadialGradient(cx, cy, planetRadius, cx, cy, height * 0.58);
-  glow.addColorStop(0, colorAlpha(state.fever > 0 ? palette.gold : palette.paper, 0.19));
-  glow.addColorStop(0.55, colorAlpha(palette.ink, 0.12));
+  const sky = ctx.createLinearGradient(0, 0, 0, height);
+  sky.addColorStop(0, shadeColor(palette.bg, -.25)); sky.addColorStop(.55, palette.bg); sky.addColorStop(1, shadeColor(palette.ink, -.45));
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, width, height);
+  const glow = ctx.createRadialGradient(cx, cy, planetRadius * .6, cx, cy, height * 0.62);
+  glow.addColorStop(0, colorAlpha(state.fever > 0 ? palette.gold : palette.paper, 0.26));
+  glow.addColorStop(0.5, colorAlpha(palette.ink, 0.14));
   glow.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, width, height);
+  // far paper ridges that drift sideways, each layer casting a shadow onto the one behind
+  for (let layer = 0; layer < 3; layer += 1) {
+    const base = height * (.2 + layer * .2), amp = 16 + layer * 7, speed = (.012 + layer * .006) * (state.mode === "run" ? 1 : .5);
+    ctx.save();
+    ctx.fillStyle = colorAlpha(layer === 1 ? palette.paper : palette.ink, .1 + layer * .035);
+    ctx.shadowColor = "rgba(0,0,0,.32)"; ctx.shadowBlur = state.reducedEffects ? 0 : 14; ctx.shadowOffsetY = 6;
+    ctx.beginPath(); ctx.moveTo(-10, height + 10);
+    for (let x = -10; x <= width + 10; x += 18) ctx.lineTo(x, base + Math.sin(x * .018 + time * speed * 10 + layer * 2.1) * amp + Math.sin(x * .043 + layer) * amp * .4);
+    ctx.lineTo(width + 10, height + 10); ctx.closePath(); ctx.fill(); ctx.restore();
+  }
+  // sparkle stars cut from paper
   for (const star of stars) {
-    ctx.globalAlpha = 0.16 + Math.sin(time * 1.2 + star.phase) * 0.08;
+    const twinkle = .5 + Math.sin(time * 1.3 + star.phase) * .5;
+    ctx.globalAlpha = .2 + twinkle * .38;
     ctx.fillStyle = star.phase % 2 > 1 ? palette.mid : palette.light;
-    ctx.save(); ctx.translate(star.x, star.y); ctx.rotate(Math.PI / 4); ctx.fillRect(-star.size / 2, -star.size / 2, star.size, star.size); ctx.restore();
+    const size = star.size * (1.4 + twinkle * .6);
+    ctx.save(); ctx.translate(star.x, star.y);
+    ctx.beginPath(); ctx.moveTo(0, -size * 2.2); ctx.lineTo(size * .34, -size * .34); ctx.lineTo(size * 2.2, 0); ctx.lineTo(size * .34, size * .34); ctx.lineTo(0, size * 2.2); ctx.lineTo(-size * .34, size * .34); ctx.lineTo(-size * 2.2, 0); ctx.lineTo(-size * .34, -size * .34); ctx.closePath(); ctx.fill();
+    ctx.restore();
   }
   ctx.globalAlpha = 1;
 }
@@ -1239,13 +1264,20 @@ function drawGates(time, palette) {
     const end = gate.gap + TAU - half;
     ctx.save();
     ctx.globalAlpha = Math.max(0.12, alpha);
-    ctx.strokeStyle = palette.ink;
-    ctx.lineWidth = gate.guardian ? 18 : 13;
+    const band = gate.guardian ? 13 : gate.type === 3 ? 11 : 9;
     ctx.lineCap = "round";
-    ctx.beginPath(); ctx.arc(cx + 2, cy + 3, gate.radius, start, end); ctx.stroke();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = gate.guardian ? 11 : gate.type === 3 ? 9 : 7;
+    for (const [dx, dy, grow, shadow] of [[4, 7, 9, .1], [3, 5, 6, .16], [2, 3, 3.5, .22]]) {
+      ctx.strokeStyle = `rgba(0,0,0,${shadow})`; ctx.lineWidth = band + grow;
+      ctx.beginPath(); ctx.arc(cx + dx, cy + dy, gate.radius, start, end); ctx.stroke();
+    }
+    ctx.strokeStyle = palette.ink; ctx.lineWidth = band + 4;
+    ctx.beginPath(); ctx.arc(cx, cy + 1.5, gate.radius, start, end); ctx.stroke();
+    ctx.strokeStyle = shadeColor(color, -.34); ctx.lineWidth = band + 1.5;
+    ctx.beginPath(); ctx.arc(cx, cy + 1.5, gate.radius, start, end); ctx.stroke();
+    ctx.strokeStyle = color; ctx.lineWidth = band;
     ctx.beginPath(); ctx.arc(cx, cy, gate.radius, start, end); ctx.stroke();
+    ctx.strokeStyle = shadeColor(color, .42); ctx.lineWidth = Math.max(1.6, band * .24); ctx.globalAlpha *= .75;
+    ctx.beginPath(); ctx.arc(cx, cy, gate.radius + band * .26, start + .02, end - .02); ctx.stroke(); ctx.globalAlpha /= .75;
     drawGateDetails(gate, start, end, color, palette, time);
     if(gate.heat)drawHeatWarning(gate,palette);
     if(gate.generous) drawPerfectPetals(gate,palette);
@@ -1428,7 +1460,7 @@ function drawTrailPiece(target,id,x,y,size,angle,index) {
 
 function drawPlayer(time, palette) {
   const point = playerPoint();
-  const scale = width < 350 ? 0.88 : width > 420 ? 1.08 : 1;
+  const scale = (width < 350 ? 0.88 : width > 420 ? 1.08 : 1) * (state.mode === "home" ? 1.35 : 1);
   ctx.save();
   ctx.translate(point.x, point.y);
   ctx.rotate(player.angle + player.direction * Math.PI / 2 + player.flip * player.direction * 0.18);
@@ -1471,11 +1503,16 @@ function drawRings() {
 }
 
 function drawLabels(palette) {
-  ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "900 13px Arial";
+  ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = '800 21px Fraunces, Georgia, serif';
   for (const label of labels) {
-    ctx.globalAlpha = label.life / label.max;
-    ctx.fillStyle = palette.ink; ctx.fillText(label.text, cx + 2, label.y + 3);
-    ctx.fillStyle = palette.gold; ctx.fillText(label.text, cx, label.y);
+    const rise = 1 - label.life / label.max;
+    ctx.globalAlpha = Math.min(1, label.life / label.max * 1.6);
+    const y = label.y - rise * 14, grow = 1 + Math.sin(Math.min(1, rise * 5) * Math.PI) * .18;
+    ctx.save(); ctx.translate(cx, y); ctx.scale(grow, grow);
+    ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.fillText(label.text, 1, 7);
+    ctx.fillStyle = palette.ink; ctx.fillText(label.text, 0, 4);
+    ctx.fillStyle = shadeColor(palette.gold, -.35); ctx.fillText(label.text, 0, 2);
+    ctx.fillStyle = palette.gold; ctx.fillText(label.text, 0, 0); ctx.restore();
   }
   ctx.restore();
 }
@@ -1516,26 +1553,125 @@ function burst(point, color, count, speed, shape) {
   }
 }
 
+// Papercut gliders: every ship is built from folded facets (lit top plane, shaded under plane),
+// a cut-edge highlight, a soft cast shadow, and a flickering engine.
+function shadeColor(hex, amount) {
+  const value = parseInt(hex.slice(1), 16);
+  let r = value >> 16, g = value >> 8 & 255, b = value & 255;
+  if (amount < 0) { const k = 1 + amount; r *= k; g *= k; b *= k; }
+  else { r += (255 - r) * amount; g += (255 - g) * amount; b += (255 - b) * amount; }
+  return `rgb(${r | 0},${g | 0},${b | 0})`;
+}
+
+function rgbToHex(rgb) { const [r, g, b] = rgb.match(/\d+/g).map(Number); return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1); }
+function mixColor(hexA, hexB, t) {
+  const a = parseInt(hexA.slice(1), 16), b = parseInt(hexB.slice(1), 16);
+  const ch = (shift) => Math.round((a >> shift & 255) * (1 - t) + (b >> shift & 255) * t);
+  return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
+}
+
+// Upper-half facets [colorKey, shade, points]; the lower half mirrors them in a darker fold.
+const gliderFacets = {
+  manta: [
+    ["light", 0, [[31,0],[5,-7],[-17,-24],[-20,-8],[-12,0]]],
+    ["light", -.17, [[5,-7],[-17,-24],[-29,-18],[-20,-8]]],
+    ["light", -.3, [[-12,0],[-20,-8],[-29,-18],[-20,0]]],
+    ["accent", 0, [[-17,-24],[-29,-18],[-25,-13],[-15,-17]]],
+    ["paper", 0, [[29,0],[2,-6],[-11,0]]],
+    ["gold", 0, [[-20,-4],[-31,0],[-20,0]]],
+  ],
+  dart: [
+    ["light", 0, [[32,0],[-17,-23],[-8,-5]]],
+    ["light", -.2, [[32,0],[-8,-5],[-19,0]]],
+    ["accent", 0, [[-8,-5],[-30,-10],[-19,0]]],
+    ["paper", 0, [[25,0],[5,-4.5],[-8,0]]],
+    ["accent", .1, [[-17,-23],[-7,-14],[-11,-18]]],
+    ["gold", 0, [[-19,-3],[-31,0],[-19,0]]],
+  ],
+  crescent: [
+    ["light", 0, [[31,0],[14,-4],[-4,-9.5],[-16,0]]],
+    ["light", -.18, [[-4,-9.5],[-15,-17],[-25,-24],[-31,-14],[-30,-6],[-16,0]]],
+    ["accent", 0, [[-15,-17],[-25,-24],[-31,-14],[-23,-13]]],
+    ["paper", 0, [[28,0],[10,-3.5],[-8,0]]],
+    ["gold", 0, [[-20,-3],[-32,0],[-20,0]]],
+  ],
+  splitwing: [
+    ["light", 0, [[32,0],[-25,-22],[-8,-3]]],
+    ["light", -.22, [[32,0],[-8,-3],[-2,0]]],
+    ["accent", 0, [[-25,-22],[-15,-12],[-20,-6],[-24,-14]]],
+    ["paper", 0, [[27,0],[-3,-2.8],[-16,0]]],
+    ["gold", 0, [[-8,-3],[-28,0],[-8,0]]],
+  ],
+  shuttle: [
+    ["light", 0, [[30,0],[12,-9],[-4,-10],[-6,0]]],
+    ["light", -.16, [[12,-9],[-20,-17],[-28,-8],[-24,0],[-6,0],[-4,-10]]],
+    ["accent", 0, [[-20,-17],[-28,-8],[-21,-9]]],
+    ["paper", 0, [[24,0],[9,-5],[-3,0]]],
+    ["gold", 0, [[-24,-4],[-32,0],[-24,0]]],
+  ],
+  ringsail: [
+    ["light", 0, [[31,0],[5,-7],[-1,0]]],
+    ["paper", 0, [[28,0],[6,-4.5],[0,0]]],
+  ],
+};
+
+function gliderOutline(target, shape) {
+  target.beginPath();
+  if (shape === "manta") { target.moveTo(31,0); target.lineTo(5,-7); target.lineTo(-17,-24); target.lineTo(-29,-18); target.lineTo(-20,0); target.lineTo(-29,18); target.lineTo(-17,24); target.lineTo(5,7); }
+  else if (shape === "dart") { target.moveTo(32,0); target.lineTo(-17,-23); target.lineTo(-8,-5); target.lineTo(-30,-10); target.lineTo(-19,0); target.lineTo(-30,10); target.lineTo(-8,5); target.lineTo(-17,23); }
+  else if (shape === "crescent") { target.moveTo(31,0); target.quadraticCurveTo(-4,-7,-25,-24); target.quadraticCurveTo(-36,-5,-16,0); target.quadraticCurveTo(-36,5,-25,24); target.quadraticCurveTo(-4,7,31,0); }
+  else if (shape === "splitwing") { target.moveTo(32,0); target.lineTo(-25,-22); target.lineTo(-8,-3); target.lineTo(-28,0); target.lineTo(-8,3); target.lineTo(-25,22); }
+  else if (shape === "shuttle") { target.moveTo(30,0); target.lineTo(12,-9); target.lineTo(-20,-17); target.lineTo(-28,-8); target.lineTo(-24,0); target.lineTo(-28,8); target.lineTo(-20,17); target.lineTo(12,9); }
+  else { target.moveTo(31,0); target.lineTo(5,-7); target.arc(-8,0,22,-.3,TAU+.3); target.lineTo(5,7); }
+  target.closePath();
+}
+
 function drawGlider(target, rider, palette, scale = 1, time = 0, flip = 0, fever = false, glow = 0) {
-  const wing = (fever ? 1.16 : 1) * (1 - flip * 0.14);
+  const wing = (fever ? 1.16 : 1) * (1 - flip * 0.14), shape = rider.shape;
+  const ring = shape === "ringsail", soft = !state.reducedEffects;
   target.save(); target.scale(scale, scale * wing);
-  target.fillStyle = "rgba(0,0,0,.28)"; target.beginPath(); target.ellipse(-2, 4, 30, 17, 0, 0, TAU); target.fill();
-  const path = () => {
-    target.beginPath();
-    if (rider.shape === "manta") { target.moveTo(31,0); target.lineTo(5,-7); target.lineTo(-17,-24); target.lineTo(-29,-18); target.lineTo(-20,0); target.lineTo(-29,18); target.lineTo(-17,24); target.lineTo(5,7); }
-    else if (rider.shape === "dart") { target.moveTo(32,0); target.lineTo(-17,-23); target.lineTo(-8,-5); target.lineTo(-30,-10); target.lineTo(-19,0); target.lineTo(-30,10); target.lineTo(-8,5); target.lineTo(-17,23); }
-    else if (rider.shape === "crescent") { target.moveTo(31,0); target.quadraticCurveTo(-4,-7,-25,-24); target.quadraticCurveTo(-36,-5,-16,0); target.quadraticCurveTo(-36,5,-25,24); target.quadraticCurveTo(-4,7,31,0); }
-    else if (rider.shape === "splitwing") { target.moveTo(32,0); target.lineTo(-25,-22); target.lineTo(-8,-3); target.lineTo(-28,0); target.lineTo(-8,3); target.lineTo(-25,22); }
-    else if (rider.shape === "shuttle") { target.moveTo(30,0); target.lineTo(12,-9); target.lineTo(-20,-17); target.lineTo(-28,-8); target.lineTo(-24,0); target.lineTo(-28,8); target.lineTo(-20,17); target.lineTo(12,9); }
-    else { target.moveTo(31,0); target.lineTo(5,-7); target.arc(-8,0,22,-.3,TAU+.3); target.lineTo(5,7); }
-    target.closePath();
+  // cast shadow, offset as if the glider floats above the page
+  target.save(); target.translate(2, 6); target.fillStyle = "rgba(0,0,0,.34)";
+  if (soft) { target.shadowColor = "rgba(0,0,0,.5)"; target.shadowBlur = 7; }
+  gliderOutline(target, shape); target.fill(); target.restore();
+  // engine flame: a folded gold/cyan tongue that breathes with time
+  const flame = (fever ? 17 : 10) + Math.sin(time * 22) * 2 + glow * 4;
+  const burn = target.createLinearGradient(-29, 0, -29 - flame, 0);
+  burn.addColorStop(0, colorAlpha(palette.gold, .95)); burn.addColorStop(.55, colorAlpha(palette.accent, .55)); burn.addColorStop(1, colorAlpha(palette.accent, 0));
+  target.fillStyle = burn; target.beginPath(); target.moveTo(-26, -4.5); target.lineTo(-29 - flame, 0); target.lineTo(-26, 4.5); target.closePath(); target.fill();
+  // cut edge
+  target.fillStyle = palette.ink; target.strokeStyle = palette.ink; target.lineJoin = "round"; target.lineWidth = 2.6;
+  if (ring) { target.beginPath(); target.arc(-8, 0, 22.5, 0, TAU); target.arc(-8, 0, 12.5, 0, TAU, true); target.fill("evenodd"); gliderOutline(target, shape); target.stroke(); }
+  else { gliderOutline(target, shape); target.fill(); target.stroke(); }
+  const facet = (points, color, shade, mirror) => {
+    target.save(); if (mirror) target.scale(1, -1);
+    const base = palette[color] || color;
+    target.fillStyle = mirror ? mixColor(rgbToHex(shadeColor(base, shade)), palette.ink, .34) : shadeColor(base, shade); target.beginPath();
+    points.forEach((point, index) => index ? target.lineTo(point[0], point[1]) : target.moveTo(point[0], point[1]));
+    target.closePath(); target.fill();
+    target.strokeStyle = `rgba(255,250,224,${mirror ? .16 : .42})`; target.lineWidth = .7; target.stroke(); target.restore();
   };
-  target.fillStyle = palette.ink; path(); target.fill();
-  target.save(); target.scale(.91,.82); target.fillStyle = palette.light; path(); target.fill(); target.restore();
-  target.fillStyle = palette.paper; target.beginPath(); target.moveTo(29,0); target.lineTo(2,-7); target.lineTo(-12,0); target.lineTo(2,7); target.closePath(); target.fill();
-  target.fillStyle = palette.accent; target.beginPath(); target.moveTo(14,0); target.lineTo(-8,-5); target.lineTo(-17,0); target.lineTo(-8,5); target.closePath(); target.fill();
-  target.fillStyle = palette.gold; target.beginPath(); target.moveTo(-20,-5); target.lineTo(-31-(fever?7:0),0); target.lineTo(-20,5); target.closePath(); target.fill();
-  if (glow || fever) { target.globalAlpha=.35+glow*.3+Math.sin(time*9)*.08; target.strokeStyle=palette.gold; target.lineWidth=2+glow*2; path(); target.stroke(); }
+  if (ring) {
+    for (let i = 0; i < 8; i += 1) {
+      const a0 = i * Math.PI / 4 + .06, a1 = (i + 1) * Math.PI / 4 + .06, upper = Math.sin((a0 + a1) / 2) < 0;
+      target.fillStyle = shadeColor(palette.light, (i % 2 ? -.2 : -.02) + (upper ? .08 : -.12));
+      target.beginPath(); target.arc(-8, 0, 21.5, a0, a1); target.arc(-8, 0, 13.5, a1, a0, true); target.closePath(); target.fill();
+      target.strokeStyle = "rgba(255,250,224,.3)"; target.lineWidth = .7; target.stroke();
+    }
+    target.strokeStyle = colorAlpha(palette.accent, .9); target.lineWidth = 2.2; target.beginPath(); target.arc(-8, 0, 17.5, -2.4, -.7); target.stroke();
+    target.fillStyle = palette.gold; target.beginPath(); target.moveTo(-26, -3); target.lineTo(-31, 0); target.lineTo(-26, 3); target.closePath(); target.fill();
+  }
+  for (const [color, shade, points] of gliderFacets[shape] || gliderFacets.manta) { facet(points, color, shade, true); }
+  for (const [color, shade, points] of gliderFacets[shape] || gliderFacets.manta) { facet(points, color, shade, false); }
+  // spine crease
+  target.strokeStyle = "rgba(6,19,25,.3)"; target.lineWidth = .8; target.beginPath(); target.moveTo(27, 0); target.lineTo(-18, 0); target.stroke();
+  // canopy glint
+  target.fillStyle = "rgba(255,250,224,.55)"; target.beginPath(); target.moveTo(21, -.6); target.lineTo(8, -3.4); target.lineTo(10, -1.2); target.closePath(); target.fill();
+  if (glow || fever) {
+    target.globalAlpha = .4 + glow * .35 + Math.sin(time * 9) * .1; target.strokeStyle = palette.gold; target.lineWidth = 2 + glow * 2;
+    if (soft) { target.shadowColor = palette.gold; target.shadowBlur = 12; }
+    gliderOutline(target, shape); target.stroke();
+  }
   target.restore();
 }
 
@@ -1583,7 +1719,8 @@ function renderCosmetics() {
     button.type = "button";
     button.className = `cosmetic${state.selected === cosmetic.id ? " selected" : ""}${unlocked ? "" : " locked"}`;
     button.style.setProperty("--swatch", cosmetic.paper);
-    button.textContent = unlocked ? "*" : ".";
+    button.style.setProperty("--swatch2", cosmetic.light);
+    button.style.setProperty("--swatch3", cosmetic.accent);
     button.title = unlocked ? cosmetic.name : `${cosmetic.name}: reach ${cosmetic.score}`;
     button.setAttribute("aria-label", button.title);
     button.addEventListener("click", () => {
@@ -1735,7 +1872,7 @@ function renderTrails() {
 }
 
 function drawHomePreview(time) {
-  if (ui.home.hidden) return;
+  if (ui.home.hidden || !ui.preview) return;
   const target = ui.preview.getContext("2d");
   target.clearRect(0,0,ui.preview.width,ui.preview.height);
   target.save(); target.translate(130,75+Math.sin(time*2)*3); drawGlider(target,currentRider(),currentCosmetic(),2.45,time,0,false,.25); target.restore();
@@ -1746,8 +1883,8 @@ function drawBloomChapterPreview(time) {
   const ember=state.chapter==="ember";
   const frame=window.OrbitArt.helpers.prepare(ui.bloomChapterArt),target=frame.ctx,w=frame.width,h=frame.height,stage=ember?state.campaign.emberRestoration:state.campaign.restoration,palette=window.OrbitArt.palettes[state.chapter];
   target.fillStyle=palette.bg;target.fillRect(0,0,w,h);window.OrbitArt.helpers.paperGrain(target,w,h,palette.light,.04);
-  window.OrbitArt.drawLivingPlanet(target,ember?"ember-furnace":"bloom-crown",{x:w/2,y:h*.72,radius:Math.min(w*.25,h*.15),paletteId:state.chapter,time,lit:stage>0,reduced:state.reducedEffects});
-  target.save();target.translate(w/2,h*.72);target.lineWidth=2;
+  window.OrbitArt.drawLivingPlanet(target,ember?"ember-furnace":"bloom-crown",{x:w/2,y:h*.81,radius:Math.min(w*.25,h*.15),paletteId:state.chapter,time,lit:stage>0,reduced:state.reducedEffects});
+  target.save();target.translate(w/2,h*.81);target.lineWidth=2;
   for(let ring=0;ring<stage;ring+=1){target.strokeStyle=colorAlpha(ember?palette.gold:ring%2?"#edca62":"#77d5aa",.22+ring*.05);target.beginPath();target.ellipse(0,0,w*(.29+ring*.035),h*(.15+ring*.017),time*.015*(ring%2?1:-1),0,TAU);target.stroke();}
   if(stage>=4){target.fillStyle="#edca62";for(let i=0;i<7;i+=1){const angle=i*TAU/7+time*.04,x=Math.cos(angle)*w*.4,y=Math.sin(angle)*h*.21;target.beginPath();target.moveTo(x,y-5);target.lineTo(x+4,y);target.lineTo(x,y+5);target.lineTo(x-4,y);target.closePath();target.fill();}}
   target.restore();
@@ -1859,6 +1996,9 @@ function frame(time) {
   lastTime = time;
   // Catch up slower frames in small collision-safe steps, without a long resume jump.
   const steps = Math.max(1, Math.ceil(delta * 60));
+  // the home hub lifts the world toward the title so the menu never covers the planet
+  const worldY = height * (state.mode === "home" ? 0.4 : 0.55);
+  cy += (worldY - cy) * Math.min(1, delta * 7);
   for (let step = 0; step < steps; step += 1) update(delta / steps);
   draw();
   drawHomePreview(time / 1000);
@@ -1909,6 +2049,7 @@ document.addEventListener("visibilitychange", () => {
 });
 document.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
 
+if (document.fonts?.load) document.fonts.load('800 21px Fraunces');
 resize();
 renderCosmetics();
 updateHud();

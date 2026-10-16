@@ -9,7 +9,7 @@ let mapActive = true;
 let seed = Number(process.argv[2]) || 73;
 const math = Object.create(Math);
 math.random = () => (seed = seed * 16807 % 2147483647) / 2147483647;
-const context = new Proxy({}, { get: (_, key) => key === 'createRadialGradient' ? () => ({ addColorStop() {} }) : () => {} });
+const context = new Proxy({}, { get: (_, key) => (key === 'createRadialGradient' || key === 'createLinearGradient') ? () => ({ addColorStop() {} }) : () => {} });
 const element = () => {
   const node = { clientWidth: logicalWidth, clientHeight: logicalHeight, width: logicalWidth, height: logicalHeight,
     hidden: true, dataset:{}, style: { setProperty() {} }, classList: { add() {}, remove() {}, toggle() {} },
