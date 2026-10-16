@@ -422,7 +422,7 @@ function finishRun() {
   if (state.runType === "campaign") {
     const level=currentCampaignLevel();
     const checks = [state.levelComplete, state.runFragments >= 3, state.perfects >= level.perfectTarget];
-    ui.resultObjectives.innerHTML = level.objectives.map((objective,index)=>`<span class="${checks[index]?"done":""}">${checks[index]?"★":"☆"} ${objective}</span>`).join("");
+    ui.resultObjectives.innerHTML = level.objectives.map((objective,index)=>`<span class="${checks[index]?"done":""}">${objective}</span>`).join("");
     ui.resultStats.textContent = (state.levelComplete ? `${"★".repeat(campaignRating)}${"☆".repeat(3-campaignRating)} · Best flow x${Math.max(1,state.runBestStreak)}` : `Reached ${Math.floor(state.elapsed)} seconds`) + ` · ${state.runFragments} fragments`;
   }
   ui.resultStars.textContent = `+${state.runStars} stars`;
@@ -1997,7 +1997,7 @@ function frame(time) {
   // Catch up slower frames in small collision-safe steps, without a long resume jump.
   const steps = Math.max(1, Math.ceil(delta * 60));
   // the home hub lifts the world toward the title so the menu never covers the planet
-  const worldY = height * (state.mode === "home" ? 0.4 : 0.55);
+  const worldY = height * (state.mode === "home" ? (height < 650 ? 0.47 : 0.4) : 0.55);
   cy += (worldY - cy) * Math.min(1, delta * 7);
   for (let step = 0; step < steps; step += 1) update(delta / steps);
   draw();

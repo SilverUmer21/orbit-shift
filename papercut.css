@@ -213,3 +213,18 @@ input[type=checkbox]:checked::after{transform:translateX(24px);background:radial
 .reward-seal canvas{border-radius:12px}
 .reward-seal>button:first-child{color:var(--reward-light,#f4f1de)}
 .reward-seal b{color:var(--reward-gold,#edca62);text-shadow:0 2px 0 rgba(0,0,0,.4)}
+
+/* compact run objectives: a single centred row so they never collide with stage titles */
+.campaign-run{top:calc(env(safe-area-inset-top,0px) + 92px);left:50%;right:auto;min-width:0;transform:translateX(-50%);pointer-events:none}
+.campaign-run.active{display:flex;gap:8px;white-space:nowrap}
+.act-label{top:24%}
+.trails{grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+.trail{min-width:0;height:42px}
+.rider-grid{-webkit-mask:linear-gradient(#000 calc(100% - 26px),transparent);mask:linear-gradient(#000 calc(100% - 26px),transparent)}
+
+@media(min-height:760px){
+  .results:has(.reward-seal:not([hidden])) h2{font-size:78px}
+  .results:has(.reward-seal:not([hidden])){gap:12px}
+  .results:has(.reward-seal:not([hidden])) .earned{padding:10px 16px}
+  .results:has(.reward-seal:not([hidden])) .earned strong{font-size:22px}
+}
