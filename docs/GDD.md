@@ -108,7 +108,7 @@ Design canvas (mockups and boards): https://claude.ai/artifact/DzV3n7kg777bLBkug
 | Tutorial panel | ✅ Restyled | |
 | Reward card | ✅ Built (Step 1) | Full-screen overlay, one card per reward: coral ribbon (NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!), counter dots, art drawn by game renderers, gold CLAIM, "Equip now" for trails/paints. After the last card, stars fly into the results star badge, which counts up; the next-plane bar fills from old to new total. Chapter clears keep the chapter stage art. |
 | Island map | ✅ Built (Step 2) | PixiJS island art kept. Paper label cards pinned beside islands (night cards when locked / Void), gold progress bar per chapter, pulsing dashed ring + bobbing NEXT pin on the chapter to play, star chip in the header, folded Ascension button with best score. |
-| Chapter screen | ✅ Built (Step 2) | Chapter planet removed (owner). Levels as round nodes on a dotted zig-zag path: mint = cleared with stars, gold pulsing = next (coral NEXT tag), lock = locked. Labels read "Level N · X sec" + name. One big PLAY for the next level. Ember uses coral nodes on a warm night background. |
+| Chapter screen | ✅ Built (Step 2, spacing pass) | Chapter planet removed (owner). "Stepping stones" (option A): levels zig-zag (28% / 72%) down the whole space between the story and PLAY on a dotted trail that turns mint (coral in Ember) up to the next level. Stars arc above each level; name and "Level N · 45s" centred below. Next level: big gold pulsing node, coral NEXT tag, gold name. Locked: lock node, muted label, GUARDIAN tag on guardian levels. Only the node, stars and label are tappable. One big PLAY for the next level. |
 | **Hangar** | ⏳ Step 3 ← next | Currently only restyled cards; full redesign planned. |
 | Awakening celebration | Unchanged | Canvas celebration on chapter clear. |
 
@@ -169,6 +169,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | 2026-10-17 | No ads. Work order: Step 0 bugs → 1 reward card → 2 map → 3 Hangar. |
 | 2026-10-17 | Reward card approved: ribbons NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!, keep "Equip now" on trails and paints. |
 | 2026-10-17 | Step 2 approved: chapter levels labelled "Level N · Name" (option A); the big chapter planet removed from the levels screen (owner). |
+| 2026-10-17 | Levels page spacing: owner asked for more room and better text alignment; chose "Stepping stones" (A) over "Trail cards" (B). Mockups: `design/paper-night/previews/levels-spacing-options.png`. |
 
 ## 11. Technical map
 
