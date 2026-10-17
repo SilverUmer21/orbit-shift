@@ -44,7 +44,7 @@ button:focus-visible{outline:3px solid var(--mint-500);outline-offset:3px}
 .play-button small{max-width:100%;overflow:hidden;color:rgba(58,30,20,.72);font:900 11px/1 var(--ui);letter-spacing:.5px;text-transform:none;text-overflow:ellipsis;white-space:nowrap}
 .play-button small:empty{display:none}
 .side-text-button{display:grid;justify-items:center;gap:7px;width:64px;min-height:0;padding:0;background:none;box-shadow:none;color:var(--mint-200);font-size:11px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
-.side-text-button::before{content:"";width:64px;height:64px;border-radius:20px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M28 8 L10 24 L28 40 V30 H40 V18 H28 Z' fill='%23FFF4DC'/%3E%3Cpath d='M10 24 L28 40 V30 H40 V24 Z' fill='%23E9D6B0'/%3E%3C/svg%3E") center/32px no-repeat,var(--fold-night);box-shadow:inset 0 2px 0 rgba(255,244,220,.14),0 5px 0 var(--night-900)}
+.side-text-button::before{content:"";width:64px;height:64px;border-radius:20px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M5 24 L23 7.5 Q27 4.5 27 9.5 V17 H38 Q43 17 43 22 V26 Q43 31 38 31 H27 V38.5 Q27 43.5 23 40.5 Z' fill='%23FFF4DC'/%3E%3Cpath d='M5 24 H43 V26 Q43 31 38 31 H27 V38.5 Q27 43.5 23 40.5 Z' fill='%23E9D6B0'/%3E%3C/svg%3E") center/36px no-repeat,var(--fold-night);box-shadow:inset 0 2px 0 rgba(255,244,220,.14),0 5px 0 var(--night-900)}
 .side-text-button:active{transform:none;box-shadow:none}
 .side-text-button:active::before{transform:translateY(4px);box-shadow:inset 0 2px 0 rgba(255,244,220,.1),0 1px 0 var(--night-900)}
 
@@ -198,7 +198,7 @@ button:focus-visible{outline:3px solid var(--mint-500);outline-offset:3px}
   .icon-button,.side-action,.side-text-button{width:52px;min-width:52px}
   .icon-button{height:52px;border-radius:17px}
   .icon-button svg{width:28px;height:28px}
-  .side-text-button::before{width:52px;height:52px;border-radius:17px;background-size:26px}
+  .side-text-button::before{width:52px;height:52px;border-radius:17px;background-size:30px}
   .side-action>span:last-child,.side-text-button{font-size:10px}
   .play-button{width:164px;height:62px;border-radius:22px}
   .play-label{font-size:32px}
@@ -499,3 +499,50 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 #retry .play-label svg{flex:none;width:.66em;height:.66em}
 @media (max-height:700px){.results .result-head{margin-top:22px}.result-title{width:min(100%,290px)}}
 @media (max-height:620px){.results .result-head{margin-top:14px}.result-title{width:min(100%,250px)}.result-objectives span:nth-child(2){padding-bottom:14px}}
+
+/* Results content sits centred between the top and the buttons on tall phones (free space splits above it and above the buttons). */
+.results .result-head{margin-top:auto}
+.results .earned{margin-bottom:12px}
+
+/* Results · minimal next plane: no card, earned stars on top, then plane · thin bar · count on one quiet line. */
+.results .earned{flex-direction:column;align-items:center;gap:12px;width:min(100%,300px);padding:0;border-radius:0;background:none;box-shadow:none}
+.results .earned-stars{order:-1;display:flex;align-items:baseline;gap:6px;margin:0;padding:0;border:0}
+.results .earned-stars strong{font-size:30px;text-shadow:0 3px 0 var(--ember-lip)}
+.results .earned-stars span{font-size:11px;letter-spacing:1.5px}
+.results .next-plane{width:100%;gap:10px}
+.results .next-plane canvas{width:46px;height:29px;padding:0;border-radius:0;background:none;opacity:.9}
+.results .next-plane div{gap:6px}
+.results .next-plane span{color:var(--muted);font-size:11px;font-weight:800}
+.results .next-plane i{height:6px;border-radius:3px;background:rgba(255,244,220,.1)}
+.results .next-plane b{border-radius:3px}
+.results .next-plane em{align-self:flex-end;color:var(--paper);font-size:12px}
+@media (max-width:360px){.results .next-plane em{display:block}}
+@media (max-height:620px){.results .earned{gap:8px}.results .earned-stars strong{font-size:24px}}
+
+/* Results · stars with life: folded paper stars pop in one by one with a sparkle burst, then float and twinkle. */
+.result-objectives span{position:relative}
+.result-objectives i svg{display:block;width:1em;height:1em;overflow:visible}
+.result-objectives i{-webkit-text-stroke:0;text-shadow:none}
+.result-objectives .star-face{fill:var(--night-600)}
+.result-objectives .star-fold{fill:#163F46}
+.result-objectives .star-glint{fill:#FFF4DC;opacity:0}
+.result-objectives span.done .star-face{fill:var(--gold)}
+.result-objectives span.done .star-fold{fill:var(--gold-shade)}
+.result-objectives span.done i{filter:drop-shadow(0 4px 0 var(--night-900))}
+.result-objectives span{--d:.15s}
+.result-objectives span:nth-child(2){--d:.42s}
+.result-objectives span:nth-child(3){--d:.69s}
+.result-objectives i{animation:starIn .4s var(--d) ease-out both}
+.result-objectives span.done i{animation:starPop .6s var(--d) cubic-bezier(.3,1.7,.5,1) both,starFloat 3s calc(var(--d) + .7s) ease-in-out infinite}
+.result-objectives span:nth-child(2).done i{animation-name:starPop,starFloatMid}
+.result-objectives span.done .star-glint{transform-box:fill-box;transform-origin:center;animation:starGlint 2.4s calc(var(--d) + .9s) ease-in-out infinite}
+.result-objectives span.done::before{content:"";position:absolute;left:50%;top:42%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;pointer-events:none;
+  box-shadow:0 -46px 0 var(--gold),40px -23px 0 var(--mint-200),40px 23px 0 var(--gold),0 46px 0 var(--mint-200),-40px 23px 0 var(--gold),-40px -23px 0 var(--mint-200);
+  opacity:0;transform:scale(.3);animation:starBurst .7s calc(var(--d) + .12s) ease-out both}
+@keyframes starIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@keyframes starPop{0%{opacity:0;transform:scale(0) rotate(-40deg)}60%{opacity:1;transform:scale(1.25) rotate(8deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes starFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-4px) rotate(-4deg)}}
+@keyframes starFloatMid{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.04)}}
+@keyframes starGlint{0%,55%,100%{opacity:0;transform:scale(.2) rotate(0)}70%{opacity:1;transform:scale(1.1) rotate(45deg)}85%{opacity:0;transform:scale(.4) rotate(90deg)}}
+@keyframes starBurst{0%{opacity:0;transform:scale(.3)}12%,70%{opacity:1}100%{opacity:0;transform:scale(1.15)}}
+@media (prefers-reduced-motion:reduce){.result-objectives i,.result-objectives span.done i,.result-objectives span.done .star-glint,.result-objectives span.done::before{animation:none}.result-objectives span.done::before{display:none}}
