@@ -225,3 +225,20 @@ button:focus-visible{outline:3px solid var(--mint-500);outline-offset:3px}
 .next-plane span{display:block;font-size:12px;font-weight:800;letter-spacing:0;text-transform:none}
 @media (max-height:620px){.results .copy,.results .goal-rewards,.results .unlock{display:none}}
 @media (max-width:360px){.next-plane em{display:none}.earned{gap:10px}}
+
+/* Top bar and action icons, round two: folded gear, star badge, live ship, detailed island. */
+.icon-button.small svg{width:30px;height:30px}
+.star-chip{position:relative;gap:0;height:40px;padding:0 16px 0 38px;background:var(--night-700);box-shadow:inset 0 3px 0 rgba(0,0,0,.22),0 4px 0 var(--night-900)}
+.star-chip svg{position:absolute;left:-12px;top:-5px;width:44px;height:44px;transform:rotate(-12deg)}
+.star-chip b{font:400 23px/1 var(--display);letter-spacing:.5px;text-shadow:0 2px 0 var(--night-900)}
+.ship-button{position:relative;overflow:visible}
+.ship-button canvas{position:absolute;left:2px;top:-13px;width:68px;height:68px;pointer-events:none}
+.ship-shadow{position:absolute;left:14px;bottom:10px;width:34px;height:7px;border-radius:50%;background:rgba(10,31,36,.55)}
+#openIslands svg{width:100%;height:100%;overflow:visible}
+@media (max-height:620px){
+  .ship-button canvas{left:1px;top:-10px;width:56px;height:56px}
+  .ship-shadow{left:11px;bottom:8px;width:28px;height:6px}
+  #openIslands svg{width:100%;height:100%}
+}
+.icon-button.small svg{width:38px;height:38px}
+.ship-button canvas{left:-1px;top:-8px;width:64px;height:64px}

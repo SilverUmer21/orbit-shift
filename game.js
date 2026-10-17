@@ -21,7 +21,7 @@ const ui = {
   report: document.querySelector("#report"), showReport: document.querySelector("#showReport"), copyReport: document.querySelector("#copyReport"),
   campaignStars: document.querySelector("#campaignStars"), firstLightRating: document.querySelector("#firstLightRating"),
   campaignMap: document.querySelector("#campaignMap"), bloomProgress: document.querySelector("#bloomProgress"),
-  hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), nearMiss: document.querySelector("#nearMiss"),
+  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), nearMiss: document.querySelector("#nearMiss"),
   nextPlane: document.querySelector("#nextPlane"), nextPlaneArt: document.querySelector("#nextPlaneArt"), nextPlaneName: document.querySelector("#nextPlaneName"), nextPlaneBar: document.querySelector("#nextPlaneBar"), nextPlaneCount: document.querySelector("#nextPlaneCount"),
   bloomLevels: document.querySelector("#bloomLevels"), bloomStory: document.querySelector("#bloomStory"), bloomChapterArt: document.querySelector("#bloomChapterArt"),
 };
@@ -1717,11 +1717,22 @@ function renderNextPlane() {
   drawGlider(mini, rider, currentCosmetic(), 1.15, 0, 0, false, 0);
 }
 
+function renderHangarShip() {
+  // The Hangar button shows the equipped ship, drawn by the same renderer as gameplay.
+  const size = 68, ratio = Math.min(devicePixelRatio || 1, 3), canvas = ui.hangarShip;
+  if (canvas.width !== size * ratio) { canvas.width = size * ratio; canvas.height = size * ratio; }
+  const target = canvas.getContext("2d");
+  target.setTransform(ratio, 0, 0, ratio, 0, 0); target.clearRect(0, 0, size, size);
+  target.translate(size / 2, size / 2); target.rotate(-0.55);
+  drawGlider(target, currentRider(), currentCosmetic(), 0.85, 0, 0, false, 0);
+}
+
 function updateHome() {
   ui.homeBest.textContent = state.best;
   ui.homeStars.textContent = state.stars;
   const affordable = riders.filter(rider => !state.ownedRiders.includes(rider.id) && state.stars >= rider.price).length;
   ui.hangarBadge.textContent = affordable; ui.hangarBadge.hidden = affordable === 0;
+  renderHangarShip();
   ui.playLevel.textContent = state.tutorialSeen ? nextCampaignLevel().name : "Practice";
   ui.sound.checked = !state.muted;
   ui.haptics.checked = state.haptics;
