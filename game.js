@@ -1755,6 +1755,7 @@ function renderBloomChapter() {
   const playLevel = nextLevel || open[open.length - 1] || levels[0];
   ui.bloomStory.textContent = nextLevel ? nextLevel.story : ember ? "A first flame breathes beneath the folded stone." : "The Bloom Crown shines in rhythm again.";
   ui.bloomLevels.innerHTML = "";
+  ui.bloomLevels.style?.setProperty("--rows", levels.length);
   levels.forEach((level) => {
     const unlocked = isLevelUnlocked(level.id), stars = state.campaign.ratings[level.id] || 0, number = campaignLevels.indexOf(level) + 1, isNext = level === nextLevel;
     const button = document.createElement("button");
@@ -1762,12 +1763,15 @@ function renderBloomChapter() {
     button.className = `chapter-level${unlocked ? "" : " locked"}${stars ? " completed" : ""}${isNext ? " next" : ""}`;
     button.disabled = !unlocked;
     button.setAttribute("aria-label", `Level ${number}, ${level.name}${unlocked ? `, ${stars} of 3 stars` : ", locked"}`);
-    button.innerHTML = `<span class="level-node">${unlocked ? number : lockIcon}</span><div><small>Level ${number} · ${level.duration} sec</small><b>${level.name}</b><em>${unlocked ? `<span class="level-stars">${[0,1,2].map(i=>`<i class="${i<stars?"on":""}">★</i>`).join("")}</span>` : level.phases.some(phase => phase.guardian) ? "Guardian level" : "Locked"}</em></div>${isNext ? '<i class="next-tag">Next</i>' : ""}`;
+    const top = isNext ? '<i class="next-tag">Next</i>' : unlocked ? `<span class="level-stars">${[0,1,2].map(i=>`<i class="${i<stars?"on":""}">★</i>`).join("")}</span>` : level.phases.some(phase => phase.guardian) ? '<i class="guardian-tag">Guardian</i>' : "";
+    button.innerHTML = `<span class="level-node">${unlocked ? number : lockIcon}</span><span class="level-top">${top}</span><span class="level-label"><b>${level.name}</b><small>Level ${number} · ${level.duration}s</small></span>`;
     button.addEventListener("click",()=>launchCampaignLevel(level.id,button));
     ui.bloomLevels.append(button);
   });
-  const rows = levels.length, path = levels.slice(1).map((_, i) => { const y1 = i * 80 + 40, y2 = y1 + 80, x1 = i % 2 ? 74 : 26, x2 = i % 2 ? 26 : 74; return `M${x1} ${y1} C${x1} ${y1 + 44} ${x2} ${y2 - 44} ${x2} ${y2}`; }).join(" ");
-  ui.bloomLevels.insertAdjacentHTML?.("beforeend", `<svg class="level-path" aria-hidden="true" viewBox="0 0 100 ${rows * 80}" preserveAspectRatio="none"><path d="${path}" vector-effect="non-scaling-stroke"/></svg>`);
+  // Trail between level centres (x 28/72, one 80-unit row each); leaves each level sideways so it never crosses a label. Reached parts are coloured.
+  const done = [], todo = [];
+  levels.slice(1).forEach((level, i) => { const y1 = i * 80 + 40, y2 = y1 + 80, x1 = i % 2 ? 72 : 28, x2 = i % 2 ? 28 : 72, d = x2 - x1; (isLevelUnlocked(level.id) ? done : todo).push(`M${x1} ${y1} C${x1 + d * .75} ${y1} ${x2 - d * .75} ${y2} ${x2} ${y2}`); });
+  ui.bloomLevels.insertAdjacentHTML?.("beforeend", `<svg class="level-path" aria-hidden="true" viewBox="0 0 100 ${levels.length * 80}" preserveAspectRatio="none"><path class="todo" d="${todo.join(" ")}" vector-effect="non-scaling-stroke"/><path class="done" d="${done.join(" ")}" vector-effect="non-scaling-stroke"/></svg>`);
   ui.chapterPlay.dataset.level = playLevel.id;
   ui.chapterPlayLevel.textContent = `Level ${campaignLevels.indexOf(playLevel) + 1} · ${playLevel.name}`;
 }

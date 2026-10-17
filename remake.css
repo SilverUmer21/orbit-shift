@@ -389,58 +389,76 @@ button:focus-visible{outline:3px solid var(--mint-500);outline-offset:3px}
 .ascension small{display:block;margin-top:3px;color:var(--mint-200);font-size:11px;font-weight:800}
 @media (prefers-reduced-motion:reduce){.map-next-ring,.map-next-pin{animation:none}}
 
-/* Step 2 · Chapter screen: no planet, levels as nodes on a winding path, one PLAY. */
-.bloom-chapter canvas{display:none}
-.bloom-chapter>header h2{font-size:22px}
-.chapter-story{margin:26px auto 10px;max-width:300px;min-height:0;font-size:14px}
-.bloom-levels{position:relative;display:block;width:min(100%,340px);margin:10px auto 0;--row:88px}
-.level-path{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
-.level-path path{fill:none;stroke:rgba(255,244,220,.3);stroke-width:3;stroke-linecap:round;stroke-dasharray:1 10}
-.chapter-level,.chapter-level:nth-child(even){position:relative;z-index:1;display:flex;align-items:center;gap:14px;width:100%;height:var(--row);min-height:0;margin:0;padding:0 0 0 calc(26% - 31px);border:0;border-radius:0;background:none;box-shadow:none;color:var(--paper);text-align:left}
-.chapter-level:nth-of-type(even){flex-direction:row-reverse;padding:0 calc(26% - 31px) 0 0;text-align:right}
-.chapter-level:active,.chapter-level.launching{transform:none;box-shadow:none}
-.chapter-level.locked{opacity:1;filter:none}
-.chapter-level>span.level-node{flex:none;display:grid;place-items:center;width:62px;height:62px;border-radius:50%;clip-path:none;background:var(--night-700);box-shadow:inset 0 2px 0 rgba(255,244,220,.06),0 5px 0 var(--night-900);color:var(--paper);font:400 24px/1 var(--display)}
-.chapter-level>span.level-node svg{width:24px;height:24px}
-.chapter-level.locked>span.level-node svg path:first-child{stroke:var(--muted)}
-.chapter-level.locked>span.level-node svg rect,.chapter-level.locked>span.level-node svg path:nth-child(3){fill:var(--muted)}
-.chapter-level.completed>span.level-node{background:linear-gradient(100deg,#7AE6BA 0 56%,#5ED6A6 56% 100%);box-shadow:inset 0 3px 0 rgba(255,255,255,.4),0 5px 0 var(--mint-700);color:#0B3B30}
-.chapter-level.next{padding-left:calc(26% - 38px)}
-.chapter-level.next:nth-of-type(even){padding:0 calc(26% - 38px) 0 0}
-.chapter-level.next>span.level-node{width:76px;height:76px;background:linear-gradient(100deg,#FFD46E 0 56%,#FFC24A 56% 100%);box-shadow:inset 0 3px 0 rgba(255,255,255,.45),0 6px 0 var(--ember-lip),0 0 0 8px rgba(255,201,77,.18),0 0 0 16px rgba(255,201,77,.08);color:var(--ink);font-size:30px;animation:nodePulse 2s ease-in-out infinite}
-@keyframes nodePulse{0%,100%{box-shadow:inset 0 3px 0 rgba(255,255,255,.45),0 6px 0 var(--ember-lip),0 0 0 8px rgba(255,201,77,.18),0 0 0 16px rgba(255,201,77,.08)}50%{box-shadow:inset 0 3px 0 rgba(255,255,255,.45),0 6px 0 var(--ember-lip),0 0 0 11px rgba(255,201,77,.22),0 0 0 22px rgba(255,201,77,.07)}}
-.chapter-level div{display:grid;gap:3px}
-.chapter-level small{color:var(--mint-200)!important;font-size:10px!important;font-weight:900;letter-spacing:1.5px;text-transform:uppercase}
-.chapter-level b{font-size:19px!important;white-space:nowrap}
-.chapter-level em{font-size:11px!important;color:var(--muted)!important;font-weight:800}
-.chapter-level.locked b{color:var(--muted)}
-.chapter-level .level-stars{font-size:14px}
-.next-tag{position:absolute;left:26%;top:calc(50% - 50px);z-index:2;padding:4px 10px;transform:translateX(-50%);border-radius:999px;background:var(--coral);color:#fff;font:900 10px/1 var(--ui);font-style:normal;letter-spacing:1.5px;text-transform:uppercase}
-.chapter-level:nth-of-type(even) .next-tag{left:74%}
-.chapter-play{position:absolute;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(250px,calc(100% - 60px));height:78px}
-.chapter-play:active{transform:translate(-50%,6px)}
-.bloom-chapter[data-biome="ember"]{background:#1E1419}
-.bloom-chapter[data-biome="ember"] .chapter-level{background:none;border:0}
-.bloom-chapter[data-biome="ember"] .chapter-level.completed>span.level-node{background:linear-gradient(100deg,#F08E73 0 56%,#E7795F 56% 100%);box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 5px 0 #A9473E;color:#3A1410}
-.bloom-chapter[data-biome="ember"] .chapter-level small{color:#F2D8A0!important}
-.bloom-chapter[data-biome="ember"] .chapter-level>span.level-node{background:#33222A}
-.bloom-chapter[data-biome="ember"] .chapter-level.next>span.level-node{background:linear-gradient(100deg,#FFD46E 0 56%,#FFC24A 56% 100%)}
-@media (prefers-reduced-motion:reduce){.chapter-level.next>span.level-node{animation:none}}
-@media (max-height:700px){.bloom-levels{--row:72px}.chapter-story{margin-top:18px}}
+/* Step 2 · Chapter screen (stepping stones, owner-approved option A): no planet; levels zig-zag on a dotted
+   trail that fills the space between the story and PLAY; stars arc above each level, name centred below.
+   Padding leaves room for the first row's stars and the last row's label; the path box matches it. */
+#bloomChapter canvas{display:none}
+#bloomChapter:not([hidden]){display:flex;flex-direction:column;padding-bottom:calc(max(28px,env(safe-area-inset-bottom)) + 102px)}
+#bloomChapter .chapter-story{flex:none;margin:20px auto 0;max-width:290px;min-height:0;color:#DCE3C5;font-size:14px;line-height:1.35;text-align:center}
+#bloomChapter .bloom-levels{position:relative;flex:1 1 0;min-height:0;width:min(100%,350px);max-height:calc(var(--rows) * 150px + 80px);margin:auto;padding:30px 0 50px;display:grid;grid-template-rows:repeat(var(--rows),minmax(0,1fr));gap:0}
+#bloomChapter .level-path{position:absolute;left:0;top:30px;z-index:0;width:100%;height:calc(100% - 80px);overflow:visible;pointer-events:none}
+#bloomChapter .level-path path{fill:none;stroke-width:5;stroke-linecap:round;stroke-dasharray:0 13}
+#bloomChapter .level-path .todo{stroke:rgba(255,244,220,.22)}
+#bloomChapter .level-path .done{stroke:var(--mint-500)}
+#bloomChapter[data-biome="ember"] .level-path .done{stroke:#F08E73}
+#bloomChapter .chapter-level{position:relative;z-index:1;display:block;width:100%;height:100%;min-height:0;margin:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:var(--paper);font:inherit;text-align:center;opacity:1;filter:none;transform:none;--n:64px}
+#bloomChapter .level-top,#bloomChapter .level-label{width:auto;height:auto;clip-path:none;background:none}
+#bloomChapter .chapter-level{pointer-events:none}
+#bloomChapter .chapter-level>span{pointer-events:auto}
+#bloomChapter .level-node{display:grid;place-items:center;width:var(--n);height:var(--n);border-radius:50%;clip-path:none;background:var(--night-700);box-shadow:inset 0 2px 0 rgba(255,244,220,.06),0 5px 0 var(--night-900);color:var(--paper);font:400 calc(var(--n) * .4)/1 var(--display)}
+#bloomChapter .level-node svg{width:40%;height:40%}
+#bloomChapter .locked .level-node svg path:first-child{stroke:var(--muted)}
+#bloomChapter .locked .level-node svg rect,#bloomChapter .locked .level-node svg path:nth-child(3){fill:var(--muted)}
+#bloomChapter .completed .level-node{background:linear-gradient(100deg,#7AE6BA 0 56%,#5ED6A6 56% 100%);box-shadow:inset 0 3px 0 rgba(255,255,255,.4),0 5px 0 var(--mint-700);color:#0B3B30}
+#bloomChapter .next .level-node{background:linear-gradient(100deg,#FFD46E 0 56%,#FFC24A 56% 100%);box-shadow:inset 0 3px 0 rgba(255,255,255,.45),0 6px 0 var(--ember-lip),0 0 0 9px rgba(255,201,77,.16),0 0 0 18px rgba(255,201,77,.07);color:var(--ink)}
+#bloomChapter[data-biome="ember"] .level-node{background:#33222A;box-shadow:inset 0 2px 0 rgba(255,244,220,.06),0 5px 0 #170E12}
+#bloomChapter[data-biome="ember"] .completed .level-node{background:linear-gradient(100deg,#F08E73 0 56%,#E7795F 56% 100%);box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 5px 0 #A9473E;color:#3A1410}
+#bloomChapter[data-biome="ember"] .next .level-node{background:linear-gradient(100deg,#FFD46E 0 56%,#FFC24A 56% 100%);box-shadow:inset 0 3px 0 rgba(255,255,255,.45),0 6px 0 var(--ember-lip),0 0 0 9px rgba(255,201,77,.16),0 0 0 18px rgba(255,201,77,.07)}
+#bloomChapter .level-stars{display:flex;align-items:flex-end;gap:1px;letter-spacing:0}
+#bloomChapter .level-stars i{display:block;color:var(--night-600);font:400 19px/1 var(--display);font-style:normal}
+#bloomChapter .level-stars i.on{color:var(--gold);text-shadow:0 2px 0 #C98A22}
+#bloomChapter[data-biome="ember"] .level-stars i{color:#4A2F38}
+#bloomChapter[data-biome="ember"] .level-stars i.on{color:var(--gold)}
+#bloomChapter .next-tag,#bloomChapter .guardian-tag,#bloomChapter .lock-tag{display:block;padding:5px 10px;border-radius:999px;font:900 10px/1 var(--ui);font-style:normal;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap}
+#bloomChapter .next-tag{background:var(--coral);box-shadow:0 3px 0 #B8483E;color:#fff}
+#bloomChapter .guardian-tag,#bloomChapter .lock-tag{background:rgba(127,168,162,.14);color:var(--muted)}
+#bloomChapter .chapter-level b{display:block;margin:0;font:400 18px/1.05 var(--display);letter-spacing:.5px;color:var(--paper);white-space:nowrap}
+#bloomChapter .chapter-level small{display:block;color:var(--mint-200);font:900 10px/1 var(--ui);letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap}
+#bloomChapter[data-biome="ember"] .chapter-level small{color:#F2D8A0}
+#bloomChapter .locked b{color:var(--muted)}
+#bloomChapter .locked small{color:rgba(127,168,162,.7)}
+#bloomChapter .chapter-play{position:absolute;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(250px,calc(100% - 60px));height:78px}
+#bloomChapter .chapter-play:active{transform:translate(-50%,6px)}
+#bloomChapter .chapter-level{--x:28%}
+#bloomChapter .chapter-level:nth-of-type(even){--x:72%}
+#bloomChapter .chapter-level.next{--n:78px}
+#bloomChapter .level-node{position:absolute;left:var(--x);top:50%;transform:translate(-50%,-50%)}
+#bloomChapter .next .level-node{animation:nodePulse 2s ease-in-out infinite}
+@keyframes nodePulse{0%,100%{box-shadow:inset 0 3px 0 rgba(255,255,255,.45),0 6px 0 var(--ember-lip),0 0 0 9px rgba(255,201,77,.16),0 0 0 18px rgba(255,201,77,.07)}50%{box-shadow:inset 0 3px 0 rgba(255,255,255,.45),0 6px 0 var(--ember-lip),0 0 0 12px rgba(255,201,77,.22),0 0 0 24px rgba(255,201,77,.06)}}
+@media (prefers-reduced-motion:reduce){#bloomChapter .next .level-node{animation:none}}
+#bloomChapter .level-top{position:absolute;left:var(--x);bottom:calc(50% + var(--n) / 2 + 7px);transform:translateX(-50%)}
+#bloomChapter .level-stars i:nth-child(1){transform:translateY(1px) rotate(-18deg)}
+#bloomChapter .level-stars i:nth-child(2){font-size:24px;transform:translateY(-4px)}
+#bloomChapter .level-stars i:nth-child(3){transform:translateY(1px) rotate(18deg)}
+#bloomChapter .level-label{position:absolute;left:var(--x);top:calc(50% + var(--n) / 2 + 11px);display:grid;justify-items:center;gap:4px;transform:translateX(-50%)}
+#bloomChapter .next b{color:var(--gold)}
+
+/* short phones */
+@media (max-height:700px){#bloomChapter .chapter-story{margin-top:14px}}
 @media (max-height:620px){
-  .bloom-levels{--row:60px;margin-top:4px}
-  .chapter-story{margin:12px auto 6px;font-size:12px}
-  .chapter-level,.chapter-level:nth-child(even){gap:10px;padding-left:calc(26% - 24px)}
-  .chapter-level:nth-of-type(even){padding:0 calc(26% - 24px) 0 0}
-  .chapter-level>span.level-node{width:48px;height:48px;font-size:19px}
-  .chapter-level.next{padding-left:calc(26% - 29px)}
-  .chapter-level.next:nth-of-type(even){padding:0 calc(26% - 29px) 0 0}
-  .chapter-level.next>span.level-node{width:58px;height:58px;font-size:23px}
-  .chapter-level b{font-size:15px!important}
-  .chapter-level small{font-size:9px!important}
-  .chapter-level .level-stars{font-size:12px}
-  .next-tag{top:calc(50% - 40px)}
-  .chapter-play{bottom:18px;height:62px;width:min(200px,calc(100% - 60px))}
+  #bloomChapter:not([hidden]){padding-bottom:96px}
+  #bloomChapter .chapter-story{margin-top:10px;font-size:12px}
+  #bloomChapter .bloom-levels{padding:22px 0 40px}
+  #bloomChapter .level-path{top:22px;height:calc(100% - 62px)}
+  #bloomChapter .chapter-level{--n:48px}
+  #bloomChapter .chapter-level.next{--n:58px}
+  #bloomChapter .chapter-level b{font-size:15px}
+  #bloomChapter .chapter-level small{font-size:9px}
+  #bloomChapter .level-stars i{font-size:15px}
+  #bloomChapter .level-stars i:nth-child(2){font-size:19px}
+  #bloomChapter .level-top{bottom:calc(50% + var(--n) / 2 + 4px)}
+  #bloomChapter .level-label{top:calc(50% + var(--n) / 2 + 8px);gap:3px}
+  #bloomChapter .chapter-play{bottom:18px;height:62px;width:min(200px,calc(100% - 60px))}
   .ascension{height:50px}
 }
 @media (max-width:360px){.bloom-chapter>header h2{font-size:17px}.campaign>header h2{font-size:20px}}
