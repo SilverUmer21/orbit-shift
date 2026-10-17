@@ -102,7 +102,7 @@ Design canvas (mockups and boards): https://claude.ai/artifact/DzV3n7kg777bLBkug
 | Screen | Status | Notes |
 |---|---|---|
 | Home | ✅ Built | Logo, best, live planet with equipped ship orbiting (game canvas), closest-goal chip, PLAY (next level) with Hangar (live ship icon + affordable badge) and Islands (detailed island). Top bar: folded gear, big star badge. |
-| Results | ✅ Built | Level name + title, 3-star row with captions, score, best, near-miss line, next-plane progress card, AGAIN with Back/Chapter and Hangar. |
+| Results | ✅ Built (results pass) | "LEVEL CLEAR!" curved on an arc (no level name above). Three folded paper stars, no captions, that pop in one by one with a sparkle burst, then float and twinkle. Score, best, near-miss line. Minimal next plane: "+15 STARS" on top, then plane · thin bar · count on one quiet line (no card). No goal-reward text list or "New biome awakened" (reward cards cover them). AGAIN with a bold folded back arrow (chapter) and Hangar showing the live equipped ship, same as Home. Content centred between the top and the buttons on tall phones. |
 | In-game HUD | ✅ Restyled | Score, flow, fever bar, counters. Play area untouched. |
 | Settings | ✅ Restyled | Paper switches, folded buttons. |
 | Tutorial panel | ✅ Restyled | |
@@ -154,6 +154,8 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | B9 | Chapter screen 320 px | The chapter planet art sits behind the last level cards on short screens. | Low | ✅ Fixed (Step 2): chapter planet removed from the level list |
 | B10 | Results | Remake CSS gave `.result-objectives` `display:flex`, overriding `[hidden]`, so Ascension results showed the previous campaign stars. | Medium | ✅ Fixed (Step 1) |
 | B11 | Map | The remake's `.island span` card rules also hit the progress bar's inner `<span>`, drawing a stray paper tab off-screen (seen at 320 px). Found during Step 2 build. | Low | ✅ Fixed (Step 2): bar is an `<i>` element |
+| B12 | Results (phones ~620–844 px tall) | Leftover goal-reward text list and "New biome awakened" showed in plain caps and ran into AGAIN. Found by owner on a real phone. | Medium | ✅ Fixed: removed from results |
+| B13 | Results (Android text scaling) | Android enlarged all text, pushing "AGAIN" past its button; the label also overflowed at 320 px without scaling. Found by owner. | Medium | ✅ Fixed: `text-size-adjust:100%`, label sized to its button |
 | — | Test harness | `tests/visual.html` logs 7 harmless 404s: the browser fetches files before `<base href>` applies. Real game loads cleanly. | Not a game bug | Noted |
 
 ## 10. Decisions log
@@ -169,6 +171,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | 2026-10-17 | No ads. Work order: Step 0 bugs → 1 reward card → 2 map → 3 Hangar. |
 | 2026-10-17 | Reward card approved: ribbons NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!, keep "Equip now" on trails and paints. |
 | 2026-10-17 | Step 2 approved: chapter levels labelled "Level N · Name" (option A); the big chapter planet removed from the levels screen (owner). |
+| 2026-10-17 | Results pass (owner): curved title kept as mocked, title only (no level name), stars without captions and animated, minimal next-plane line, bold folded back arrow (option 1), Hangar uses the live ship. Also check results at 390×760. |
 | 2026-10-17 | Levels page spacing: owner asked for more room and better text alignment; chose "Stepping stones" (A) over "Trail cards" (B). Mockups: `design/paper-night/previews/levels-spacing-options.png`. |
 
 ## 11. Technical map

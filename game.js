@@ -431,7 +431,7 @@ function finishRun() {
     const level=currentCampaignLevel();
     const checks = [state.levelComplete, state.runFragments >= 3, state.perfects >= level.perfectTarget];
     const captions = ["Finish", "3 fragments", `${level.perfectTarget} perfects`];
-    ui.resultObjectives.innerHTML = level.objectives.map((objective,index)=>`<span class="${checks[index]?"done":""}" title="${objective}"><i aria-hidden="true">★</i><small>${captions[index]}</small></span>`).join("");
+    ui.resultObjectives.innerHTML = level.objectives.map((objective,index)=>`<span class="${checks[index]?"done":""}" title="${objective}"><i aria-hidden="true">${resultStar}</i><small>${captions[index]}</small></span>`).join("");
     ui.resultStats.textContent = (state.levelComplete ? `Best flow x${Math.max(1,state.runBestStreak)}` : `Reached ${Math.floor(state.elapsed)} seconds`) + ` · ${state.runFragments} fragments`;
   }
   setArcTitle(ui.resultTitle, state.runType === "campaign" ? (state.levelComplete ? "Level clear!" : "So close!") : state.best > oldBest ? "New record!" : "Orbit broken");
@@ -1720,6 +1720,8 @@ function showScreen(name) {
 
 function hideScreens() { for (const screen of [ui.home, ui.campaign, ui.bloomChapter, ui.garage, ui.settings, ui.results]) screen.hidden = true; }
 
+// Results star: folded paper star (face + shaded half) with a small glint that twinkles once it is earned.
+const resultStar = '<svg viewBox="0 0 48 48"><polygon class="star-face" points="24,3 29.6,17 44.5,17.8 32.9,27.2 36.8,41.6 24,33.4 11.2,41.6 15.1,27.2 3.5,17.8 18.4,17"/><polygon class="star-fold" points="24,3 29.6,17 44.5,17.8 32.9,27.2 36.8,41.6 24,33.4"/><path class="star-glint" d="M40 2 L41.6 6.4 46 8 41.6 9.6 40 14 38.4 9.6 34 8 38.4 6.4 Z"/></svg>';
 const lockIcon = '<svg aria-hidden="true" viewBox="0 0 48 48"><path d="M15 22 V16 Q15 7 24 7 Q33 7 33 16 V22" fill="none" stroke="#E9D6B0" stroke-width="5"/><rect x="9" y="21" width="30" height="21" rx="5" fill="#FFF4DC"/><path d="M9 31 H39 V37 Q39 42 34 42 H14 Q9 42 9 37 Z" fill="#E9D6B0"/><circle cx="24" cy="30" r="3" fill="#12363D"/></svg>';
 function mapProgress(value, max) { return `<i class="map-bar"><i style="width:${Math.min(100, value / max * 100)}%"></i></i>${value}/${max} ★`; }
 
