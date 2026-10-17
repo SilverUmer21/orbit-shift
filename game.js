@@ -25,7 +25,7 @@ const ui = {
   rewardCount: document.querySelector("#rewardCount"), rewardBonus: document.querySelector("#rewardBonus"), rewardCard: document.querySelector("#rewardCard"), equipReward: document.querySelector("#equipReward"),
   resultStarChip: document.querySelector("#resultStarChip"), resultStarTotal: document.querySelector("#resultStarTotal"),
   mapNext: document.querySelector("#mapNext"), ascensionBest: document.querySelector("#ascensionBest"), chapterPlay: document.querySelector("#chapterPlay"), chapterPlayLevel: document.querySelector("#chapterPlayLevel"),
-  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), nearMiss: document.querySelector("#nearMiss"),
+  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), nearMiss: document.querySelector("#nearMiss"),
   nextPlane: document.querySelector("#nextPlane"), nextPlaneArt: document.querySelector("#nextPlaneArt"), nextPlaneName: document.querySelector("#nextPlaneName"), nextPlaneBar: document.querySelector("#nextPlaneBar"), nextPlaneCount: document.querySelector("#nextPlaneCount"),
   bloomLevels: document.querySelector("#bloomLevels"), bloomStory: document.querySelector("#bloomStory"), bloomChapterArt: document.querySelector("#bloomChapterArt"),
 };
@@ -434,11 +434,12 @@ function finishRun() {
     ui.resultObjectives.innerHTML = level.objectives.map((objective,index)=>`<span class="${checks[index]?"done":""}" title="${objective}"><i aria-hidden="true">★</i><small>${captions[index]}</small></span>`).join("");
     ui.resultStats.textContent = (state.levelComplete ? `Best flow x${Math.max(1,state.runBestStreak)}` : `Reached ${Math.floor(state.elapsed)} seconds`) + ` · ${state.runFragments} fragments`;
   }
-  ui.resultTitle.textContent = state.runType === "campaign" ? (state.levelComplete ? "Level clear!" : "So close!") : state.best > oldBest ? "New record!" : "Orbit broken";
+  setArcTitle(ui.resultTitle, state.runType === "campaign" ? (state.levelComplete ? "Level clear!" : "So close!") : state.best > oldBest ? "New record!" : "Orbit broken");
   ui.resultEyebrow.textContent = state.runType === "campaign" ? currentCampaignLevel().name : "Ascension";
   const nearMiss = nearMissText(campaignRating);
   ui.nearMiss.textContent = nearMiss; ui.nearMiss.hidden = !nearMiss;
   renderNextPlane();
+  renderHangarShip(ui.resultHangarShip);
   ui.resultStars.textContent = `+${state.runStars + state.runGoalStars}`;
   ui.goalRewards.textContent = state.runGoalRewards.join(" - ");
   ui.record.textContent = state.best > oldBest ? "New orbit record" : "";
@@ -539,7 +540,7 @@ function equipCurrentReward() {
   if (reward.type === "trail" && state.unlockedTrails.includes(reward.id)) state.selectedTrail = reward.id;
   else if (reward.type === "biome" && state.unlocked.includes(reward.id)) state.selected = reward.id;
   else return;
-  save(); renderCosmetics();
+  save(); renderCosmetics(); renderHangarShip(ui.resultHangarShip);
   ui.equipReward.textContent = "Equipped"; ui.equipReward.disabled = true;
 }
 
@@ -1797,6 +1798,13 @@ function playFromHome() {
   startRun("campaign", nextCampaignLevel().id);
 }
 
+// Results title curves along a circular arc: one SVG text in defs, drawn three times (two lip shadows, then gold).
+function setArcTitle(element, text) {
+  element.setAttribute?.("aria-label", text);
+  if (!element.insertAdjacentHTML) { element.textContent = text; return; }
+  element.innerHTML = `<svg class="arc-title" viewBox="0 0 320 122" aria-hidden="true"><defs><path id="resultArc" d="M16 116 A190 190 0 0 1 304 116"/><text id="resultArcText" text-anchor="middle"><textPath href="#resultArc" startOffset="50%">${text.toUpperCase()}</textPath></text></defs><use href="#resultArcText" class="arc-deep" y="8"/><use href="#resultArcText" class="arc-lip" y="4"/><use href="#resultArcText" class="arc-face"/></svg>`;
+}
+
 function nextPlane() { return riders.find(rider => !state.ownedRiders.includes(rider.id)); }
 
 function nearMissText(rating) {
@@ -1825,9 +1833,9 @@ function renderNextPlane(stars = state.stars) {
   drawGlider(mini, rider, currentCosmetic(), 1.15, 0, 0, false, 0);
 }
 
-function renderHangarShip() {
-  // The Hangar button shows the equipped ship, drawn by the same renderer as gameplay.
-  const size = 68, ratio = Math.min(devicePixelRatio || 1, 3), canvas = ui.hangarShip;
+function renderHangarShip(canvas = ui.hangarShip) {
+  // Hangar buttons (Home and Results) show the equipped ship, drawn by the same renderer as gameplay.
+  const size = 68, ratio = Math.min(devicePixelRatio || 1, 3);
   if (canvas.width !== size * ratio) { canvas.width = size * ratio; canvas.height = size * ratio; }
   const target = canvas.getContext("2d");
   target.setTransform(ratio, 0, 0, ratio, 0, 0); target.clearRect(0, 0, size, size);
