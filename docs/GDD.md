@@ -113,10 +113,10 @@ Design canvas (mockups and boards): https://claude.ai/artifact/DzV3n7kg777bLBkug
 
 ## 8. Roadmap
 
-### Step 0 — Safe bug fixes  ← current
-Fix B1, B2, B3, B7, B8 (section 9). No redesign.
+### Step 0 — Safe bug fixes  ✅ done (2026-10-17)
+Fixed B1, B2, B3, B7, B8 (section 9). No redesign.
 
-### Step 1 — Reward card
+### Step 1 — Reward card  ← next
 - One reward at a time on a large Paper Night card showing the real item: trail as a ribbon, paint as your old ship in that paint, relic/clear as a gold medallion.
 - "NEW!" ribbon, gold CLAIM, "1 of N" counter.
 - After the last reward, stars fly into the badge with a count-up, and the next-plane bar fills from the old value to the new one.
@@ -142,14 +142,15 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 
 | # | Area | Bug | Severity | Status |
 |---|---|---|---|---|
-| B1 | Results | Goal-reward stars are added to the total but not shown in "+X stars" (can show +0 after earning +18). | Medium | Open (Step 0) |
-| B2 | Chapter list | Earned ★ and unearned ☆ look almost the same in gold; 0-star levels look complete. | Medium | Open (Step 0) |
-| B3 | Map 320 px | Island labels wrap and overlap the Ember/Void islands; title wraps to two lines. | Medium | Open (Step 0) |
+| B1 | Results | Goal-reward stars are added to the total but not shown in "+X stars" (can show +0 after earning +18). | Medium | ✅ Fixed (Step 0): `state.runGoalStars` counted in the total, no double counting |
+| B2 | Chapter list | Earned ★ and unearned ☆ look almost the same in gold; 0-star levels look complete. | Medium | ✅ Fixed (Step 0): solid gold vs faint stars |
+| B3 | Map 320 px | Island labels wrap and overlap the Ember/Void islands; title wraps to two lines. | Medium | ✅ Fixed (Step 0): labels positioned from the map layout via container units, no wrapping; map and chapter titles fit |
 | B4 | Hangar | Trails/paints have no labels or unlock hints; hint only on mouse hover. | Medium | Step 3 |
 | B5 | Hangar 320 px | Only ~1.5 rows of planes visible; paints/trails take most space. | Low | Step 3 |
 | B6 | Reward card | Placeholder glyphs (✦ ~ ◆ ●); rewards must be tapped through to discover. | Low | Step 1 |
-| B7 | Map | Void lock is an emoji 🔒, looks different per phone. | Low | Open (Step 0) |
-| B8 | Progression | The 6th goal tries to unlock Bloom Wake (the Bloom chapter trail); its hint says "complete 6 goals". | Low | Open (Step 0) |
+| B7 | Map | Void lock is an emoji 🔒, looks different per phone. | Low | ✅ Fixed (Step 0): drawn folded lock + "Locked" |
+| B8 | Progression | The 6th goal tries to unlock Bloom Wake (the Bloom chapter trail); its hint says "complete 6 goals". | Low | ✅ Fixed (Step 0): goals only unlock goal trails; hint says "clear First Light" |
+| B9 | Chapter screen 320 px | The chapter planet art sits behind the last level cards on short screens. | Low | Step 2 (chapter redesign) |
 | — | Test harness | `tests/visual.html` logs 7 harmless 404s: the browser fetches files before `<base href>` applies. Real game loads cleanly. | Not a game bug | Noted |
 
 ## 10. Decisions log
