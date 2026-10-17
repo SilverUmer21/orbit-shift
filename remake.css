@@ -479,3 +479,23 @@ button:focus-visible{outline:3px solid var(--mint-500);outline-offset:3px}
     .map-next[data-chapter="ember"] .map-next-pin{top:calc(var(--r) * -.86 - 28px)}
   }
 }
+
+/* Results pass (owner): curved title only, three bare stars, no reward text list, live ship on Hangar, AGAIN always fits. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.results #resultEyebrow,.results .goal-rewards,.results .unlock{display:none}
+.result-title{display:block;width:min(100%,330px);margin:0 auto;font-size:0;line-height:0;text-shadow:none}
+.arc-title{display:block;width:100%;height:auto;overflow:visible}
+.arc-title text{font:400 46px var(--display);letter-spacing:2px}
+.arc-title .arc-deep{fill:var(--night-900)}
+.arc-title .arc-lip{fill:var(--ember-lip)}
+.arc-title .arc-face{fill:var(--gold)}
+.results .result-head{margin-top:34px}
+.result-objectives small{display:none}
+.result-objectives span:nth-child(2){padding-bottom:22px}
+.results .result-objectives{margin-top:0}
+.results #resultHangar canvas{left:-2px;top:-9px}
+#retry{container-type:inline-size}
+#retry .play-label{gap:8px;font-size:min(36px,19cqw);letter-spacing:1px;white-space:nowrap}
+#retry .play-label svg{flex:none;width:.66em;height:.66em}
+@media (max-height:700px){.results .result-head{margin-top:22px}.result-title{width:min(100%,290px)}}
+@media (max-height:620px){.results .result-head{margin-top:14px}.result-title{width:min(100%,250px)}.result-objectives span:nth-child(2){padding-bottom:14px}}
