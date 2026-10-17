@@ -242,3 +242,39 @@ button:focus-visible{outline:3px solid var(--mint-500);outline-offset:3px}
 }
 .icon-button.small svg{width:38px;height:38px}
 .ship-button canvas{left:-1px;top:-8px;width:64px;height:64px}
+
+/* Step 0 fixes. B2: earned vs unearned level stars must differ. */
+.level-stars{display:inline-flex;gap:2px;font-size:15px;line-height:1}
+.level-stars i{font-style:normal;color:rgba(255,244,220,.2)}
+.level-stars i.on{color:var(--gold);text-shadow:0 1px 0 var(--night-900)}
+
+/* B7: drawn lock instead of an emoji. */
+.lock-badge{display:inline-flex!important;align-items:center;gap:5px;color:var(--muted)!important;font-size:12px;font-weight:900;letter-spacing:.5px!important}
+.lock-badge svg{width:16px;height:16px}
+
+/* B3: map labels sit beside each island using the map's own layout (islands at 0.34/0.68/0.34 width,
+   0.23/0.5/0.74 height, scaled by min(w/430, h/844)), never wrap, and shrink on small phones. */
+.campaign>header h2{white-space:nowrap}
+.island span{white-space:nowrap}
+@media (max-width:360px){.campaign>header h2{font-size:22px}}
+.island-path{container-type:size}
+@supports (top:1cqh){
+  .island{height:110px;min-height:110px}
+  .bloom-island{top:calc(23cqh - 55px)}
+  .ember-island{top:calc(50cqh - 55px)}
+  .void-island{top:calc(74cqh - 55px)}
+  .island span{top:50%;transform:translateY(-50%)}
+  .bloom-island span{left:calc(34cqw + min(19.4cqw,9.9cqh) + 6px)}
+  .ember-island span{right:calc(32cqw + min(16.4cqw,8.4cqh) + 6px)}
+  .void-island span{left:calc(34cqw + min(16cqw,8.1cqh) + 6px)}
+  .island b{font-size:clamp(15px,5.2cqw,21px)}
+  .island small{font-size:clamp(9px,2.6cqw,11px)}
+  .bloom-island.launching span{transform:translate(5px,-50%)}
+}
+@supports (top:1cqh){
+  .bloom-island span{left:calc(34cqw + min(21cqw,10.8cqh) + 8px)}
+  .ember-island span{right:calc(32cqw + min(18cqw,9.2cqh) + 8px)}
+  .void-island span{left:calc(34cqw + min(17cqw,8.7cqh) + 8px)}
+}
+.bloom-chapter>header h2{white-space:nowrap}
+@media (max-width:360px){.bloom-chapter>header h2{font-size:18px}}

@@ -111,7 +111,7 @@ const state = {
   mode: "home", score: 0, multiplier: 1, streak: 0, runBestStreak: 0, fever: 0, feverCharge: 0,
   best: saved.best || 0, bestStreak: saved.bestStreak || 0,
   unlocked: saved.unlocked || ["bloom"], selected: saved.selected || "bloom",
-  stars: Number(saved.stars) || 0, runStars: 0, gatesPassed: 0, perfects: 0, feverCount: 0,
+  stars: Number(saved.stars) || 0, runStars: 0, runGoalStars: 0, gatesPassed: 0, perfects: 0, feverCount: 0,
   ownedRiders: saved.ownedRiders || ["manta"], selectedRider: saved.selectedRider || "manta",
   shield: false, shieldEarned: false, invulnerable: 0, phaseId: "", guardianPassed: 0, runGoalRewards: [],
   runRewards: [],
@@ -234,6 +234,7 @@ function startRun(runType = "endless", levelId = null) {
   state.feverCharge = 0;
   state.elapsed = 0;
   state.runStars = 0;
+  state.runGoalStars = 0;
   state.gatesPassed = 0;
   state.perfects = 0;
   state.feverCount = 0;
@@ -433,7 +434,7 @@ function finishRun() {
   const nearMiss = nearMissText(campaignRating);
   ui.nearMiss.textContent = nearMiss; ui.nearMiss.hidden = !nearMiss;
   renderNextPlane();
-  ui.resultStars.textContent = `+${state.runStars} stars`;
+  ui.resultStars.textContent = `+${state.runStars + state.runGoalStars} stars`;
   ui.goalRewards.textContent = state.runGoalRewards.join(" - ");
   ui.record.textContent = state.best > oldBest ? "New orbit record" : "";
   ui.unlock.textContent = state.unlocked.length > previousUnlocks ? "New biome awakened" : "";
@@ -640,10 +641,12 @@ function updateGoals(kind, amount, absolute = false) {
     goal.progress = absolute ? Math.max(goal.progress, amount) : goal.progress + amount;
     if (goal.progress < goal.target) continue;
     state.stars += goal.reward;
+    state.runGoalStars += goal.reward;
     state.goalsCompleted += 1;
     state.stats.goals += 1;
     state.runGoalRewards.push(`${goal.label} +${goal.reward} stars`);
-    const trailName = trailStyles[Math.min(state.goalsCompleted, trailStyles.length - 1)];
+    const goalTrails = trailStyles.filter(name => name !== "bloom-wake");
+    const trailName = goalTrails[Math.min(state.goalsCompleted, goalTrails.length - 1)];
     if (!state.unlockedTrails.includes(trailName)) { state.unlockedTrails.push(trailName); state.runGoalRewards.push(`${trailName} trail unlocked`); state.runRewards.push({ type: "trail", id: trailName, label: `${trailName} trail` }); }
     state.goalCycle[goal.category] = (state.goalCycle[goal.category] || 0) + 1;
     state.goals[i] = makeGoal(goal.category, state.goalCycle[goal.category]);
@@ -1662,7 +1665,7 @@ function renderBloomChapter() {
     button.type = "button";
     button.className = `chapter-level${unlocked ? "" : " locked"}${stars ? " completed" : ""}`;
     button.disabled = !unlocked;
-    button.innerHTML = `<span>${String(index+1).padStart(2,"0")}</span><div><small>${level.duration} sec voyage</small><b>${level.name}</b><em>${unlocked ? `${"★".repeat(stars)}${"☆".repeat(3-stars)}` : "Locked"}</em></div>`;
+    button.innerHTML = `<span>${String(index+1).padStart(2,"0")}</span><div><small>${level.duration} sec voyage</small><b>${level.name}</b><em>${unlocked ? `<span class="level-stars" aria-label="${stars} of 3 stars">${[0,1,2].map(i=>`<i class="${i<stars?"on":""}">★</i>`).join("")}</span>` : "Locked"}</em></div>`;
     button.addEventListener("click",()=>launchCampaignLevel(level.id,button));
     ui.bloomLevels.append(button);
   });
@@ -1789,7 +1792,7 @@ function renderTrails() {
     button.type = "button";
     button.className = `trail${state.selectedTrail === trailName ? " selected" : ""}${unlocked ? "" : " locked"}`;
     button.style.setProperty("--trail", ["#e6e3b3","#77d5aa","#edca62","#ef6e67","#8b76c7","#f4f1de","#4fae91"][index]);
-    button.title = unlocked ? trailName : `${trailName}: complete ${index} goals`;
+    button.title = unlocked ? trailName : trailName === "bloom-wake" ? "bloom-wake: clear First Light" : `${trailName}: complete ${index} goals`;
     button.setAttribute("aria-label", button.title);
     button.addEventListener("click", () => { if (!unlocked) return; state.selectedTrail = trailName; save(); renderTrails(); });
     ui.trails.append(button);
