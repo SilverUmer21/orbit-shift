@@ -106,7 +106,7 @@ Design canvas (mockups and boards): https://claude.ai/artifact/DzV3n7kg777bLBkug
 | In-game HUD | ✅ Restyled | Score, flow, fever bar, counters. Play area untouched. |
 | Settings | ✅ Restyled | Paper switches, folded buttons. |
 | Tutorial panel | ✅ Restyled | |
-| **Reward card** | ⏳ Step 1 | See roadmap. |
+| Reward card | ✅ Built (Step 1) | Full-screen overlay, one card per reward: coral ribbon (NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!), counter dots, art drawn by game renderers, gold CLAIM, "Equip now" for trails/paints. After the last card, stars fly into the results star badge, which counts up; the next-plane bar fills from old to new total. Chapter clears keep the chapter stage art. |
 | **Island map + chapter list** | ⏳ Step 2 | See roadmap. |
 | **Hangar** | ⏳ Step 3 | Currently only restyled cards; full redesign planned. |
 | Awakening celebration | Unchanged | Canvas celebration on chapter clear. |
@@ -116,13 +116,13 @@ Design canvas (mockups and boards): https://claude.ai/artifact/DzV3n7kg777bLBkug
 ### Step 0 — Safe bug fixes  ✅ done (2026-10-17)
 Fixed B1, B2, B3, B7, B8 (section 9). No redesign.
 
-### Step 1 — Reward card  ← next
+### Step 1 — Reward card  ✅ done (2026-10-17)
 - One reward at a time on a large Paper Night card showing the real item: trail as a ribbon, paint as your old ship in that paint, relic/clear as a gold medallion.
 - "NEW!" ribbon, gold CLAIM, "1 of N" counter.
 - After the last reward, stars fly into the badge with a count-up, and the next-plane bar fills from the old value to the new one.
 - Rewards stay saved before animations.
 
-### Step 2 — Island map and chapter screen
+### Step 2 — Island map and chapter screen  ← next
 - Keep the PixiJS island art. Labels become paper cards pinned beside islands.
 - Pulsing "next" marker on the island to play, a star progress bar per chapter, a clear lock badge, and a styled Ascension button.
 - Chapter screen: levels as dots on a path, next level highlighted, big PLAY for it.
@@ -147,10 +147,11 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | B3 | Map 320 px | Island labels wrap and overlap the Ember/Void islands; title wraps to two lines. | Medium | ✅ Fixed (Step 0): labels positioned from the map layout via container units, no wrapping; map and chapter titles fit |
 | B4 | Hangar | Trails/paints have no labels or unlock hints; hint only on mouse hover. | Medium | Step 3 |
 | B5 | Hangar 320 px | Only ~1.5 rows of planes visible; paints/trails take most space. | Low | Step 3 |
-| B6 | Reward card | Placeholder glyphs (✦ ~ ◆ ●); rewards must be tapped through to discover. | Low | Step 1 |
+| B6 | Reward card | Placeholder glyphs (✦ ~ ◆ ●); rewards must be tapped through to discover. | Low | ✅ Fixed (Step 1): one card per reward with real art and dots |
 | B7 | Map | Void lock is an emoji 🔒, looks different per phone. | Low | ✅ Fixed (Step 0): drawn folded lock + "Locked" |
 | B8 | Progression | The 6th goal tries to unlock Bloom Wake (the Bloom chapter trail); its hint says "complete 6 goals". | Low | ✅ Fixed (Step 0): goals only unlock goal trails; hint says "clear First Light" |
 | B9 | Chapter screen 320 px | The chapter planet art sits behind the last level cards on short screens. | Low | Step 2 (chapter redesign) |
+| B10 | Results | Remake CSS gave `.result-objectives` `display:flex`, overriding `[hidden]`, so Ascension results showed the previous campaign stars. | Medium | ✅ Fixed (Step 1) |
 | — | Test harness | `tests/visual.html` logs 7 harmless 404s: the browser fetches files before `<base href>` applies. Real game loads cleanly. | Not a game bug | Noted |
 
 ## 10. Decisions log
@@ -164,6 +165,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | 2026-10-17 | PLAY starts the next unlocked level (tutorial first for new players); Islands opens the map. |
 | 2026-10-17 | Home icons: folded gear (A), big star badge (A), Hangar shows the live equipped ship (B), detailed floating island (A+). |
 | 2026-10-17 | No ads. Work order: Step 0 bugs → 1 reward card → 2 map → 3 Hangar. |
+| 2026-10-17 | Reward card approved: ribbons NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!, keep "Equip now" on trails and paints. |
 
 ## 11. Technical map
 
@@ -184,3 +186,5 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 - `tests/ascension-timing.cjs` asserts `ui.resultHome.textContent === 'Ember Chapter'`. The results back button therefore keeps its label as text and draws its icon in CSS.
 - The test DOM stub accepts new elements created via `document.querySelector`.
 - `state` and other top-level `const`s are not on `window`. In the harness use `contentWindow.eval(...)`.
+- Reward-card test contract: one button per reward in `#rewardChoices`, `#rewardName` keeps "Trail: spark" style text (visually hidden), clicking a choice selects it, `#continueRewards` on the last reward hides `#rewardSeal`.
+- Any element given a CSS `display` in `remake.css` that is toggled with `hidden` needs an explicit `[hidden]{display:none}` rule.

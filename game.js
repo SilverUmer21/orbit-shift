@@ -21,6 +21,9 @@ const ui = {
   report: document.querySelector("#report"), showReport: document.querySelector("#showReport"), copyReport: document.querySelector("#copyReport"),
   campaignStars: document.querySelector("#campaignStars"), firstLightRating: document.querySelector("#firstLightRating"),
   campaignMap: document.querySelector("#campaignMap"), bloomProgress: document.querySelector("#bloomProgress"),
+  rewardRibbon: document.querySelector("#rewardRibbon"), rewardType: document.querySelector("#rewardType"), rewardTitle: document.querySelector("#rewardTitle"), rewardDesc: document.querySelector("#rewardDesc"),
+  rewardCount: document.querySelector("#rewardCount"), rewardBonus: document.querySelector("#rewardBonus"), rewardCard: document.querySelector("#rewardCard"), equipReward: document.querySelector("#equipReward"),
+  resultStarChip: document.querySelector("#resultStarChip"), resultStarTotal: document.querySelector("#resultStarTotal"),
   hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), nearMiss: document.querySelector("#nearMiss"),
   nextPlane: document.querySelector("#nextPlane"), nextPlaneArt: document.querySelector("#nextPlaneArt"), nextPlaneName: document.querySelector("#nextPlaneName"), nextPlaneBar: document.querySelector("#nextPlaneBar"), nextPlaneCount: document.querySelector("#nextPlaneCount"),
   bloomLevels: document.querySelector("#bloomLevels"), bloomStory: document.querySelector("#bloomStory"), bloomChapterArt: document.querySelector("#bloomChapterArt"),
@@ -166,6 +169,7 @@ let purchasePreview = null;
 let rewardAnimation = null;
 let rewardIndex = 0;
 let rewardChapterComplete = false;
+let starTally = null;
 
 const today = new Date().toISOString().slice(0, 10);
 state.stats.sessions += 1;
@@ -434,13 +438,15 @@ function finishRun() {
   const nearMiss = nearMissText(campaignRating);
   ui.nearMiss.textContent = nearMiss; ui.nearMiss.hidden = !nearMiss;
   renderNextPlane();
-  ui.resultStars.textContent = `+${state.runStars + state.runGoalStars} stars`;
+  ui.resultStars.textContent = `+${state.runStars + state.runGoalStars}`;
   ui.goalRewards.textContent = state.runGoalRewards.join(" - ");
   ui.record.textContent = state.best > oldBest ? "New orbit record" : "";
   ui.unlock.textContent = state.unlocked.length > previousUnlocks ? "New biome awakened" : "";
   ui.resultHome.textContent = state.runType === "campaign" ? `${currentCampaignLevel().biome==="ember"?"Ember":"Bloom"} Chapter` : "Home";
   ui.results.hidden = false;
   renderRewardSeal();
+  prepareStarTally();
+  if (!state.runRewards.length) startStarTally();
   animateRating(campaignRating, firstCampaignClear);
   ui.shell.classList.remove("playing");
   stopMusic();
@@ -487,23 +493,91 @@ function renderRewardSeal(index = 0) {
   ui.rewardSeal.hidden = rewards.length === 0;
   if (!rewards.length) return;
   const reward = rewards[Math.min(index, rewards.length - 1)];
-  const name = rewardDisplayName(reward), palette = rewardPalette(reward);
+  const name = rewardDisplayName(reward), copy = rewardCopy(reward);
   rewardChapterComplete = state.runType === "campaign" && state.levelComplete && ["crown-of-petals", "solar-forge"].includes(state.levelId);
   ui.rewardSeal.classList.toggle("chapter-awakening", rewardChapterComplete);
+  ui.rewardSeal.classList.toggle("reduced", state.reducedEffects);
   ui.rewardName.textContent = name;
+  ui.rewardRibbon.textContent = copy.ribbon;
+  ui.rewardType.textContent = copy.type;
+  ui.rewardTitle.textContent = copy.title;
+  ui.rewardDesc.textContent = copy.desc;
+  ui.rewardBonus.hidden = !copy.bonus;
+  ui.rewardCount.textContent = `${Math.min(index, rewards.length - 1) + 1} of ${rewards.length}`;
+  ui.continueRewards.textContent = "Claim";
   ui.rewardPreview.setAttribute("aria-label", `Show next reward. Current reward: ${name}`);
-  ui.rewardSeal.style.setProperty("--reward-ink", palette.ink);
-  ui.rewardSeal.style.setProperty("--reward-paper", palette.paper);
-  ui.rewardSeal.style.setProperty("--reward-gold", palette.gold);
-  ui.rewardSeal.style.setProperty("--reward-light", palette.light);
   ui.rewardChoices.innerHTML = "";
-  ui.rewardChoices.hidden = rewards.length < 2;
   rewards.forEach((item, itemIndex) => {
-    const button = document.createElement("button"), itemName = rewardDisplayName(item); button.type = "button"; button.innerHTML = `<span aria-hidden="true">${rewardGlyph(item)}</span>`; button.title=itemName;button.setAttribute("aria-label",`Reward ${itemIndex + 1}: ${itemName}`);button.setAttribute("aria-pressed",String(itemIndex===index));
-    button.className = itemIndex === index ? "selected" : ""; button.addEventListener("click", () => renderRewardSeal(itemIndex)); ui.rewardChoices.append(button);
+    const button = document.createElement("button"), itemName = rewardDisplayName(item); button.type = "button"; button.title = itemName; button.setAttribute("aria-label", `Reward ${itemIndex + 1}: ${itemName}`); button.setAttribute("aria-pressed", String(itemIndex === index));
+    button.className = itemIndex === index ? "selected" : itemIndex < index ? "seen" : ""; button.addEventListener("click", () => renderRewardSeal(itemIndex)); ui.rewardChoices.append(button);
   });
-  ui.rewardSeal.style.setProperty("--unfold",state.reducedEffects?"1":"0");
+  const equippable = (reward.type === "trail" && state.unlockedTrails.includes(reward.id) && state.selectedTrail !== reward.id) || (reward.type === "biome" && state.unlocked.includes(reward.id) && state.selected !== reward.id);
+  ui.equipReward.hidden = !equippable; ui.equipReward.disabled = false; ui.equipReward.textContent = "Equip now";
+  ui.rewardCard.classList.remove("pop"); void ui.rewardCard.offsetWidth; ui.rewardCard.classList.add("pop");
   drawRewardPreview();
+}
+
+const trailWords = { paper: "paper diamonds", pollen: "glowing pollen", spark: "bright sparks", ribbon: "paper ribbons", echo: "echo rings", crown: "crown gems", "bloom-wake": "petals" };
+function rewardCopy(reward) {
+  const name = rewardDisplayName(reward).replace(/^[^:]+:\s*/, "");
+  if (reward.type === "trail") return { ribbon: "New trail!", type: "Trail", title: name.replace(/-/g, " "), desc: `Your glider leaves a trail of ${trailWords[reward.id] || "paper"}.` };
+  if (reward.type === "biome") { const paint = cosmetics.find(item => item.id === reward.id); return { ribbon: "New paint!", type: "Paint", title: name, desc: paint?.score ? `Unlocked for reaching ${paint.score} points.` : "A new paint for your glider." }; }
+  if (reward.type === "relic") return { ribbon: "New relic!", type: "Relic", title: name, desc: reward.id === "bloom-crown" ? "The Bloom constellation shines again." : "Guardian cleared. Kept in your collection." };
+  const level = campaignLevels.find(item => item.id === reward.id);
+  return { ribbon: "Level clear!", type: "First clear", title: level?.name || name, desc: level?.story || "", bonus: true };
+}
+
+function claimReward() {
+  if (rewardIndex < state.runRewards.length - 1) { renderRewardSeal(rewardIndex + 1); beep(660, .06, "triangle"); return; }
+  ui.rewardSeal.hidden = true;
+  startStarTally();
+}
+
+function equipCurrentReward() {
+  const reward = state.runRewards[rewardIndex]; if (!reward) return;
+  if (reward.type === "trail" && state.unlockedTrails.includes(reward.id)) state.selectedTrail = reward.id;
+  else if (reward.type === "biome" && state.unlocked.includes(reward.id)) state.selected = reward.id;
+  else return;
+  save(); renderCosmetics();
+  ui.equipReward.textContent = "Equipped"; ui.equipReward.disabled = true;
+}
+
+// Results tally: stars fly from the run total into the badge, the badge counts up, then the next-plane bar fills.
+function prepareStarTally() {
+  const gained = state.runStars + state.runGoalStars;
+  starTally = { gained, from: state.stars - gained, elapsed: 0, started: false, launched: false, done: false };
+  showStarTally(0);
+}
+function startStarTally() { if (starTally) starTally.started = true; }
+function showStarTally(progress) {
+  if (!starTally) return;
+  const total = starTally.from + Math.round(starTally.gained * progress);
+  ui.resultStarTotal.textContent = total;
+  renderNextPlane(total);
+}
+function launchFlyingStars() {
+  const from = ui.resultStars?.getBoundingClientRect?.(), to = ui.resultStarChip?.getBoundingClientRect?.(), home = ui.results?.getBoundingClientRect?.();
+  if (!from || !to || !home || state.reducedEffects || starTally.gained <= 0) return;
+  const count = Math.min(8, Math.max(3, Math.ceil(starTally.gained / 5)));
+  for (let i = 0; i < count; i += 1) {
+    const star = document.createElement("span"); star.className = "fly-star"; star.setAttribute("aria-hidden", "true");
+    star.style.left = `${from.left - home.left + from.width / 2 - 11 + (i % 3 - 1) * 8}px`; star.style.top = `${from.top - home.top - 4}px`;
+    star.style.setProperty("--dx", `${to.left - from.left - from.width / 2 + 4 - (i % 3 - 1) * 8}px`); star.style.setProperty("--dy", `${to.top - from.top + 8}px`);
+    star.style.animationDelay = `${i * 90}ms`;
+    star.addEventListener("animationend", () => star.remove());
+    ui.results.append(star);
+  }
+}
+function updateStarTally(delta) {
+  const tally = starTally;
+  if (!tally || !tally.started || tally.done || ui.results.hidden) return;
+  if (!tally.launched) { tally.launched = true; launchFlyingStars(); }
+  tally.elapsed += delta;
+  const delay = state.reducedEffects ? 0 : .35, duration = state.reducedEffects ? 0 : .35 + Math.min(tally.gained, 40) * .02;
+  const progress = duration ? Math.max(0, Math.min(1, (tally.elapsed - delay) / duration)) : 1;
+  showStarTally(progress);
+  ui.resultStarChip.classList.toggle("counting", progress > 0 && progress < 1);
+  if (progress >= 1) { tally.done = true; ui.resultStarChip.classList.remove("counting"); if (tally.gained > 0) beep(880, .1, "triangle"); }
 }
 
 function rewardGlyph(reward) { return reward.type === "trail" ? "~" : reward.type === "relic" ? "◆" : reward.type === "biome" ? "●" : "✦"; }
@@ -524,13 +598,24 @@ function rewardPalette(reward) {
 }
 
 function drawRewardPreview() {
-  const reward=state.runRewards[rewardIndex]; if(!reward)return;
-  const stage=rewardChapterComplete,canvas=ui.rewardPreview.querySelector("canvas"),palette=rewardPalette(reward),time=rewardAnimation?.elapsed||0;
-  const width=stage?220:180,height=stage?142:76;
-  if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
-  const target = canvas.getContext("2d"); target.clearRect(0,0,width,height);
-  if(stage){drawChapterRewardStage(target,reward,palette,time);return;}
-  drawRewardSurface(target,palette,time); target.save(); target.translate(90, 39); drawRewardMark(target,reward,palette,time); target.restore();
+  const reward = state.runRewards[rewardIndex]; if (!reward) return;
+  const canvas = ui.rewardPreview.querySelector("canvas"), w = 290, h = 214, ratio = 2, palette = rewardPalette(reward), time = rewardAnimation?.elapsed || 0, motion = state.reducedEffects ? 0 : time;
+  if (canvas.width !== w * ratio || canvas.height !== h * ratio) { canvas.width = w * ratio; canvas.height = h * ratio; }
+  const target = canvas.getContext("2d"); target.setTransform(ratio, 0, 0, ratio, 0, 0); target.clearRect(0, 0, w, h);
+  if (rewardChapterComplete) { const scale = Math.min(w / 220, h / 142); target.translate((w - 220 * scale) / 2, (h - 142 * scale) / 2); target.scale(scale, scale); drawChapterRewardStage(target, reward, palette, time); return; }
+  if (reward.type === "trail") {
+    const paint = currentCosmetic();
+    for (let i = 0; i < 26; i += 1) { const t = i / 25, x = 25 + t * 167, y = 145 - t * 43 - Math.sin(t * Math.PI) * 23 + Math.sin(i * .5 - motion * 3) * 2.5; target.globalAlpha = .25 + t * .75; target.fillStyle = i % 2 ? paint.accent : paint.gold; drawTrailPiece(target, reward.id, x, y, 3.5 + t * 4.5, -.6, i); }
+    target.globalAlpha = 1; target.translate(226, 73); target.rotate(-.75); drawGlider(target, currentRider(), paint, 1.3, motion, 0, false, 0);
+  } else if (reward.type === "biome") {
+    const paint = cosmetics.find(item => item.id === reward.id) || palette;
+    target.translate(w / 2, h / 2 + 4 + Math.sin(motion * 2) * 3); target.rotate(-.35); drawGlider(target, currentRider(), paint, 1.8, motion, 0, false, 0);
+  } else if (reward.type === "relic") {
+    target.translate(w / 2, h / 2); target.scale(2.1, 2.1); drawRelicMedallion(target, palette, time);
+  } else {
+    const level = campaignLevels.find(item => item.id === reward.id), ember = level?.biome === "ember";
+    OrbitArt.drawLivingPlanet(target, ember ? "ember-furnace" : "bloom-crown", { x: w / 2, y: h / 2 - 10, radius: 60, paletteId: ember ? "ember" : "bloom", time, reduced: state.reducedEffects });
+  }
 }
 
 function drawRewardMark(target,reward,palette,time) {
@@ -582,6 +667,7 @@ function drawChapterEmblem(target,palette,size) {
 function updateRewardAnimation(delta) {
   if(!rewardAnimation||state.mode!=="results")return;
   rewardAnimation.elapsed+=delta;
+  updateStarTally(delta);
   const reveal=state.reducedEffects?1:Math.min(1,rewardAnimation.elapsed/.65);
   ui.rewardSeal.style.setProperty("--unfold",String(reveal));
   const stars=ui.resultRating.querySelectorAll("span");
@@ -1708,13 +1794,13 @@ function nearMissText(rating) {
   return gap > 0 ? `${gap} away from your best` : "";
 }
 
-function renderNextPlane() {
+function renderNextPlane(stars = state.stars) {
   const rider = nextPlane();
   ui.nextPlane.hidden = !rider;
   if (!rider) return;
-  ui.nextPlaneName.textContent = state.stars >= rider.price ? `${rider.name} is ready!` : `Next plane · ${rider.name}`;
-  ui.nextPlaneCount.textContent = `${Math.min(state.stars, rider.price)}/${rider.price}`;
-  ui.nextPlaneBar.style.setProperty("width", `${Math.min(100, state.stars / rider.price * 100)}%`);
+  ui.nextPlaneName.textContent = stars >= rider.price ? `${rider.name} is ready!` : `Next plane · ${rider.name}`;
+  ui.nextPlaneCount.textContent = `${Math.min(stars, rider.price)}/${rider.price}`;
+  ui.nextPlaneBar.style.setProperty("width", `${Math.min(100, stars / rider.price * 100)}%`);
   const mini = ui.nextPlaneArt.getContext("2d");
   mini.setTransform(1, 0, 0, 1, 0, 0); mini.clearRect(0, 0, 88, 56); mini.translate(44, 28);
   drawGlider(mini, rider, currentCosmetic(), 1.15, 0, 0, false, 0);
@@ -1949,7 +2035,8 @@ ui.haptics.addEventListener("change", () => { state.haptics = ui.haptics.checked
 ui.effects.addEventListener("change", () => { state.reducedEffects = ui.effects.checked; save(); });
 ui.replayTutorial.addEventListener("click", startTutorial);
 ui.skipTutorial.addEventListener("click", skipTutorial);
-ui.continueRewards.addEventListener("click", () => { ui.rewardSeal.hidden = true; });
+ui.continueRewards.addEventListener("click", claimReward);
+ui.equipReward.addEventListener("click", equipCurrentReward);
 ui.rewardPreview.addEventListener("click",()=>{if(state.runRewards.length)renderRewardSeal((rewardIndex+1)%state.runRewards.length);});
 ui.showReport.addEventListener("click", () => { ui.report.textContent = reportText(); ui.report.hidden = !ui.report.hidden; ui.copyReport.hidden = ui.report.hidden; });
 ui.copyReport.addEventListener("click", async () => {
