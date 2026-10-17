@@ -107,8 +107,9 @@ Design canvas (mockups and boards): https://claude.ai/artifact/DzV3n7kg777bLBkug
 | Settings | ✅ Restyled | Paper switches, folded buttons. |
 | Tutorial panel | ✅ Restyled | |
 | Reward card | ✅ Built (Step 1) | Full-screen overlay, one card per reward: coral ribbon (NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!), counter dots, art drawn by game renderers, gold CLAIM, "Equip now" for trails/paints. After the last card, stars fly into the results star badge, which counts up; the next-plane bar fills from old to new total. Chapter clears keep the chapter stage art. |
-| **Island map + chapter list** | ⏳ Step 2 | See roadmap. |
-| **Hangar** | ⏳ Step 3 | Currently only restyled cards; full redesign planned. |
+| Island map | ✅ Built (Step 2) | PixiJS island art kept. Paper label cards pinned beside islands (night cards when locked / Void), gold progress bar per chapter, pulsing dashed ring + bobbing NEXT pin on the chapter to play, star chip in the header, folded Ascension button with best score. |
+| Chapter screen | ✅ Built (Step 2) | Chapter planet removed (owner). Levels as round nodes on a dotted zig-zag path: mint = cleared with stars, gold pulsing = next (coral NEXT tag), lock = locked. Labels read "Level N · X sec" + name. One big PLAY for the next level. Ember uses coral nodes on a warm night background. |
+| **Hangar** | ⏳ Step 3 ← next | Currently only restyled cards; full redesign planned. |
 | Awakening celebration | Unchanged | Canvas celebration on chapter clear. |
 
 ## 8. Roadmap
@@ -122,13 +123,13 @@ Fixed B1, B2, B3, B7, B8 (section 9). No redesign.
 - After the last reward, stars fly into the badge with a count-up, and the next-plane bar fills from the old value to the new one.
 - Rewards stay saved before animations.
 
-### Step 2 — Island map and chapter screen  ← next
+### Step 2 — Island map and chapter screen  ✅ done (2026-10-17)
 - Keep the PixiJS island art. Labels become paper cards pinned beside islands.
 - Pulsing "next" marker on the island to play, a star progress bar per chapter, a clear lock badge, and a styled Ascension button.
 - Chapter screen: levels as dots on a path, next level highlighted, big PLAY for it.
-- Open decision: "Level 6 · Pollen Path" numbering vs names only (show both in the mockup).
+- Decided: "Level N · Name" with the global level number (option A). Chapter planet art removed from the level list.
 
-### Step 3 — Hangar
+### Step 3 — Hangar  ← next
 - Showcase: selected old ship on a floating-island stand.
 - Tabs Planes / Paint / Trails, one grid at a time.
 - Clear card states: equipped, owned, affordable, locked.
@@ -150,8 +151,9 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | B6 | Reward card | Placeholder glyphs (✦ ~ ◆ ●); rewards must be tapped through to discover. | Low | ✅ Fixed (Step 1): one card per reward with real art and dots |
 | B7 | Map | Void lock is an emoji 🔒, looks different per phone. | Low | ✅ Fixed (Step 0): drawn folded lock + "Locked" |
 | B8 | Progression | The 6th goal tries to unlock Bloom Wake (the Bloom chapter trail); its hint says "complete 6 goals". | Low | ✅ Fixed (Step 0): goals only unlock goal trails; hint says "clear First Light" |
-| B9 | Chapter screen 320 px | The chapter planet art sits behind the last level cards on short screens. | Low | Step 2 (chapter redesign) |
+| B9 | Chapter screen 320 px | The chapter planet art sits behind the last level cards on short screens. | Low | ✅ Fixed (Step 2): chapter planet removed from the level list |
 | B10 | Results | Remake CSS gave `.result-objectives` `display:flex`, overriding `[hidden]`, so Ascension results showed the previous campaign stars. | Medium | ✅ Fixed (Step 1) |
+| B11 | Map | The remake's `.island span` card rules also hit the progress bar's inner `<span>`, drawing a stray paper tab off-screen (seen at 320 px). Found during Step 2 build. | Low | ✅ Fixed (Step 2): bar is an `<i>` element |
 | — | Test harness | `tests/visual.html` logs 7 harmless 404s: the browser fetches files before `<base href>` applies. Real game loads cleanly. | Not a game bug | Noted |
 
 ## 10. Decisions log
@@ -166,6 +168,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | 2026-10-17 | Home icons: folded gear (A), big star badge (A), Hangar shows the live equipped ship (B), detailed floating island (A+). |
 | 2026-10-17 | No ads. Work order: Step 0 bugs → 1 reward card → 2 map → 3 Hangar. |
 | 2026-10-17 | Reward card approved: ribbons NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!, keep "Equip now" on trails and paints. |
+| 2026-10-17 | Step 2 approved: chapter levels labelled "Level N · Name" (option A); the big chapter planet removed from the levels screen (owner). |
 
 ## 11. Technical map
 
