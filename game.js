@@ -183,7 +183,8 @@ function loadSave() {
 }
 
 function save() {
-  localStorage.setItem("orbit-shift-save", JSON.stringify({
+  // Storage can throw (private mode, quota); progress then lives for this session only instead of breaking the run.
+  try { localStorage.setItem("orbit-shift-save", JSON.stringify({
     version: SAVE_VERSION,
     best: state.best, bestStreak: state.bestStreak, unlocked: state.unlocked,
     selected: state.selected, stars: state.stars, ownedRiders: state.ownedRiders, selectedRider: state.selectedRider,
@@ -191,7 +192,7 @@ function save() {
     unlockedTrails: state.unlockedTrails, selectedTrail: state.selectedTrail, relics: state.relics, stats: state.stats,
     muted: state.muted, haptics: state.haptics, reducedEffects: state.reducedEffects, tutorialSeen: state.tutorialSeen,
     campaign: state.campaign,
-  }));
+  })); } catch {}
 }
 
 function makeGoal(category, index) {
@@ -1200,15 +1201,26 @@ function drawFragments(time, palette) {
   }
 }
 
+// The flat fill and planet glow only change with the palette, fever and canvas size, so they are painted once into a
+// canvas-sized bitmap and copied each frame instead of filling the screen with a fresh radial gradient.
+let backgroundLayer = null, backgroundKey = "";
 function drawBackground(time, palette) {
-  ctx.fillStyle = palette.bg;
-  ctx.fillRect(0, 0, width, height);
-  const glow = ctx.createRadialGradient(cx, cy, planetRadius, cx, cy, height * 0.58);
-  glow.addColorStop(0, colorAlpha(state.fever > 0 ? palette.gold : palette.paper, 0.19));
-  glow.addColorStop(0.55, colorAlpha(palette.ink, 0.12));
-  glow.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, width, height);
+  const glowColor = state.fever > 0 ? palette.gold : palette.paper, key = `${palette.bg}${glowColor}${palette.ink}${canvas.width}x${canvas.height}`;
+  if (key !== backgroundKey) {
+    backgroundKey = key; backgroundLayer ||= document.createElement("canvas");
+    backgroundLayer.width = canvas.width; backgroundLayer.height = canvas.height;
+    const layer = backgroundLayer.getContext("2d");
+    layer.setTransform(canvas.width / width, 0, 0, canvas.height / height, 0, 0);
+    layer.fillStyle = palette.bg;
+    layer.fillRect(0, 0, width, height);
+    const glow = layer.createRadialGradient(cx, cy, planetRadius, cx, cy, height * 0.58);
+    glow.addColorStop(0, colorAlpha(glowColor, 0.19));
+    glow.addColorStop(0.55, colorAlpha(palette.ink, 0.12));
+    glow.addColorStop(1, "rgba(0,0,0,0)");
+    layer.fillStyle = glow;
+    layer.fillRect(0, 0, width, height);
+  }
+  ctx.drawImage(backgroundLayer, 0, 0, width, height);
   for (const star of stars) {
     ctx.globalAlpha = 0.16 + Math.sin(time * 1.2 + star.phase) * 0.08;
     ctx.fillStyle = star.phase % 2 > 1 ? palette.mid : palette.light;
@@ -1915,7 +1927,7 @@ function renderTrails() {
 }
 
 function drawHomePreview(time) {
-  if (ui.home.hidden) return;
+  if (ui.home.hidden || !ui.preview.offsetParent) return;
   const target = ui.preview.getContext("2d");
   target.clearRect(0,0,ui.preview.width,ui.preview.height);
   target.save(); target.translate(130,75+Math.sin(time*2)*3); drawGlider(target,currentRider(),currentCosmetic(),2.45,time,0,false,.25); target.restore();
@@ -2034,13 +2046,15 @@ function runSelfChecks() {
   console.assert(SAVE_VERSION === 5 && state.campaign && campaignLevels.length === 8, "Campaign save migration must remain available");
 }
 
+// Screens that fully cover the game canvas (the Hangar and settings are 96% opaque): the scene keeps updating but is not repainted.
+const coveredModes = new Set(["campaign", "bloomChapter", "garage", "settings"]);
 function frame(time) {
   const delta = Math.max(0, Math.min(0.1, (time - lastTime) / 1000 || 0));
   lastTime = time;
   // Catch up slower frames in small collision-safe steps, without a long resume jump.
   const steps = Math.max(1, Math.ceil(delta * 60));
   for (let step = 0; step < steps; step += 1) update(delta / steps);
-  draw();
+  if (!coveredModes.has(state.mode)) draw();
   drawHomePreview(time / 1000);
   drawBloomChapterPreview(time / 1000);
   requestAnimationFrame(frame);
@@ -2082,7 +2096,7 @@ window.addEventListener("keydown", (event) => {
     else if (state.mode === "awakening" && awakening?.skippable) finishAwakening();
     else if (state.mode === "home") playFromHome();
     else if (state.mode === "campaign") openChapter();
-    else if (state.mode === "bloomChapter" && event.target===document.body) startRun("campaign", state.chapter==="ember"?"kindling":campaignLevels[Math.min(state.campaign.unlockedLevel-1,3)].id);
+    else if (state.mode === "bloomChapter" && event.target===document.body) launchCampaignLevel(ui.chapterPlay.dataset.level, ui.chapterPlay);
     else if (state.mode === "results") startRun(state.runType, state.levelId);
   }
 });
@@ -2091,7 +2105,8 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) audio?.suspend();
   else { lastTime = performance.now(); if (!state.muted) audio?.resume(); }
 });
-document.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
+// Block page drag and pull-to-refresh, but let the Hangar plane grid and reward dots scroll.
+document.addEventListener("touchmove", (event) => { if (!event.target.closest?.(".rider-grid,.reward-choices")) event.preventDefault(); }, { passive: false });
 
 resize();
 renderCosmetics();

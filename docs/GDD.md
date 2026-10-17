@@ -156,6 +156,9 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | B11 | Map | The remake's `.island span` card rules also hit the progress bar's inner `<span>`, drawing a stray paper tab off-screen (seen at 320 px). Found during Step 2 build. | Low | ✅ Fixed (Step 2): bar is an `<i>` element |
 | B12 | Results (phones ~620–844 px tall) | Leftover goal-reward text list and "New biome awakened" showed in plain caps and ran into AGAIN. Found by owner on a real phone. | Medium | ✅ Fixed: removed from results |
 | B13 | Results (Android text scaling) | Android enlarged all text, pushing "AGAIN" past its button; the label also overflowed at 320 px without scaling. Found by owner. | Medium | ✅ Fixed: `text-size-adjust:100%`, label sized to its button |
+| B14 | Hangar (touch phones) | A page-wide `touchmove` blocker stopped the plane grid from scrolling on touch, so short phones could never reach the lower planes (root cause of B5). Found in the game review. | High | ✅ Fixed: the blocker skips `.rider-grid` and `.reward-choices` (verified: touch drag scrolls 0 px before, 157 px after) |
+| B15 | Save | `localStorage.setItem` could throw (private mode, full storage) and break the end of a run. | Medium | ✅ Fixed: save is wrapped in try/catch |
+| B16 | Chapter screen | Space on the chapter screen started Kindling / an old level index instead of the level PLAY shows. | Low | ✅ Fixed: Space uses the PLAY button's level |
 | — | Test harness | `tests/visual.html` logs 7 harmless 404s: the browser fetches files before `<base href>` applies. Real game loads cleanly. | Not a game bug | Noted |
 
 ## 10. Decisions log
@@ -181,13 +184,20 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | `index.html` | DOM screens over the game canvas. Keep ids stable. |
 | `game.js` | All game logic and canvas drawing. UI-only edits are allowed; gameplay functions are off-limits. |
 | `art-renderers.js` | Planet and map renderers (`OrbitArt`). Off-limits for now. |
-| `archipelago-map.js`, `campaign-map.js` | PixiJS island map (positions: Bloom 0.34w/0.23h, Ember 0.68w/0.5h, Void 0.34w/0.74h; scale `min(w/430, h/844)`). |
+| `archipelago-map.js`, `campaign-map.js` | PixiJS island map, lazy-loaded by `campaign-map.js` (idle time, Islands button press, or first map call) (positions: Bloom 0.34w/0.23h, Ember 0.68w/0.5h, Void 0.34w/0.74h; scale `min(w/430, h/844)`). |
 | `styles.css`, `journey.css` | Original styles (left intact). |
 | `remake.css` | Paper Night layer loaded last; all remake styling goes here. |
 | `fonts/` | Bundled Lilita One and Nunito. |
 | `design/paper-night/` | Exported assets, icons, previews, app icon masters. |
 | `tests/ascension-timing.cjs` | Deterministic gameplay/progression suite. Run `node tests/ascension-timing.cjs` and `node tests/ascension-timing.cjs 19 320`. Six PASS lines expected. |
 | `tests/visual.html` | Isolated visual harness with a disposable save (`python3 -m http.server 3000`, open `/tests/visual.html`). |
+
+**Performance notes (game review, 2026-10-17):**
+- The game canvas is not repainted while an opaque screen covers it (`coveredModes`: map, chapter, Hangar, settings); the scene still updates.
+- The background fill and planet glow are cached in a canvas-sized bitmap (`backgroundLayer`), rebuilt only when the palette, fever or size changes. This was the largest paint cost.
+- The hidden Home rider preview is not redrawn. Fonts are preloaded. PixiJS (~800 KB) no longer loads with the page.
+- Measured (4× CPU throttle, software rendering, 390×844 @3x): Home/run/results 14 → 39 fps, chapter and Hangar 14–16 → 60 fps. The map stays slow in software WebGL; check on a real phone.
+- Canvas DPR is already capped at 2. JavaScript per frame is under 1 ms on desktop.
 
 **Constraints learned:**
 - `tests/ascension-timing.cjs` asserts `ui.resultHome.textContent === 'Ember Chapter'`. The results back button therefore keeps its label as text and draws its icon in CSS.
