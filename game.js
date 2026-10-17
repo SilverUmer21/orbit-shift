@@ -24,6 +24,7 @@ const ui = {
   rewardRibbon: document.querySelector("#rewardRibbon"), rewardType: document.querySelector("#rewardType"), rewardTitle: document.querySelector("#rewardTitle"), rewardDesc: document.querySelector("#rewardDesc"),
   rewardCount: document.querySelector("#rewardCount"), rewardBonus: document.querySelector("#rewardBonus"), rewardCard: document.querySelector("#rewardCard"), equipReward: document.querySelector("#equipReward"),
   resultStarChip: document.querySelector("#resultStarChip"), resultStarTotal: document.querySelector("#resultStarTotal"),
+  mapNext: document.querySelector("#mapNext"), ascensionBest: document.querySelector("#ascensionBest"), chapterPlay: document.querySelector("#chapterPlay"), chapterPlayLevel: document.querySelector("#chapterPlayLevel"),
   hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), nearMiss: document.querySelector("#nearMiss"),
   nextPlane: document.querySelector("#nextPlane"), nextPlaneArt: document.querySelector("#nextPlaneArt"), nextPlaneName: document.querySelector("#nextPlaneName"), nextPlaneBar: document.querySelector("#nextPlaneBar"), nextPlaneCount: document.querySelector("#nextPlaneCount"),
   bloomLevels: document.querySelector("#bloomLevels"), bloomStory: document.querySelector("#bloomStory"), bloomChapterArt: document.querySelector("#bloomChapterArt"),
@@ -1718,17 +1719,25 @@ function showScreen(name) {
 
 function hideScreens() { for (const screen of [ui.home, ui.campaign, ui.bloomChapter, ui.garage, ui.settings, ui.results]) screen.hidden = true; }
 
+const lockIcon = '<svg aria-hidden="true" viewBox="0 0 48 48"><path d="M15 22 V16 Q15 7 24 7 Q33 7 33 16 V22" fill="none" stroke="#E9D6B0" stroke-width="5"/><rect x="9" y="21" width="30" height="21" rx="5" fill="#FFF4DC"/><path d="M9 31 H39 V37 Q39 42 34 42 H14 Q9 42 9 37 Z" fill="#E9D6B0"/><circle cx="24" cy="30" r="3" fill="#12363D"/></svg>';
+function mapProgress(value, max) { return `<i class="map-bar"><i style="width:${Math.min(100, value / max * 100)}%"></i></i>${value}/${max} ★`; }
+
 function renderCampaignMap() {
   const rating = campaignLevels.reduce((total,level)=>total+(state.campaign.ratings[level.id]||0),0);
   ui.campaignStars.textContent = `${rating}/${campaignLevels.length*3}`;
-  ui.firstLightRating.textContent = `${campaignLevels.filter(level=>level.biome==="bloom"&&state.campaign.completed.includes(level.id)).length}/4 restored`;
+  const chapterRating = biome => campaignLevels.filter(level=>level.biome===biome).reduce((total,level)=>total+(state.campaign.ratings[level.id]||0),0);
+  ui.firstLightRating.innerHTML = mapProgress(chapterRating("bloom"), 12);
   const ember = ui.campaign.querySelector(".ember-island");
   const completed = state.campaign.completed.includes("first-light");
   const unlocked=isLevelUnlocked("kindling");
   ember.disabled=!unlocked;
   ember.classList.toggle("locked",!unlocked);
   ember.classList.toggle("revealed", unlocked);
-  ember.querySelector("em").textContent = unlocked ? `${campaignLevels.filter(level=>level.biome==="ember").reduce((total,level)=>total+(state.campaign.ratings[level.id]||0),0)}/12 stars` : "Complete Bloom";
+  ember.querySelector("em").innerHTML = unlocked ? mapProgress(chapterRating("ember"), 12) : `${lockIcon}Clear Crown of Petals`;
+  ember.querySelector("em").classList.toggle("lock-badge", !unlocked);
+  const nextChapter = !state.campaign.completed.includes("crown-of-petals") ? "bloom" : unlocked && !state.campaign.completed.includes("solar-forge") ? "ember" : "";
+  ui.mapNext.hidden = !nextChapter; ui.mapNext.dataset.chapter = nextChapter;
+  ui.ascensionBest.textContent = state.best ? `Endless run · Best ${state.best}` : "Endless run";
   window.OrbitArchipelago?.setCompleted(completed);
   window.OrbitArchipelago?.setRestoration(state.campaign.restoration);
   window.OrbitArchipelago?.setEmberRestoration?.(state.campaign.emberRestoration);
@@ -1741,20 +1750,26 @@ function renderBloomChapter() {
   ui.bloomChapter.querySelector(".eyebrow").textContent=ember?"Ember Chapter":"Bloom Chapter";
   ui.bloomChapter.querySelector("h2").textContent=ember?"Light the Furnace":"Restore the Crown";
   ui.bloomProgress.textContent = `${rating}/${levels.length*3}`;
-  ui.bloomStory.textContent = ember ? state.campaign.emberRestoration ? "A first flame breathes beneath the folded stone." : levels[0].story : state.campaign.restoration >= 4 ? "The Bloom Crown shines in rhythm again." : levels[Math.min(state.campaign.unlockedLevel-1,3)].story;
+  const open = levels.filter(level => isLevelUnlocked(level.id));
+  const nextLevel = open.find(level => !state.campaign.completed.includes(level.id));
+  const playLevel = nextLevel || open[open.length - 1] || levels[0];
+  ui.bloomStory.textContent = nextLevel ? nextLevel.story : ember ? "A first flame breathes beneath the folded stone." : "The Bloom Crown shines in rhythm again.";
   ui.bloomLevels.innerHTML = "";
-  const nodes=levels;
-  nodes.forEach((level,index) => {
-    const unlocked = isLevelUnlocked(level.id);
-    const stars = state.campaign.ratings[level.id] || 0;
+  levels.forEach((level) => {
+    const unlocked = isLevelUnlocked(level.id), stars = state.campaign.ratings[level.id] || 0, number = campaignLevels.indexOf(level) + 1, isNext = level === nextLevel;
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `chapter-level${unlocked ? "" : " locked"}${stars ? " completed" : ""}`;
+    button.className = `chapter-level${unlocked ? "" : " locked"}${stars ? " completed" : ""}${isNext ? " next" : ""}`;
     button.disabled = !unlocked;
-    button.innerHTML = `<span>${String(index+1).padStart(2,"0")}</span><div><small>${level.duration} sec voyage</small><b>${level.name}</b><em>${unlocked ? `<span class="level-stars" aria-label="${stars} of 3 stars">${[0,1,2].map(i=>`<i class="${i<stars?"on":""}">★</i>`).join("")}</span>` : "Locked"}</em></div>`;
+    button.setAttribute("aria-label", `Level ${number}, ${level.name}${unlocked ? `, ${stars} of 3 stars` : ", locked"}`);
+    button.innerHTML = `<span class="level-node">${unlocked ? number : lockIcon}</span><div><small>Level ${number} · ${level.duration} sec</small><b>${level.name}</b><em>${unlocked ? `<span class="level-stars">${[0,1,2].map(i=>`<i class="${i<stars?"on":""}">★</i>`).join("")}</span>` : level.phases.some(phase => phase.guardian) ? "Guardian level" : "Locked"}</em></div>${isNext ? '<i class="next-tag">Next</i>' : ""}`;
     button.addEventListener("click",()=>launchCampaignLevel(level.id,button));
     ui.bloomLevels.append(button);
   });
+  const rows = levels.length, path = levels.slice(1).map((_, i) => { const y1 = i * 80 + 40, y2 = y1 + 80, x1 = i % 2 ? 74 : 26, x2 = i % 2 ? 26 : 74; return `M${x1} ${y1} C${x1} ${y1 + 44} ${x2} ${y2 - 44} ${x2} ${y2}`; }).join(" ");
+  ui.bloomLevels.insertAdjacentHTML?.("beforeend", `<svg class="level-path" aria-hidden="true" viewBox="0 0 100 ${rows * 80}" preserveAspectRatio="none"><path d="${path}" vector-effect="non-scaling-stroke"/></svg>`);
+  ui.chapterPlay.dataset.level = playLevel.id;
+  ui.chapterPlayLevel.textContent = `Level ${campaignLevels.indexOf(playLevel) + 1} · ${playLevel.name}`;
 }
 
 function openChapter(biome="bloom") {
@@ -1893,7 +1908,7 @@ function drawHomePreview(time) {
 }
 
 function drawBloomChapterPreview(time) {
-  if (ui.bloomChapter.hidden || !window.OrbitArt) return;
+  if (ui.bloomChapter.hidden || !window.OrbitArt || !ui.bloomChapterArt.offsetParent) return;
   const ember=state.chapter==="ember";
   const frame=window.OrbitArt.helpers.prepare(ui.bloomChapterArt),target=frame.ctx,w=frame.width,h=frame.height,stage=ember?state.campaign.emberRestoration:state.campaign.restoration,palette=window.OrbitArt.palettes[state.chapter];
   target.fillStyle=palette.bg;target.fillRect(0,0,w,h);window.OrbitArt.helpers.paperGrain(target,w,h,palette.light,.04);
@@ -2020,6 +2035,7 @@ function frame(time) {
 window.addEventListener("resize", resize);
 canvas.addEventListener("pointerdown", () => awakening?.skippable ? finishAwakening() : reverse());
 document.querySelector("#play").addEventListener("click", playFromHome);
+ui.chapterPlay.addEventListener("click", () => launchCampaignLevel(ui.chapterPlay.dataset.level, ui.chapterPlay));
 document.querySelector("#openIslands").addEventListener("click", () => showScreen("campaign"));
 document.querySelector("#resultHangar").addEventListener("click", () => showScreen("garage"));
 document.querySelector("#ascension").addEventListener("click", () => startRun("endless"));
