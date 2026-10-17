@@ -278,3 +278,73 @@ button:focus-visible{outline:3px solid var(--mint-500);outline-offset:3px}
 }
 .bloom-chapter>header h2{white-space:nowrap}
 @media (max-width:360px){.bloom-chapter>header h2{font-size:18px}}
+
+/* Step 1 · Reward card: full-screen overlay, one reward at a time. Overrides the old in-results seal. */
+.visually-hidden{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.reward-seal,.reward-seal.chapter-awakening{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:0;width:auto;padding:max(28px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom));overflow:hidden;clip-path:none;border-radius:0;background:rgba(6,18,22,.84);box-shadow:none;color:var(--paper);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.reward-seal::after{content:none}
+.reward-rays{position:absolute;left:50%;top:330px;width:760px;height:760px;transform:translate(-50%,-50%);border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(255,201,77,.11) 0 8deg,transparent 8deg 24deg);-webkit-mask:radial-gradient(circle,#000 0,#000 30%,transparent 62%);mask:radial-gradient(circle,#000 0,#000 30%,transparent 62%);animation:rewardRays 24s linear infinite;pointer-events:none}
+@keyframes rewardRays{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.reward-counter{position:relative;display:flex;align-items:center;gap:10px;margin-top:22px;color:var(--mint-200);font-size:13px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase}
+.reward-choices{display:flex;gap:4px;max-width:none;overflow:visible}
+.reward-choices button{flex:none;width:22px;height:22px;min-width:22px;min-height:22px;padding:0;border:0;border-radius:50%;background:transparent;box-shadow:none;transform:none}
+.reward-choices button::before{content:"";display:block;width:9px;height:9px;margin:auto;border-radius:50%;background:var(--night-600)}
+.reward-choices button.seen::before{background:var(--mint-500)}
+.reward-choices button.selected::before{background:var(--gold);transform:scale(1.25)}
+.reward-choices button.selected{background:transparent;transform:none}
+.reward-card{position:relative;margin-top:40px;width:min(322px,100%);padding:16px 16px 22px;box-sizing:border-box;border-radius:28px;background:linear-gradient(100deg,#FFF6E2 0 56%,#F6EACB 56% 100%);box-shadow:inset 0 3px 0 rgba(255,255,255,.7),0 9px 0 #C9B48C,0 26px 40px rgba(0,0,0,.35);color:var(--night-800);text-align:center}
+.reward-card.pop{animation:rewardPop .38s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes rewardPop{from{opacity:0;transform:translateY(26px) scale(.86)}to{opacity:1;transform:none}}
+.reward-ribbon{position:absolute;left:50%;top:-22px;z-index:1;padding:9px 26px 10px;transform:translateX(-50%) rotate(-3deg);background:var(--coral);color:#fff;font:400 20px/1 var(--display);letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;clip-path:polygon(0 0,100% 0,94% 50%,100% 100%,0 100%,6% 50%);box-shadow:0 4px 0 #B8483F}
+.reward-seal .reward-stage{position:relative;display:block;width:100%;height:214px;min-height:0;padding:0;overflow:hidden;border-radius:20px;background:radial-gradient(circle at 50% 55%,#1C4F55 0,#12363D 55%,#0E2A30 100%);box-shadow:none;color:inherit}
+.reward-seal .reward-stage::before,.reward-seal .reward-stage::after{content:none}
+.reward-seal .reward-stage:active{transform:none}
+.reward-seal .reward-stage canvas{display:block;width:100%;height:100%;max-width:none;object-fit:contain}
+.reward-bonus{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);padding:5px 14px;border-radius:999px;background:var(--night-900);color:var(--gold);font:400 22px/1 var(--display)}
+.reward-bonus[hidden]{display:none}
+.reward-type{margin:16px 0 0;color:var(--mint-700);font-size:12px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
+.reward-title{margin:4px 0 0;color:var(--night-800);font:400 36px/1 var(--display);letter-spacing:1px;text-transform:uppercase}
+.reward-desc{margin:8px 0 0;color:#4E6A66;font-size:14px;font-weight:800}
+.reward-seal .claim-button{position:relative;margin-top:34px;width:246px;height:74px;border-radius:26px;font-size:38px;letter-spacing:2px}
+.link-button{position:relative;min-height:44px;margin-top:10px;padding:8px 16px;background:none;box-shadow:none;color:var(--mint-200);font-size:14px;font-weight:900;letter-spacing:1px;text-decoration:underline;text-underline-offset:4px}
+.link-button:active{transform:none;box-shadow:none}
+.link-button:disabled{color:var(--mint-500);text-decoration:none}
+.link-button[hidden]{display:none}
+.reward-confetti{position:absolute;inset:0;pointer-events:none}
+.reward-confetti i{position:absolute;top:-12px;width:10px;height:6px;border-radius:2px;animation:rewardBits 3.6s linear infinite}
+.reward-confetti i:nth-child(1){left:10%;background:var(--gold);animation-delay:-.4s}
+.reward-confetti i:nth-child(2){left:24%;background:var(--mint-500);animation-delay:-2.1s}
+.reward-confetti i:nth-child(3){left:42%;background:var(--coral);animation-delay:-1.2s}
+.reward-confetti i:nth-child(4){left:63%;background:var(--paper);animation-delay:-2.8s}
+.reward-confetti i:nth-child(5){left:79%;background:var(--gold);animation-delay:-.9s}
+.reward-confetti i:nth-child(6){left:91%;background:var(--coral);animation-delay:-1.8s}
+@keyframes rewardBits{from{transform:translateY(0) rotate(0)}to{transform:translateY(105vh) rotate(540deg)}}
+.reward-seal.reduced .reward-rays,.reward-seal.reduced .reward-confetti{display:none}
+.reward-seal.reduced .reward-card.pop{animation:none}
+@media (prefers-reduced-motion:reduce){.reward-rays,.reward-confetti{display:none}.reward-card.pop{animation:none}}
+
+/* Results star badge and the tally's flying stars. */
+.result-star-chip{position:absolute;top:max(16px,env(safe-area-inset-top));right:18px;z-index:2;transition:transform .12s ease,box-shadow .12s ease}
+.result-star-chip.counting{transform:scale(1.07);box-shadow:0 0 0 4px rgba(255,201,77,.32),inset 0 3px 0 rgba(0,0,0,.22),0 4px 0 var(--night-900)}
+.results .result-head{margin-top:52px}
+.fly-star{position:absolute;z-index:3;width:22px;height:22px;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpolygon points='24,4 29,17.12 43.02,17.82 32.08,26.63 35.76,40.18 24,32.5 12.24,40.18 15.92,26.63 4.98,17.82 19,17.12' fill='%23FFC94D' stroke='%230A1F24' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;animation:flyStar .62s cubic-bezier(.5,0,.75,.4) both}
+@keyframes flyStar{0%{opacity:0;transform:translate(0,0) scale(.6)}15%{opacity:1;transform:translate(calc(var(--dx)*.05),-18px) scale(1.15)}100%{opacity:.9;transform:translate(var(--dx),var(--dy)) scale(.7)}}
+
+@media (max-height:620px){
+  .reward-seal,.reward-seal.chapter-awakening{padding-top:max(16px,env(safe-area-inset-top))}
+  .reward-counter{margin-top:6px}
+  .reward-card{margin-top:30px;width:min(280px,100%);padding:12px 12px 16px}
+  .reward-seal .reward-stage{height:150px}
+  .reward-title{font-size:28px}
+  .reward-desc{font-size:12px}
+  .reward-type{margin-top:12px}
+  .reward-seal .claim-button{margin-top:24px;width:210px;height:62px;font-size:32px;border-radius:22px}
+  .link-button{margin-top:4px}
+  .reward-rays{top:230px;width:600px;height:600px}
+  .result-star-chip{top:12px;right:12px;height:34px;padding:0 12px 0 32px}
+  .result-star-chip svg{left:-10px;top:-4px;width:38px;height:38px}
+  .result-star-chip b{font-size:19px}
+  .results .result-head{margin-top:40px}
+}
+/* B10: the remake gave .result-objectives display:flex, which overrode [hidden] and leaked campaign stars into Ascension results. */
+.result-objectives[hidden]{display:none}
