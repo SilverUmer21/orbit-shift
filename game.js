@@ -21,6 +21,8 @@ const ui = {
   report: document.querySelector("#report"), showReport: document.querySelector("#showReport"), copyReport: document.querySelector("#copyReport"),
   campaignStars: document.querySelector("#campaignStars"), firstLightRating: document.querySelector("#firstLightRating"),
   campaignMap: document.querySelector("#campaignMap"), bloomProgress: document.querySelector("#bloomProgress"),
+  hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), nearMiss: document.querySelector("#nearMiss"),
+  nextPlane: document.querySelector("#nextPlane"), nextPlaneArt: document.querySelector("#nextPlaneArt"), nextPlaneName: document.querySelector("#nextPlaneName"), nextPlaneBar: document.querySelector("#nextPlaneBar"), nextPlaneCount: document.querySelector("#nextPlaneCount"),
   bloomLevels: document.querySelector("#bloomLevels"), bloomStory: document.querySelector("#bloomStory"), bloomChapterArt: document.querySelector("#bloomChapterArt"),
 };
 
@@ -416,15 +418,21 @@ function finishRun() {
   }
   save();
   ui.resultScore.textContent = Math.floor(state.score);
-  ui.resultStats.textContent = `Best flow x${Math.max(1, state.runBestStreak)} - All-time ${state.best}`;
+  ui.resultStats.textContent = `Best ${state.best} · Flow x${Math.max(1, state.runBestStreak)}`;
   ui.resultEyebrow.textContent = state.runType === "campaign" ? state.levelComplete ? `${currentCampaignLevel().name} restored` : `${currentCampaignLevel().name} interrupted` : "Orbit broken";
   ui.resultObjectives.hidden = state.runType !== "campaign";
   if (state.runType === "campaign") {
     const level=currentCampaignLevel();
     const checks = [state.levelComplete, state.runFragments >= 3, state.perfects >= level.perfectTarget];
-    ui.resultObjectives.innerHTML = level.objectives.map((objective,index)=>`<span class="${checks[index]?"done":""}">${checks[index]?"★":"☆"} ${objective}</span>`).join("");
-    ui.resultStats.textContent = (state.levelComplete ? `${"★".repeat(campaignRating)}${"☆".repeat(3-campaignRating)} · Best flow x${Math.max(1,state.runBestStreak)}` : `Reached ${Math.floor(state.elapsed)} seconds`) + ` · ${state.runFragments} fragments`;
+    const captions = ["Finish", "3 fragments", `${level.perfectTarget} perfects`];
+    ui.resultObjectives.innerHTML = level.objectives.map((objective,index)=>`<span class="${checks[index]?"done":""}" title="${objective}"><i aria-hidden="true">★</i><small>${captions[index]}</small></span>`).join("");
+    ui.resultStats.textContent = (state.levelComplete ? `Best flow x${Math.max(1,state.runBestStreak)}` : `Reached ${Math.floor(state.elapsed)} seconds`) + ` · ${state.runFragments} fragments`;
   }
+  ui.resultTitle.textContent = state.runType === "campaign" ? (state.levelComplete ? "Level clear!" : "So close!") : state.best > oldBest ? "New record!" : "Orbit broken";
+  ui.resultEyebrow.textContent = state.runType === "campaign" ? currentCampaignLevel().name : "Ascension";
+  const nearMiss = nearMissText(campaignRating);
+  ui.nearMiss.textContent = nearMiss; ui.nearMiss.hidden = !nearMiss;
+  renderNextPlane();
   ui.resultStars.textContent = `+${state.runStars} stars`;
   ui.goalRewards.textContent = state.runGoalRewards.join(" - ");
   ui.record.textContent = state.best > oldBest ? "New orbit record" : "";
@@ -1671,9 +1679,50 @@ function launchCampaignLevel(levelId,button) {
   setTimeout(()=>{ button?.classList.remove("launching"); startRun("campaign",levelId); },180);
 }
 
+function nextCampaignLevel() {
+  const open = campaignLevels.filter(level => isLevelUnlocked(level.id));
+  return open.find(level => !state.campaign.completed.includes(level.id)) || open[open.length - 1] || campaignLevels[0];
+}
+
+function playFromHome() {
+  if (!state.tutorialSeen) { startTutorial(); return; }
+  startRun("campaign", nextCampaignLevel().id);
+}
+
+function nextPlane() { return riders.find(rider => !state.ownedRiders.includes(rider.id)); }
+
+function nearMissText(rating) {
+  if (state.runType === "campaign") {
+    const level = currentCampaignLevel();
+    if (!state.levelComplete) { const left = Math.max(1, Math.ceil(level.duration - state.elapsed)); return `Only ${left}s from the finish`; }
+    if (rating >= 3) return "";
+    const fragments = Math.max(0, 3 - state.runFragments), perfects = Math.max(0, level.perfectTarget - state.perfects);
+    const ordinal = rating === 1 ? "next" : "3rd";
+    if (fragments && (!perfects || fragments <= perfects)) return `${fragments} more fragment${fragments > 1 ? "s" : ""} for the ${ordinal} star`;
+    return `${perfects} more perfect${perfects > 1 ? "s" : ""} for the ${ordinal} star`;
+  }
+  const gap = state.best - Math.floor(state.score);
+  return gap > 0 ? `${gap} away from your best` : "";
+}
+
+function renderNextPlane() {
+  const rider = nextPlane();
+  ui.nextPlane.hidden = !rider;
+  if (!rider) return;
+  ui.nextPlaneName.textContent = state.stars >= rider.price ? `${rider.name} is ready!` : `Next plane · ${rider.name}`;
+  ui.nextPlaneCount.textContent = `${Math.min(state.stars, rider.price)}/${rider.price}`;
+  ui.nextPlaneBar.style.setProperty("width", `${Math.min(100, state.stars / rider.price * 100)}%`);
+  const mini = ui.nextPlaneArt.getContext("2d");
+  mini.setTransform(1, 0, 0, 1, 0, 0); mini.clearRect(0, 0, 88, 56); mini.translate(44, 28);
+  drawGlider(mini, rider, currentCosmetic(), 1.15, 0, 0, false, 0);
+}
+
 function updateHome() {
   ui.homeBest.textContent = state.best;
   ui.homeStars.textContent = state.stars;
+  const affordable = riders.filter(rider => !state.ownedRiders.includes(rider.id) && state.stars >= rider.price).length;
+  ui.hangarBadge.textContent = affordable; ui.hangarBadge.hidden = affordable === 0;
+  ui.playLevel.textContent = state.tutorialSeen ? nextCampaignLevel().name : "Practice";
   ui.sound.checked = !state.muted;
   ui.haptics.checked = state.haptics;
   ui.effects.checked = state.reducedEffects;
@@ -1681,7 +1730,9 @@ function updateHome() {
 }
 
 function renderGoals() {
-  ui.goals.innerHTML = state.goals.map((goal) => `<div class="voyage-goal"><b>${goal.label}</b><span>${Math.min(goal.progress,goal.target)}/${goal.target}</span><i style="--progress:${Math.min(100,goal.progress/goal.target*100)}%"></i></div>`).join("");
+  // Show only the goal closest to completion; the other two keep progressing in the background.
+  const goal = state.goals.reduce((closest, item) => item.progress / item.target > closest.progress / closest.target ? item : closest, state.goals[0]);
+  ui.goals.innerHTML = goal ? `<div class="voyage-goal"><b>${goal.label}</b><i style="--progress:${Math.min(100,goal.progress/goal.target*100)}%"></i><span>${Math.min(goal.progress,goal.target)}/${goal.target}</span></div>` : "";
 }
 
 function renderGarage() {
@@ -1868,7 +1919,9 @@ function frame(time) {
 
 window.addEventListener("resize", resize);
 canvas.addEventListener("pointerdown", () => awakening?.skippable ? finishAwakening() : reverse());
-document.querySelector("#play").addEventListener("click", () => state.tutorialSeen ? showScreen("campaign") : startTutorial());
+document.querySelector("#play").addEventListener("click", playFromHome);
+document.querySelector("#openIslands").addEventListener("click", () => showScreen("campaign"));
+document.querySelector("#resultHangar").addEventListener("click", () => showScreen("garage"));
 document.querySelector("#ascension").addEventListener("click", () => startRun("endless"));
 for(const button of document.querySelectorAll("[data-chapter]"))button.addEventListener("click",()=>{if(!button.disabled){window.OrbitArchipelago?.pulse();openChapter(button.dataset.chapter);}});
 document.querySelector("#retry").addEventListener("click", () => startRun(state.runType, state.levelId));
@@ -1896,7 +1949,7 @@ window.addEventListener("keydown", (event) => {
     event.preventDefault();
     if (state.mode === "run") reverse();
     else if (state.mode === "awakening" && awakening?.skippable) finishAwakening();
-    else if (state.mode === "home") state.tutorialSeen ? showScreen("campaign") : startTutorial();
+    else if (state.mode === "home") playFromHome();
     else if (state.mode === "campaign") openChapter();
     else if (state.mode === "bloomChapter" && event.target===document.body) startRun("campaign", state.chapter==="ember"?"kindling":campaignLevels[Math.min(state.campaign.unlockedLevel-1,3)].id);
     else if (state.mode === "results") startRun(state.runType, state.levelId);
