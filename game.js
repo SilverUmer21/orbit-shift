@@ -25,7 +25,7 @@ const ui = {
   rewardCount: document.querySelector("#rewardCount"), rewardBonus: document.querySelector("#rewardBonus"), rewardCard: document.querySelector("#rewardCard"), equipReward: document.querySelector("#equipReward"),
   resultStarChip: document.querySelector("#resultStarChip"), resultStarTotal: document.querySelector("#resultStarTotal"),
   mapNext: document.querySelector("#mapNext"), ascensionBest: document.querySelector("#ascensionBest"), chapterPlay: document.querySelector("#chapterPlay"), chapterPlayLevel: document.querySelector("#chapterPlayLevel"),
-  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), nearMiss: document.querySelector("#nearMiss"),
+  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), nearMiss: document.querySelector("#nearMiss"),
   nextPlane: document.querySelector("#nextPlane"), nextPlaneArt: document.querySelector("#nextPlaneArt"), nextPlaneName: document.querySelector("#nextPlaneName"), nextPlaneBar: document.querySelector("#nextPlaneBar"), nextPlaneCount: document.querySelector("#nextPlaneCount"),
   bloomLevels: document.querySelector("#bloomLevels"), bloomStory: document.querySelector("#bloomStory"), bloomChapterArt: document.querySelector("#bloomChapterArt"),
 };
@@ -399,6 +399,7 @@ function finishRun() {
     const level=currentCampaignLevel();
     campaignRating = 1 + Number(state.runFragments >= 3) + Number(state.perfects >= level.perfectTarget);
     const firstClear = !state.campaign.completed.includes(state.levelId);
+    chapterReveal = { level: state.levelId, unlocked: firstClear, starsFrom: state.campaign.ratings[state.levelId] || 0 };
     if (firstClear) {
       state.campaign.completed.push(state.levelId); state.runStars += 15; state.runRewards.push({ type: "clear", id: state.levelId, label: `${level.name} restored` });
       const levelIndex=campaignLevels.findIndex(item=>item.id===state.levelId);
@@ -548,7 +549,9 @@ function equipCurrentReward() {
 // Results tally: stars fly from the run total into the badge, the badge counts up, then the next-plane bar fills.
 function prepareStarTally() {
   const gained = state.runStars + state.runGoalStars;
-  starTally = { gained, from: state.stars - gained, elapsed: 0, started: false, launched: false, done: false };
+  starTally = { gained, from: state.stars - gained, score: Math.floor(state.score), elapsed: 0, started: false, launched: false, scored: false, done: false };
+  ui.resultScore.classList.remove("landed"); ui.record.classList.remove("stamp");
+  if (!state.reducedEffects) ui.resultScore.textContent = 0;
   showStarTally(0);
 }
 function startStarTally() { if (starTally) starTally.started = true; }
@@ -574,9 +577,13 @@ function launchFlyingStars() {
 function updateStarTally(delta) {
   const tally = starTally;
   if (!tally || !tally.started || tally.done || ui.results.hidden) return;
-  if (!tally.launched) { tally.launched = true; launchFlyingStars(); }
   tally.elapsed += delta;
-  const delay = state.reducedEffects ? 0 : .35, duration = state.reducedEffects ? 0 : .35 + Math.min(tally.gained, 40) * .02;
+  // Beats: score counts up (0–0.8s) and lands, the record stamps, then stars fly into the badge and the bar fills.
+  const scoreProgress = state.reducedEffects ? 1 : Math.min(1, tally.elapsed / .8);
+  ui.resultScore.textContent = Math.round(tally.score * (1 - (1 - scoreProgress) ** 3));
+  if (scoreProgress >= 1 && !tally.scored) { tally.scored = true; ui.resultScore.classList.add("landed"); ui.record.classList.add("stamp"); }
+  const delay = state.reducedEffects ? 0 : .95, duration = state.reducedEffects ? 0 : .35 + Math.min(tally.gained, 40) * .02;
+  if (!tally.launched && tally.elapsed >= delay - .35) { tally.launched = true; launchFlyingStars(); }
   const progress = duration ? Math.max(0, Math.min(1, (tally.elapsed - delay) / duration)) : 1;
   showStarTally(progress);
   ui.resultStarChip.classList.toggle("counting", progress > 0 && progress < 1);
@@ -1573,20 +1580,32 @@ function drawParticles() {
 
 function drawRings() {
   for (const ring of rings) {
+    ring.start ??= ring.radius;
     ctx.globalAlpha = ring.life / ring.max;
     ctx.strokeStyle = ring.color;
     ctx.lineWidth = 2 + ring.life * 4;
     ctx.beginPath(); ctx.arc(cx, cy, ring.radius, 0, TAU); ctx.stroke();
+    // A dashed echo trails each shockwave, like a second orbit rippling outward.
+    ctx.globalAlpha *= .7; ctx.lineWidth = 2; ctx.setLineDash([2, 9]); ctx.lineDashOffset = ring.life * 40;
+    ctx.beginPath(); ctx.arc(cx, cy, ring.start + (ring.radius - ring.start) * .55, 0, TAU); ctx.stroke();
+    ctx.setLineDash([]);
   }
   ctx.globalAlpha = 1;
 }
 
 function drawLabels(palette) {
-  ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "900 13px Arial";
+  // Labels land like a stamped paper tag: overshoot, settle, drift up. A perfect streak shows its count.
+  ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle";
   for (const label of labels) {
-    ctx.globalAlpha = label.life / label.max;
-    ctx.fillStyle = palette.ink; ctx.fillText(label.text, cx + 2, label.y + 3);
-    ctx.fillStyle = palette.gold; ctx.fillText(label.text, cx, label.y);
+    label.streak ??= label.text === "PERFECT" ? state.streak : 0;
+    const age = label.max - label.life, pop = age < .16 ? .4 + age / .16 * .9 : Math.max(1, 1.3 - (age - .16) * 3);
+    const big = label.text === "PERFECT" || label.text === "FEVER", text = label.streak > 1 ? `${label.text} ×${label.streak}` : label.text;
+    ctx.globalAlpha = Math.min(1, label.life / label.max * 2.2);
+    ctx.font = `${big ? 24 : 17}px "Lilita One", "Arial Black", sans-serif`;
+    ctx.save(); ctx.translate(cx, label.y - age * 16); ctx.scale(pop, pop); ctx.rotate(-.04);
+    ctx.fillStyle = palette.ink; ctx.fillText(text, 2, 3);
+    ctx.fillStyle = palette.gold; ctx.fillText(text, 0, 0);
+    ctx.restore();
   }
   ctx.restore();
 }
@@ -1758,6 +1777,9 @@ function renderCampaignMap() {
   window.OrbitArchipelago?.setEmberRestoration?.(state.campaign.emberRestoration);
 }
 
+// Set by a campaign clear; the chapter screen plays it once: new stars pop on that level and, on a first clear, the
+// equipped ship flies the trail to the next level, which then ignites.
+let chapterReveal = null;
 function renderBloomChapter() {
   const ember=state.chapter==="ember",levels=campaignLevels.filter(level=>level.biome===state.chapter);
   const rating = levels.reduce((total,level)=>total+(state.campaign.ratings[level.id]||0),0);
@@ -1769,26 +1791,50 @@ function renderBloomChapter() {
   const nextLevel = open.find(level => !state.campaign.completed.includes(level.id));
   const playLevel = nextLevel || open[open.length - 1] || levels[0];
   ui.bloomStory.textContent = nextLevel ? nextLevel.story : ember ? "A first flame breathes beneath the folded stone." : "The Bloom Crown shines in rhythm again.";
+  const revealIndex = chapterReveal ? levels.findIndex(level => level.id === chapterReveal.level) : -1;
+  const reveal = revealIndex >= 0 && !state.reducedEffects ? chapterReveal : null;
+  if (revealIndex >= 0) chapterReveal = null;
+  const igniteIndex = reveal?.unlocked && levels[revealIndex + 1] && isLevelUnlocked(levels[revealIndex + 1].id) ? revealIndex + 1 : -1;
   ui.bloomLevels.innerHTML = "";
   ui.bloomLevels.style?.setProperty("--rows", levels.length);
-  levels.forEach((level) => {
+  levels.forEach((level, index) => {
     const unlocked = isLevelUnlocked(level.id), stars = state.campaign.ratings[level.id] || 0, number = campaignLevels.indexOf(level) + 1, isNext = level === nextLevel;
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `chapter-level${unlocked ? "" : " locked"}${stars ? " completed" : ""}${isNext ? " next" : ""}`;
+    button.className = `chapter-level${unlocked ? "" : " locked"}${stars ? " completed" : ""}${isNext ? " next" : ""}${index === igniteIndex ? " igniting" : ""}`;
     button.disabled = !unlocked;
     button.setAttribute("aria-label", `Level ${number}, ${level.name}${unlocked ? `, ${stars} of 3 stars` : ", locked"}`);
-    const top = isNext ? '<i class="next-tag">Next</i>' : unlocked ? `<span class="level-stars">${[0,1,2].map(i=>`<i class="${i<stars?"on":""}">★</i>`).join("")}</span>` : level.phases.some(phase => phase.guardian) ? '<i class="guardian-tag">Guardian</i>' : "";
+    const top = isNext ? '<i class="next-tag">Next</i>' : unlocked ? `<span class="level-stars">${[0,1,2].map(i=>`<i class="${i<stars?"on":""}${index===revealIndex&&reveal&&i>=reveal.starsFrom&&i<stars?" pop":""}" style="--k:${i-(reveal?.starsFrom||0)}">★</i>`).join("")}</span>` : level.phases.some(phase => phase.guardian) ? '<i class="guardian-tag">Guardian</i>' : "";
     button.innerHTML = `<span class="level-node">${unlocked ? number : lockIcon}</span><span class="level-top">${top}</span><span class="level-label"><b>${level.name}</b><small>Level ${number} · ${level.duration}s</small></span>`;
     button.addEventListener("click",()=>launchCampaignLevel(level.id,button));
     ui.bloomLevels.append(button);
   });
   // Trail between level centres (x 28/72, one 80-unit row each); leaves each level sideways so it never crosses a label. Reached parts are coloured.
-  const done = [], todo = [];
-  levels.slice(1).forEach((level, i) => { const y1 = i * 80 + 40, y2 = y1 + 80, x1 = i % 2 ? 72 : 28, x2 = i % 2 ? 28 : 72, d = x2 - x1; (isLevelUnlocked(level.id) ? done : todo).push(`M${x1} ${y1} C${x1 + d * .75} ${y1} ${x2 - d * .75} ${y2} ${x2} ${y2}`); });
-  ui.bloomLevels.insertAdjacentHTML?.("beforeend", `<svg class="level-path" aria-hidden="true" viewBox="0 0 100 ${levels.length * 80}" preserveAspectRatio="none"><path class="todo" d="${todo.join(" ")}" vector-effect="non-scaling-stroke"/><path class="done" d="${done.join(" ")}" vector-effect="non-scaling-stroke"/></svg>`);
+  // The segment just unlocked starts faint and is drawn in by a mask while the ship flies it.
+  const done = [], todo = [], fresh = igniteIndex > 0 ? trailSegment(igniteIndex - 1) : "";
+  levels.slice(1).forEach((level, i) => (i === igniteIndex - 1 ? todo : isLevelUnlocked(level.id) ? done : todo).push(trailSegment(i)));
+  const freshPath = fresh ? `<defs><mask id="trailReveal" maskUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="${levels.length * 80 + 40}"><path class="trail-reveal" d="${fresh}" pathLength="1"/></mask></defs><path class="done" d="${fresh}" mask="url(#trailReveal)" vector-effect="non-scaling-stroke"/>` : "";
+  ui.bloomLevels.insertAdjacentHTML?.("beforeend", `<svg class="level-path" aria-hidden="true" viewBox="0 0 100 ${levels.length * 80}" preserveAspectRatio="none"><path class="todo" d="${todo.join(" ")}" vector-effect="non-scaling-stroke"/><path class="done" d="${done.join(" ")}" vector-effect="non-scaling-stroke"/>${freshPath}</svg>`);
+  if (fresh) flyRevealShip(igniteIndex - 1, levels.length);
   ui.chapterPlay.dataset.level = playLevel.id;
   ui.chapterPlayLevel.textContent = `Level ${campaignLevels.indexOf(playLevel) + 1} · ${playLevel.name}`;
+}
+
+function trailSegment(i) { const y1 = i * 80 + 40, y2 = y1 + 80, x1 = i % 2 ? 72 : 28, x2 = i % 2 ? 28 : 72, d = x2 - x1; return `M${x1} ${y1} C${x1 + d * .75} ${y1} ${x2 - d * .75} ${y2} ${x2} ${y2}`; }
+
+// The equipped ship flies the newly drawn trail: the same curve, converted from the path's viewBox to pixels for offset-path.
+function flyRevealShip(i, rows) {
+  const box = ui.bloomLevels.querySelector?.(".level-path")?.getBoundingClientRect?.(), host = ui.bloomLevels.getBoundingClientRect?.();
+  if (!box?.width || !host) return;
+  const sx = box.width / 100, sy = box.height / (rows * 80), ox = box.left - host.left, oy = box.top - host.top;
+  const pixel = trailSegment(i).replace(/(-?[\d.]+) (-?[\d.]+)/g, (_, x, y) => `${(ox + x * sx).toFixed(1)} ${(oy + y * sy).toFixed(1)}`);
+  const size = 52, ratio = Math.min(devicePixelRatio || 1, 3), ship = document.createElement("canvas");
+  ship.className = "reveal-ship"; ship.width = ship.height = size * ratio; ship.setAttribute("aria-hidden", "true");
+  const target = ship.getContext("2d"); target.setTransform(ratio, 0, 0, ratio, size / 2 * ratio, size / 2 * ratio);
+  drawGlider(target, currentRider(), currentCosmetic(), .74, 0, 0, false, 0);
+  ship.style.offsetPath = `path("${pixel}")`;
+  ship.addEventListener("animationend", () => ship.remove());
+  ui.bloomLevels.append(ship);
 }
 
 function openChapter(biome="bloom") {
@@ -1838,8 +1884,9 @@ function nearMissText(rating) {
 function renderNextPlane(stars = state.stars) {
   const rider = nextPlane();
   ui.nextPlane.hidden = !rider;
-  if (!rider) return;
+  if (!rider) { ui.resultHangar.classList.remove("ready"); return; }
   ui.nextPlaneName.textContent = stars >= rider.price ? `${rider.name} is ready!` : `Next plane · ${rider.name}`;
+  ui.nextPlane.classList.toggle("ready", stars >= rider.price); ui.resultHangar.classList.toggle("ready", stars >= rider.price);
   ui.nextPlaneCount.textContent = `${Math.min(stars, rider.price)}/${rider.price}`;
   ui.nextPlaneBar.style.setProperty("width", `${Math.min(100, stars / rider.price * 100)}%`);
   const mini = ui.nextPlaneArt.getContext("2d");
