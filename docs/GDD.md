@@ -2,7 +2,16 @@
 
 Living document for the **Complete Remake** (`complete-remake-orbit-shift` branch). Read this before every work session and update it whenever something is built, decided or found.
 
-Last updated: 2026-10-17
+Last updated: 2026-10-18
+
+> ## ★ How we design (owner's rule, read first, every session)
+>
+> **Work as a game designer and a UI/UX game designer, not as someone decorating screens.**
+>
+> 1. **Start from the game's identity.** Before designing anything, look at its **theme** (a folded-paper cosmos with planets to restore), its **art style** (Paper Night: cut paper, folds, two-tone hard-split shading, night palette, gold for reward) and its **genre** (one-tap hyper-casual arcade with a light meta layer). Every screen, animation and VFX must feel like it belongs to this world and this genre.
+> 2. **"Game language" ≠ reusing existing assets.** Existing art is a building block, not the rule. Invent new shapes, motion and effects whenever they express the theme, art style and genre better. Ask: *what does this say about the world, what should the player feel, and does it meet the genre's expectations (instant readability, speed, juice, an obvious next step)?*
+> 3. **Research before making.** For every feature, first study how strong games in the genre and in similar art styles solve it: patterns, UX conventions, motion, feedback and retention mechanics. Write down the findings and the references, then design from them.
+> 4. **Then the usual flow:** plan → mockup → owner approval → build → test → screenshot → commit and push.
 
 ---
 
@@ -33,7 +42,7 @@ A one-tap, portrait, hyper-casual orbit game: your paper glider circles a living
 | Reward every level | Loud, staged level-end: stars, near-miss line, one reward at a time, progress bar filling toward the next plane. |
 | Staged juice | Feedback in beats ~60–150 ms apart (spark → value → count-up → pulse). Never everything at once. |
 | Obvious next step | Maps are a path with the next level highlighted and one big PLAY. |
-| Game language everywhere | UI, animation and VFX reuse the game's own motifs: orbit rings and dashed orbits, paper folds and paper diamonds, the player's equipped ship and its trail, gold for stars/perfect. Menus should feel like the same world as a run. |
+| Game language everywhere | UI, animation and VFX are designed from the theme (folded-paper cosmos), art style (Paper Night) and genre (one-tap hyper-casual), so menus feel like the same world as a run. This does not mean reusing existing assets: invent new art and motion when it serves the world better (see the rule at the top). |
 | No ads | The game has no ads. Do not add ad-gated rewards unless the owner asks. |
 
 Sources: Homa Games "15 Golden Rules"; Voodoo design guide (GameAnalytics); Tap Nation hybrid-casual features; GameAnalytics meta mechanics; Game Developer (map formats, game juice); CrazyLabs level design; Etermax/G5 progress-bar rewards.
@@ -175,7 +184,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | 2026-10-17 | No ads. Work order: Step 0 bugs → 1 reward card → 2 map → 3 Hangar. |
 | 2026-10-17 | Reward card approved: ribbons NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!, keep "Equip now" on trails and paints. |
 | 2026-10-17 | Step 2 approved: chapter levels labelled "Level N · Name" (option A); the big chapter planet removed from the levels screen (owner). |
-| 2026-10-18 | Animations approved (owner's top three): chapter unlock moment, results beats, PERFECT pop. Rule from owner: UI, animation and VFX must speak the game's language — orbit rings, paper folds and diamonds, the player's own ship and trail. |
+| 2026-10-18 | Animations approved (owner's top three): chapter unlock moment, results beats, PERFECT pop. Owner clarified the next day: "game language" means designing from theme, art style and genre as a game/UI/UX designer, with research first, not reusing existing assets (rule at the top of this GDD). |
 | 2026-10-17 | Results pass (owner): curved title kept as mocked, title only (no level name), stars without captions and animated, minimal next-plane line, bold folded back arrow (option 1), Hangar uses the live ship. Also check results at 390×760. |
 | 2026-10-17 | Levels page spacing: owner asked for more room and better text alignment; chose "Stepping stones" (A) over "Trail cards" (B). Mockups: `design/paper-night/previews/levels-spacing-options.png`. |
 
