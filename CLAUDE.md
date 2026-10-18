@@ -2,6 +2,8 @@
 
 Read `docs/GDD.md` before any work. It holds the context, what is built, the current step, the bug log and the decisions. Update it when something is built, decided or found.
 
+How we design (owner's rule, also at the top of the GDD): act as a game designer and UI/UX game designer. Start from the game's theme, art style and genre; research how strong games in the genre solve a feature before designing it; invent new art, motion and VFX when that serves the world better. "Game language" does not mean reusing existing assets.
+
 Rules that always apply:
 - Work on the `complete-remake-orbit-shift` branch.
 - Never change gameplay, ring/gate formation, planets or ship art without the owner's approval.
