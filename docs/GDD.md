@@ -139,6 +139,9 @@ Fixed B1, B2, B3, B7, B8 (section 9). No redesign.
 - Chapter screen: levels as dots on a path, next level highlighted, big PLAY for it.
 - Decided: "Level N · Name" with the global level number (option A). Chapter planet art removed from the level list.
 
+### Retention & ASO strategy  ← proposed, awaiting owner decisions
+Research and proposal in `docs/RETENTION-STRATEGY.md`. Proposed waves: Tonight's Sky (daily seeded orbit and share card), Night Lanterns (streak with Paper Moon freeze), daily three goals, install/offline; then Constellation Atlas and Home sky decorations (stars sink, designed with the Hangar); then ghost, one notification, seasonal skies; ASO plan for Google Play and the web portals.
+
 ### Step 3 — Hangar  ← next
 - Showcase: selected old ship on a floating-island stand.
 - Tabs Planes / Paint / Trails, one grid at a time.
