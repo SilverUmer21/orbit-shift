@@ -70,6 +70,14 @@ Sources: Homa Games "15 Golden Rules"; Voodoo design guide (GameAnalytics); Tap 
   - **Practice from the gatekeeper.** After failing a guardian level past the guardian's start, results offer it. The run starts 2 s before the guardian with gate, fragment and hazard indices skipped ahead. It gives no stars, rewards or completion and ends on a "Practice" results screen.
   - **Tap lockout and pause.** Results ignore taps for 0.45 s. Returning to the app mid-run shows a "Paused · Tap to continue" card (Space works too) instead of resuming instantly.
 
+- **Paper comets** (2026-10-18, beta). A folded paper star with ribbon tails, aimed at where the ship will be (±0.17 rad).
+  - **Warning:** a gold dotted line along its path and a shrinking ring at the orbit crossing, for 1.1 s.
+  - **Flight:** 0.9 s to the orbit at 430 px/s. It crosses the orbit **once**, then bursts on the planet.
+  - **Outcome:** a hit within 19 px crashes ("hazard"). Passing within 48 px gives "TAIL SPARK" (+15×multiplier).
+  - **Dodging:** reversing at the warning dodges it (verified: closest pass 53–62 px).
+  - **When:** Ascension only for now, every ~8.5–11 s from 25 s, and every ~5.5–8 s in the Void and Ascension phases. Never within 2.6 s of a gate arriving.
+  - **Tests:** only with real input, so the deterministic test autopilot never meets comets. The Void campaign levels will use them once they exist.
+
 **Current core (unchanged):**
 
 - Glider orbits the planet; **tap / Space / ←→ reverses direction**.
