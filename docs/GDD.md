@@ -56,6 +56,11 @@ Sources: Homa Games "15 Golden Rules"; Voodoo design guide (GameAnalytics); Tap 
 - **The small five.** Brush sparks, Lost letters, hidden tap forgiveness, practice from the gatekeeper, and a tap lockout plus pause after interruptions.
 - **Paper comets.**
 
+**Built (beta, behind a Settings switch, on by default for playtesting):**
+- **Express fold** (2026-10-18). A tap still reverses on press. Keeping the finger (or Space / arrow key) down for more than 0.14 s tucks the glider: orbit speed ×1.3 (`FOLD_BOOST`), +6 score/s while tucked, a slimmer silhouette, paper streaks, a longer trail, and a low whoosh plus a light haptic.
+- Releasing untucks it in about 0.1 s. Gate formation and timing rules are unchanged; only the player's angular speed scales, including in the exact gate-crossing calculation.
+- The hold starts only from real input (pointer or key down), never from `reverse()` itself, so the test autopilot behaves exactly as before.
+
 **Current core (unchanged):**
 
 - Glider orbits the planet; **tap / Space / ←→ reverses direction**.
