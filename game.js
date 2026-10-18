@@ -25,7 +25,7 @@ const ui = {
   rewardCount: document.querySelector("#rewardCount"), rewardBonus: document.querySelector("#rewardBonus"), rewardCard: document.querySelector("#rewardCard"), equipReward: document.querySelector("#equipReward"),
   resultStarChip: document.querySelector("#resultStarChip"), resultStarTotal: document.querySelector("#resultStarTotal"),
   mapNext: document.querySelector("#mapNext"), ascensionBest: document.querySelector("#ascensionBest"), chapterPlay: document.querySelector("#chapterPlay"), chapterPlayLevel: document.querySelector("#chapterPlayLevel"),
-  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), nearMiss: document.querySelector("#nearMiss"),
+  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), practiceGuardian: document.querySelector("#practiceGuardian"), resumeOverlay: document.querySelector("#resumeOverlay"), resumeButton: document.querySelector("#resumeButton"), nearMiss: document.querySelector("#nearMiss"),
   nextPlane: document.querySelector("#nextPlane"), nextPlaneArt: document.querySelector("#nextPlaneArt"), nextPlaneName: document.querySelector("#nextPlaneName"), nextPlaneBar: document.querySelector("#nextPlaneBar"), nextPlaneCount: document.querySelector("#nextPlaneCount"),
   bloomLevels: document.querySelector("#bloomLevels"), bloomStory: document.querySelector("#bloomStory"), bloomChapterArt: document.querySelector("#bloomChapterArt"),
 };
@@ -235,7 +235,7 @@ function startRun(runType = "endless", levelId = null) {
   state.runType = runType;
   state.levelId = levelId;
   state.levelComplete = false;
-  holding = false;
+  holding = false; state.practice = false; state.runLetters = 0; queuedReverse = false; graceCrash = null; realInput = false; ui.resumeOverlay.hidden = true;
   state.runFragments = 0;
   state.score = 0;
   state.multiplier = 1;
@@ -341,17 +341,27 @@ function skipTutorial() {
   state.tutorialSeen = true; save(); tutorialSession = null; ui.tutorialPanel.hidden = true; ui.shell.classList.remove("playing"); stopMusic(); showScreen("campaign");
 }
 
+// Forgiveness (real input only, so the test autopilot is unchanged): a tap inside the 75 ms debounce is queued instead
+// of dropped, and a tap up to 70 ms after a gate edge clipped the ship forgives that crash.
+let queuedReverse = false, graceCrash = null, realInput = false;
 function reverse() {
-  if (state.mode !== "run" || state.paused) return;
+  if (state.mode !== "run" || state.paused) return false;
   const now = performance.now();
-  if (now - lastReverse < 75) return;
+  if (now - lastReverse < 75) return false;
   lastReverse = now;
+  if (graceCrash) { graceCrash = null; labels.push({ text: "CLOSE CALL", life: .8, max: .8, y: cy - orbitRadius - 28 }); }
   player.direction *= -1;
   player.flip = 1;
   burst(playerPoint(), currentCosmetic().accent, 7, 90, "dot");
   if (tutorialSession?.step === 0) advanceTutorial();
   beep(300 + (player.direction > 0 ? 65 : 0), 0.045, "triangle");
   vibrate(8);
+  return true;
+}
+function tapInput() { realInput = true; if (!reverse() && state.mode === "run" && !state.paused) queuedReverse = true; }
+function updateForgiveness() {
+  if (queuedReverse && performance.now() - lastReverse >= 75) { queuedReverse = false; reverse(); }
+  if (graceCrash && performance.now() > graceCrash.deadline) { graceCrash = null; beginCrash("gate"); }
 }
 
 function beginCrash(cause = "gate") {
@@ -389,6 +399,8 @@ function beginCrash(cause = "gate") {
 function finishRun() {
   if(state.mode!=="run"&&state.mode!=="crash") return;
   if (state.runType === "tutorial") return;
+  ui.results.classList.add("lockout"); setTimeout(() => ui.results.classList.remove("lockout"), 450);
+  if (state.practice) { finishPractice(); return; }
   const oldBest = state.best;
   const firstCampaignClear = state.runType === "campaign" && state.levelComplete && !state.campaign.completed.includes(state.levelId);
   const previousUnlocks = state.unlocked.length;
@@ -443,6 +455,8 @@ function finishRun() {
   }
   setArcTitle(ui.resultTitle, state.runType === "campaign" ? (state.levelComplete ? "Level clear!" : "So close!") : state.best > oldBest ? "New record!" : "Orbit broken");
   ui.resultEyebrow.textContent = state.runType === "campaign" ? currentCampaignLevel().name : "Ascension";
+  const guardianPhase = state.runType === "campaign" ? currentCampaignLevel().phases.find(phase => phase.guardian) : null;
+  ui.practiceGuardian.hidden = !(guardianPhase && !state.levelComplete && state.elapsed >= guardianPhase.start);
   const nearMiss = nearMissText(campaignRating);
   ui.nearMiss.textContent = nearMiss; ui.nearMiss.hidden = !nearMiss;
   renderNextPlane();
@@ -462,6 +476,35 @@ function finishRun() {
   renderCosmetics();
   updateHud();
 }
+
+// Practice from the gatekeeper: replay a guardian level from just before its guardian, for no stars or rewards.
+function startPractice(levelId) {
+  const level = campaignLevels.find(item => item.id === levelId), guardian = level?.phases.find(phase => phase.guardian);
+  if (!guardian || startRun("campaign", levelId) === false) return;
+  state.practice = true;
+  state.elapsed = Math.max(0, guardian.start - 2);
+  const after = times => { const index = times.findIndex(time => time >= state.elapsed); return index < 0 ? times.length : index; };
+  campaignGateIndex = after(level.gateTimes); campaignFragmentIndex = after(level.fragmentTimes); campaignHazardIndex = after(level.hazardTimes);
+  gateCount = campaignGateIndex;
+  labels.push({ text: "PRACTICE", life: 1.4, max: 1.4, y: cy - orbitRadius - 28 });
+}
+function finishPractice() {
+  state.mode = "results"; state.runStars = 0; state.runGoalStars = 0; state.runRewards = []; state.runGoalRewards = [];
+  setArcTitle(ui.resultTitle, state.levelComplete ? "Gatekeeper calmed!" : "Practice");
+  ui.resultEyebrow.textContent = currentCampaignLevel().name;
+  ui.resultObjectives.hidden = true; ui.nearMiss.hidden = true; ui.record.textContent = ""; ui.unlock.textContent = ""; ui.goalRewards.textContent = "";
+  ui.resultScore.textContent = Math.floor(state.score);
+  ui.resultStats.textContent = "Practice run · no stars";
+  ui.resultStars.textContent = "+0";
+  ui.practiceGuardian.hidden = false;
+  ui.resultHome.textContent = `${currentCampaignLevel().biome==="ember"?"Ember":"Bloom"} Chapter`;
+  renderNextPlane(); renderHangarShip(ui.resultHangarShip);
+  ui.results.hidden = false;
+  renderRewardSeal(); prepareStarTally(); startStarTally();
+  ui.shell.classList.remove("playing"); stopMusic(); updateHud();
+}
+
+function resumeRun() { ui.resumeOverlay.hidden = true; state.paused = false; holding = false; lastTime = performance.now(); }
 
 function beginAwakening() {
   if(state.mode!=="run"||state.runType!=="campaign"||!state.levelComplete)return;
@@ -755,6 +798,17 @@ function updateGoals(kind, amount, absolute = false) {
   }
 }
 
+function collectLetter(gate) {
+  gate.letterTaken = true; state.runLetters += 1; state.runStars += 2;
+  labels.push({ text: "LOST LETTER +2", life: 1, max: 1, y: cy - orbitRadius - 52 });
+  burst(playerPoint(), currentCosmetic().gold, 14, 150, "paper"); beep(988, .08, "sine"); vibrate(10);
+}
+function brushSpark(hazard) {
+  hazard.brushed = true; state.score += 12 * state.multiplier;
+  labels.push({ text: "BRUSH", life: .6, max: .6, y: cy - orbitRadius - 28 });
+  burst(playerPoint(), currentCosmetic().light, 9, 120, "paper"); beep(1180, .04, "triangle");
+}
+
 function updateFold(delta) {
   const tucked = state.expressFold && holding && state.mode === "run" && performance.now() - holdStart >= FOLD_HOLD * 1000;
   const before = player.fold;
@@ -880,6 +934,7 @@ function spawnGate() {
     palette: gateCount % 3, pair: false, guardian: Boolean(phase.guardian), guardianId: phase.id,
     sideOpening:isSideOpening(plan.target),warningStrength:level?.warningStrength || 0,recovery:forceEasy,
   };
+  if (!gate.guardian && !paired && gateCount % 4 === 2) gate.letter = gateCount % 8 === 2 ? 1 : -1;
   gates.push(gate);
   recoveryGate = !gate.guardian && gate.sideOpening && !forceEasy;
   gateCount += 1;
@@ -949,7 +1004,7 @@ function update(delta) {
   const phase = updateJourney();
   if (state.runType === "campaign" && state.elapsed >= currentCampaignLevel().duration) {
     state.levelComplete = true;
-    beginAwakening();
+    if (state.practice) finishRun(); else beginAwakening();
     return;
   }
   tutorial = Math.max(0, tutorial - delta);
@@ -962,6 +1017,7 @@ function update(delta) {
   const worldScale = delta>0 ? worldTravel(delta,oldFever)/delta : 1;
   const previousPlayer = playerPoint();
   const previousAngle=player.angle;
+  updateForgiveness(); if (state.mode !== "run") return;
   updateFold(delta);
   const speedScale = foldSpeed();
   player.angle = normalize(player.angle + player.direction * orbitalTravel(state.elapsed-delta,delta) * speedScale);
@@ -992,6 +1048,7 @@ function update(delta) {
     hazard.angle = normalize(hazard.angle + hazard.speed * delta * worldScale);
     hazard.life -= delta;
     if (hazard.age>=.85 && hazard.life > 0.35 && angleDistance(player.angle, hazard.angle) < 0.135) {beginCrash("hazard");if(state.mode!=="run")return;}
+    else if (hazard.age>=.85 && hazard.life > 0.35 && !hazard.brushed && angleDistance(player.angle, hazard.angle) < 0.135 + .12) brushSpark(hazard);
   }
   hazards = hazards.filter((hazard) => hazard.life > 0);
 
@@ -1087,7 +1144,14 @@ function resolveGate(gate,crossingAngle=player.angle,crossingGap=gate.gap) {
   gate.resolved = true;
   const distance = angleDistance(crossingAngle, crossingGap);
   const clearance = gate.opening / 2 - 0.105 - distance;
-  if (clearance < 0) { beginCrash("gate"); return; }
+  if (clearance < 0) {
+    const movingAway = angleDistance(normalize(crossingAngle + player.direction * .01), crossingGap) > distance;
+    if (realInput && clearance > -.05 && movingAway && state.runType !== "tutorial" && !graceCrash) graceCrash = { deadline: performance.now() + 70 };
+    else beginCrash("gate");
+    return;
+  }
+  // Lost letter: an envelope sits in the gate's edge zone on one side; threading that edge collects it.
+  if (gate.letter && !gate.letterTaken && angleDistance(crossingAngle, normalize(crossingGap + gate.letter * (gate.opening / 2 - .175))) < .1) collectLetter(gate);
   if (state.runType === "tutorial") {
     if (gate.tutorialKind === "perfect" && clearance >= perfectWindow(gate)) { resetTutorialStep(); return; }
     advanceTutorial(); return;
@@ -1384,6 +1448,7 @@ function drawGates(time, palette) {
     drawGateDetails(gate, start, end, color, palette, time);
     if(gate.heat)drawHeatWarning(gate,palette);
     if(gate.generous) drawPerfectPetals(gate,palette);
+    if(gate.letter && !gate.letterTaken && !gate.resolved) drawLetter(gate.gap + gate.letter * (half - .175), gate.radius, palette, time);
     drawSideGuidance(gate,time,palette,alpha);
     for (const side of [-1, 1]) {
       const angle = gate.gap + side * half;
@@ -1625,6 +1690,16 @@ function drawLabels(palette) {
     ctx.fillStyle = palette.gold; ctx.fillText(text, 0, 0);
     ctx.restore();
   }
+  ctx.restore();
+}
+
+// A lost letter: a small folded envelope with a gold seal, bobbing in the gate's edge zone.
+function drawLetter(angle, radius, palette, time) {
+  ctx.save(); ctx.translate(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius); ctx.rotate(angle + Math.PI / 2 + Math.sin(time * 3) * .12); ctx.scale(1.3, 1.3);
+  ctx.fillStyle = palette.ink; ctx.fillRect(-8, -5, 18, 13);
+  ctx.fillStyle = palette.light; ctx.fillRect(-9, -6, 18, 12);
+  ctx.strokeStyle = palette.ink; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(-9, -6); ctx.lineTo(0, 1); ctx.lineTo(9, -6); ctx.stroke();
+  ctx.fillStyle = palette.gold; ctx.beginPath(); ctx.arc(0, 1, 2.6, 0, TAU); ctx.fill();
   ctx.restore();
 }
 
@@ -2139,7 +2214,7 @@ function frame(time) {
 }
 
 window.addEventListener("resize", resize);
-canvas.addEventListener("pointerdown", () => { if (awakening?.skippable) finishAwakening(); else { reverse(); pressHold(); } });
+canvas.addEventListener("pointerdown", () => { if (awakening?.skippable) finishAwakening(); else { tapInput(); pressHold(); } });
 for (const type of ["pointerup", "pointercancel", "blur"]) window.addEventListener(type, releaseHold);
 document.querySelector("#play").addEventListener("click", playFromHome);
 ui.chapterPlay.addEventListener("click", () => launchCampaignLevel(ui.chapterPlay.dataset.level, ui.chapterPlay));
@@ -2173,7 +2248,8 @@ window.addEventListener("keydown", (event) => {
   if(state.mode!=="run"&&event.target?.closest?.("button,input,select"))return;
   if (["Space", "ArrowLeft", "ArrowRight"].includes(event.code)) {
     event.preventDefault();
-    if (state.mode === "run") reverse();
+    if (state.mode === "run" && !ui.resumeOverlay.hidden) resumeRun();
+    else if (state.mode === "run") tapInput();
     else if (state.mode === "awakening" && awakening?.skippable) finishAwakening();
     else if (state.mode === "home") playFromHome();
     else if (state.mode === "campaign") openChapter();
@@ -2182,10 +2258,15 @@ window.addEventListener("keydown", (event) => {
   }
 });
 document.addEventListener("visibilitychange", () => {
-  state.paused = document.hidden;
-  if (document.hidden) audio?.suspend();
-  else { lastTime = performance.now(); if (!state.muted) audio?.resume(); }
+  // Coming back mid-run waits for a tap instead of resuming instantly into a gate.
+  if (document.hidden) { state.paused = true; holding = false; audio?.suspend(); }
+  else {
+    lastTime = performance.now(); if (!state.muted) audio?.resume();
+    if (state.mode === "run") ui.resumeOverlay.hidden = false; else state.paused = false;
+  }
 });
+ui.resumeButton.addEventListener("click", resumeRun);
+ui.practiceGuardian.addEventListener("click", () => startPractice(state.levelId));
 // Block page drag and pull-to-refresh, but let the Hangar plane grid and reward dots scroll.
 document.addEventListener("touchmove", (event) => { if (!event.target.closest?.(".rider-grid,.reward-choices")) event.preventDefault(); }, { passive: false });
 
