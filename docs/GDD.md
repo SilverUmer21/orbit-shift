@@ -33,6 +33,7 @@ A one-tap, portrait, hyper-casual orbit game: your paper glider circles a living
 | Reward every level | Loud, staged level-end: stars, near-miss line, one reward at a time, progress bar filling toward the next plane. |
 | Staged juice | Feedback in beats ~60–150 ms apart (spark → value → count-up → pulse). Never everything at once. |
 | Obvious next step | Maps are a path with the next level highlighted and one big PLAY. |
+| Game language everywhere | UI, animation and VFX reuse the game's own motifs: orbit rings and dashed orbits, paper folds and paper diamonds, the player's equipped ship and its trail, gold for stars/perfect. Menus should feel like the same world as a run. |
 | No ads | The game has no ads. Do not add ad-gated rewards unless the owner asks. |
 
 Sources: Homa Games "15 Golden Rules"; Voodoo design guide (GameAnalytics); Tap Nation hybrid-casual features; GameAnalytics meta mechanics; Game Developer (map formats, game juice); CrazyLabs level design; Etermax/G5 progress-bar rewards.
@@ -102,8 +103,8 @@ Design canvas (mockups and boards): https://claude.ai/artifact/DzV3n7kg777bLBkug
 | Screen | Status | Notes |
 |---|---|---|
 | Home | ✅ Built | Logo, best, live planet with equipped ship orbiting (game canvas), closest-goal chip, PLAY (next level) with Hangar (live ship icon + affordable badge) and Islands (detailed island). Top bar: folded gear, big star badge. |
-| Results | ✅ Built (results pass) | "LEVEL CLEAR!" curved on an arc (no level name above). Three folded paper stars, no captions, that pop in one by one with a sparkle burst, then float and twinkle. Score, best, near-miss line. Minimal next plane: "+15 STARS" on top, then plane · thin bar · count on one quiet line (no card). No goal-reward text list or "New biome awakened" (reward cards cover them). AGAIN with a bold folded back arrow (chapter) and Hangar showing the live equipped ship, same as Home. Content centred between the top and the buttons on tall phones. |
-| In-game HUD | ✅ Restyled | Score, flow, fever bar, counters. Play area untouched. |
+| Results | ✅ Built (results pass) | "LEVEL CLEAR!" curved on an arc (no level name above). Three folded paper stars, no captions, that pop in one by one with a sparkle burst, then float and twinkle. Score, best, near-miss line. Minimal next plane: "+15 STARS" on top, then plane · thin bar · count on one quiet line (no card). No goal-reward text list or "New biome awakened" (reward cards cover them). AGAIN with a bold folded back arrow (chapter) and Hangar showing the live equipped ship, same as Home. Content centred between the top and the buttons on tall phones. Beats: stars pop → score counts up and lands (0–0.8 s) → NEW ORBIT RECORD stamps in with a dashed orbit ripple → stars fly to the badge while a paper plane rides the next-plane bar; when affordable the bar shines, the text turns gold and a dashed orbit ring circles the Hangar button. |
+| In-game HUD | ✅ Restyled | Score, flow, fever bar, counters. Play area untouched except VFX: in-run labels (PERFECT, FEVER, FRAGMENT…) pop in like a stamped paper tag in Lilita One and drift up; PERFECT shows the streak ("PERFECT ×3"); every shockwave ring leaves a dashed orbit echo. |
 | Settings | ✅ Restyled | Paper switches, folded buttons. |
 | Tutorial panel | ✅ Restyled | |
 | Reward card | ✅ Built (Step 1) | Full-screen overlay, one card per reward: coral ribbon (NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!), counter dots, art drawn by game renderers, gold CLAIM, "Equip now" for trails/paints. After the last card, stars fly into the results star badge, which counts up; the next-plane bar fills from old to new total. Chapter clears keep the chapter stage art. |
@@ -174,6 +175,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | 2026-10-17 | No ads. Work order: Step 0 bugs → 1 reward card → 2 map → 3 Hangar. |
 | 2026-10-17 | Reward card approved: ribbons NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!, keep "Equip now" on trails and paints. |
 | 2026-10-17 | Step 2 approved: chapter levels labelled "Level N · Name" (option A); the big chapter planet removed from the levels screen (owner). |
+| 2026-10-18 | Animations approved (owner's top three): chapter unlock moment, results beats, PERFECT pop. Rule from owner: UI, animation and VFX must speak the game's language — orbit rings, paper folds and diamonds, the player's own ship and trail. |
 | 2026-10-17 | Results pass (owner): curved title kept as mocked, title only (no level name), stars without captions and animated, minimal next-plane line, bold folded back arrow (option 1), Hangar uses the live ship. Also check results at 390×760. |
 | 2026-10-17 | Levels page spacing: owner asked for more room and better text alignment; chose "Stepping stones" (A) over "Trail cards" (B). Mockups: `design/paper-night/previews/levels-spacing-options.png`. |
 
