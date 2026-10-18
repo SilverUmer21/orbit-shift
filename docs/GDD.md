@@ -139,7 +139,10 @@ Fixed B1, B2, B3, B7, B8 (section 9). No redesign.
 - Chapter screen: levels as dots on a path, next level highlighted, big PLAY for it.
 - Decided: "Level N · Name" with the global level number (option A). Chapter planet art removed from the level list.
 
-### Retention & ASO strategy  ← proposed, awaiting owner decisions
+### Direction 2 — story, gameplay depth, retention, Home  ← proposed, awaiting owner decisions
+`docs/DIRECTION-2.md` (2026-10-18). Owner opened gameplay to *additions* (core one-tap reverse stays), chose a **cozy & wondrous** story tone and **Google Play** as the launch target. Proposal: story "The Night Post" (Pip the paper-moth courier, Old Moon the sleepy postmaster); depth ideas (Brush sparks, Lost letters, hidden forgiveness, practice from the gatekeeper, tap lockout + pause; then Express fold in Ember, Paper comets in Void, Stargazing calm mode); retention told through the story; Home redesign with Ascension one tap from Home. Each mechanic still needs owner approval.
+
+### Retention & ASO strategy  ← proposed, merged into Direction 2
 Research and proposal in `docs/RETENTION-STRATEGY.md`. Proposed waves: Tonight's Sky (daily seeded orbit and share card), Night Lanterns (streak with Paper Moon freeze), daily three goals, install/offline; then Constellation Atlas and Home sky decorations (stars sink, designed with the Hangar); then ghost, one notification, seasonal skies; ASO plan for Google Play and the web portals.
 
 ### Step 3 — Hangar  ← next
