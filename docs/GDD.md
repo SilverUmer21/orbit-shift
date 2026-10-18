@@ -61,11 +61,20 @@ Sources: Homa Games "15 Golden Rules"; Voodoo design guide (GameAnalytics); Tap 
 - Releasing untucks it in about 0.1 s. Gate formation and timing rules are unchanged; only the player's angular speed scales, including in the exact gate-crossing calculation.
 - The hold starts only from real input (pointer or key down), never from `reverse()` itself, so the test autopilot behaves exactly as before.
 
+- **The small five** (2026-10-18, always on):
+  - **Brush sparks.** Passing within about 0.12 rad of a hazard without touching it gives +12×multiplier score, a "BRUSH" tag and sparks, once per hazard.
+  - **Lost letters.** Every 4th regular gate (not guardian, not paired) carries an envelope in its edge zone on a set side, so no extra randomness is used. Threading that edge (within 0.1 rad) collects it: +2 stars and a "LOST LETTER +2" tag. Counted in `state.runLetters`, ready for the Stamp Album.
+  - **Hidden forgiveness** (real touch or key input only, so the test autopilot is unchanged):
+    - A tap inside the 75 ms debounce is queued instead of dropped.
+    - A gate edge that clips the ship by under 0.05 rad, while it moves away from the gap, gives a 70 ms grace window. A tap inside it forgives the crash ("CLOSE CALL").
+  - **Practice from the gatekeeper.** After failing a guardian level past the guardian's start, results offer it. The run starts 2 s before the guardian with gate, fragment and hazard indices skipped ahead. It gives no stars, rewards or completion and ends on a "Practice" results screen.
+  - **Tap lockout and pause.** Results ignore taps for 0.45 s. Returning to the app mid-run shows a "Paused · Tap to continue" card (Space works too) instead of resuming instantly.
+
 **Current core (unchanged):**
 
 - Glider orbits the planet; **tap / Space / ←→ reverses direction**.
 - **Gates (paper rings)** close in from outside with a gap; you must be at the gap when they reach your orbit.
-- **Perfect**: pass near the gap centre. Golden-petal gates have a more forgiving perfect window.
+- **Perfect**: thread *close to the gap's edge* (clearance under the perfect window; the old GDD wrongly said "centre"). Golden-petal gates have a wider perfect window.
 - **Fever**: 5 perfects → 6 s at x5, hazards slowed 20%, grants the one **flow shield** per run.
 - **Fragments**: 6 per level, collect 3 for the fragment star; extras give bonus stars.
 - **Hazards**, **heat gates** (Ember: 75% → 125% speed), **paired gates**, **guardians** (Budkeeper, Solar Forge).

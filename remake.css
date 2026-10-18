@@ -597,3 +597,17 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   #bloomChapter .trail-reveal{animation:none;stroke-dashoffset:0}
   #bloomChapter .reveal-ship,#bloomChapter .igniting .level-node::before,#bloomChapter .igniting .level-node::after{display:none}
 }
+
+/* Small five: results ignore taps for a moment after a run ends; paused-run card; practice-from-the-gatekeeper link. */
+.results.lockout{pointer-events:none}
+.resume-overlay{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:rgba(8,21,28,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.resume-overlay[hidden]{display:none}
+.resume-overlay button{display:grid;justify-items:center;gap:6px;min-width:200px;padding:22px 28px 24px;border:0;border-radius:24px;background:linear-gradient(100deg,#FFF6E2 0 56%,#F6EACB 56% 100%);box-shadow:inset 0 2px 0 rgba(255,255,255,.7),0 6px 0 #C9B48C,0 16px 30px rgba(0,0,0,.35);color:var(--night-800);animation:resumeIn .35s cubic-bezier(.3,1.6,.5,1) both}
+.resume-overlay b{font:400 30px/1 var(--display);letter-spacing:1px;text-transform:uppercase}
+.resume-overlay span{color:var(--mint-700);font:900 13px/1 var(--ui);letter-spacing:1.5px;text-transform:uppercase;animation:resumeBlink 1.4s ease-in-out infinite}
+@keyframes resumeIn{from{opacity:0;transform:scale(.8) rotate(-4deg)}to{opacity:1;transform:none}}
+@keyframes resumeBlink{50%{opacity:.45}}
+.practice-button{min-height:0;padding:8px 14px;border:2px dashed rgba(255,201,77,.6);border-radius:999px;background:transparent;box-shadow:none;color:var(--gold);font:900 12px/1 var(--ui);letter-spacing:1px;text-transform:uppercase}
+.practice-button[hidden]{display:none}
+.practice-button:active{transform:translateY(2px)}
+@media (prefers-reduced-motion:reduce){.resume-overlay button,.resume-overlay span{animation:none}}
