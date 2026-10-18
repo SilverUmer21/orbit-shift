@@ -26,7 +26,7 @@ A one-tap, portrait, hyper-casual orbit game: your paper glider circles a living
 ## 2. Working agreement
 
 1. **Plan → mockup → owner approves → build → test at 390 and 320 → screenshot → commit and push.** One step at a time.
-2. **Never change gameplay** (movement, tap-to-reverse, collisions, timing, scoring, fever, shield) or **how rings/gates form and draw**.
+2. **Gameplay changes only as owner-approved additions** (section 4). Unapproved changes to movement, tap-to-reverse, collisions, timing, scoring, fever, shield and **how rings/gates form and draw** stay forbidden. Approved mechanics ship behind a flag until the owner has played them.
 3. **Do not change the planets** (game's `bloom-crown` / `ember-furnace` renderers) or the **planes/ship art** (`drawGlider`) without explicit approval. A plane redesign is deferred.
 4. Keep every DOM id that `game.js` uses. Do not weaken or edit tests to make a change pass.
 5. Ask the owner when a choice is theirs; report bugs found and fix them inside the current step.
@@ -47,7 +47,16 @@ A one-tap, portrait, hyper-casual orbit game: your paper glider circles a living
 
 Sources: Homa Games "15 Golden Rules"; Voodoo design guide (GameAnalytics); Tap Nation hybrid-casual features; GameAnalytics meta mechanics; Game Developer (map formats, game juice); CrazyLabs level design; Etermax/G5 progress-bar rewards.
 
-## 4. Core gameplay (locked — do not change)
+## 4. Core gameplay
+
+**2026-10-18:** the owner opened gameplay to *additions*. The one-tap instant reverse stays the core. New mechanics are approved one by one and ship behind a flag until the owner has played them. Anything not listed as approved below stays locked.
+
+**Approved to prototype (Direction 2):**
+- **Express fold.** Hold for speed; the owner calls it "the biggest great change".
+- **The small five.** Brush sparks, Lost letters, hidden tap forgiveness, practice from the gatekeeper, and a tap lockout plus pause after interruptions.
+- **Paper comets.**
+
+**Current core (unchanged):**
 
 - Glider orbits the planet; **tap / Space / ←→ reverses direction**.
 - **Gates (paper rings)** close in from outside with a gap; you must be at the gap when they reach your orbit.
@@ -72,6 +81,38 @@ Sources: Homa Games "15 Golden Rules"; Voodoo design guide (GameAnalytics); Tap 
 | Void | Eclipse Eye | — | deferred |
 
 Each level has 3 stars: **finish**, **3 fragments**, **perfect target**. 24 stars total. Completing a level unlocks the next; finishing Crown of Petals unlocks Ember.
+
+## 4b. Story bible — The Night Post (approved 2026-10-18)
+
+**Logline:** *Every star is a letter that never arrived. Fly them home.*
+
+**Tone:** cozy & wondrous. No villain, no grim stakes. The world misses its messages.
+
+**Characters:**
+- **Pip.** A tiny paper-moth courier with an envelope satchel. Pip flies the glider, and the glider *is* a folded letter, so the ship art is unchanged.
+- **Old Moon.** The sky's postmaster, a crescent in a nightcap. He dozed off with the dark paper curtain drawn (the "Eclipse"), so the night mail stopped and the islands curled up waiting.
+- **Islanders.** Petal-folk (Bloom), match-folk (Ember), lost letters (Void). They appear on the map as you restore them.
+
+**Mechanics in story terms:**
+
+| Mechanic | Story term |
+|---|---|
+| Gates | Letter slots |
+| Perfect | Gold postmark |
+| 3 fragments | A stamp |
+| Fever | Express Post |
+| Hold (Express fold) | Pip tucks the letter tight for speed |
+| Guardians | Gatekeepers who hoarded the mail and are calmed, not beaten |
+| Clearing an island | Delivering its letter. The island unfolds, windows light up, and a gold thread joins two stars on the map. |
+
+**Telling:** wordless, no more than 5 s per beat. A wax seal on the results screen, postcards as reward cards, one line of chapter text, islanders appearing on the map, and one-line letters from islanders arriving with rewards.
+
+**Chapters:**
+- **Bloom.** The dropped mailbag, then mailbox flags, then letters in vines. The Budkeeper blooms and hands over Ember's letter.
+- **Ember.** A cold wax furnace, then the match-folk, then a thank-you postcard from Bloom. The Solar Forge reveals a letter addressed *"To Moon."*
+- **Void.** Moon's curtain, then lost letters drifting, then a near-silent level, then Moonrise: Moon wakes and the nightly mail begins (this opens the daily live game).
+
+**Retention forms:** Tonight's Letter (a daily shared delivery plus a postcard share card), mailbox flags / lanterns as the streak with a weekly Paper Moon freeze, Tonight's rounds (three daily goals), the Stamp Album (collection), decorating Pip's post office / Home sky (a place to spend stars), and letters from islanders (lore drip).
 
 ## 5. Meta and economy (current numbers)
 
@@ -190,6 +231,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | 2026-10-17 | No ads. Work order: Step 0 bugs → 1 reward card → 2 map → 3 Hangar. |
 | 2026-10-17 | Reward card approved: ribbons NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!, keep "Equip now" on trails and paints. |
 | 2026-10-17 | Step 2 approved: chapter levels labelled "Level N · Name" (option A); the big chapter planet removed from the levels screen (owner). |
+| 2026-10-18 | Direction 2 approved: story **The Night Post**; prototype Express fold (hold for speed, the owner's top pick), the small five and Paper comets; Home redesign to be mocked (Ascension one tap from Home). Launch target Google Play via Capacitor (APK for testing, AAB for the store). |
 | 2026-10-18 | Animations approved (owner's top three): chapter unlock moment, results beats, PERFECT pop. Owner clarified the next day: "game language" means designing from theme, art style and genre as a game/UI/UX designer, with research first, not reusing existing assets (rule at the top of this GDD). |
 | 2026-10-17 | Results pass (owner): curved title kept as mocked, title only (no level name), stars without captions and animated, minimal next-plane line, bold folded back arrow (option 1), Hangar uses the live ship. Also check results at 390×760. |
 | 2026-10-17 | Levels page spacing: owner asked for more room and better text alignment; chose "Stepping stones" (A) over "Trail cards" (B). Mockups: `design/paper-night/previews/levels-spacing-options.png`. |
