@@ -25,7 +25,7 @@ const ui = {
   rewardCount: document.querySelector("#rewardCount"), rewardBonus: document.querySelector("#rewardBonus"), rewardCard: document.querySelector("#rewardCard"), equipReward: document.querySelector("#equipReward"),
   resultStarChip: document.querySelector("#resultStarChip"), resultStarTotal: document.querySelector("#resultStarTotal"),
   mapNext: document.querySelector("#mapNext"), ascensionBest: document.querySelector("#ascensionBest"), chapterPlay: document.querySelector("#chapterPlay"), chapterPlayLevel: document.querySelector("#chapterPlayLevel"),
-  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), nearMiss: document.querySelector("#nearMiss"),
+  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), nearMiss: document.querySelector("#nearMiss"),
   nextPlane: document.querySelector("#nextPlane"), nextPlaneArt: document.querySelector("#nextPlaneArt"), nextPlaneName: document.querySelector("#nextPlaneName"), nextPlaneBar: document.querySelector("#nextPlaneBar"), nextPlaneCount: document.querySelector("#nextPlaneCount"),
   bloomLevels: document.querySelector("#bloomLevels"), bloomStory: document.querySelector("#bloomStory"), bloomChapterArt: document.querySelector("#bloomChapterArt"),
 };
@@ -123,7 +123,7 @@ const state = {
   goals: initialGoals, goalCycle, goalsCompleted: Number(saved.goalsCompleted) || 0,
   unlockedTrails: saved.unlockedTrails || ["paper"], selectedTrail: saved.selectedTrail || "paper", relics: saved.relics || [],
   stats: initialStats,
-  muted: Boolean(saved.muted), haptics: saved.haptics !== false, reducedEffects: Boolean(saved.reducedEffects),
+  muted: Boolean(saved.muted), haptics: saved.haptics !== false, reducedEffects: Boolean(saved.reducedEffects), expressFold: saved.expressFold !== false,
   tutorialSeen: Boolean(saved.tutorialSeen), elapsed: 0, paused: false,
   runType: "endless", levelId: null, levelComplete: false, runFragments: 0, chapter: "bloom",
   campaign: initialCampaign,
@@ -135,7 +135,11 @@ let cx = 0;
 let cy = 0;
 let planetRadius = 0;
 let orbitRadius = 0;
-let player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0 };
+let player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0, fold: 0 };
+// Express fold (beta): the tap still reverses on press; keeping the finger down tucks the glider for extra orbit speed.
+const FOLD_BOOST = .3, FOLD_HOLD = .14;
+let holdStart = 0, holding = false;
+function foldSpeed() { return 1 + FOLD_BOOST * player.fold; }
 let gates = [];
 let hazards = [];
 let fragments = [];
@@ -190,7 +194,7 @@ function save() {
     selected: state.selected, stars: state.stars, ownedRiders: state.ownedRiders, selectedRider: state.selectedRider,
     goals: state.goals, goalCycle: state.goalCycle, goalsCompleted: state.goalsCompleted,
     unlockedTrails: state.unlockedTrails, selectedTrail: state.selectedTrail, relics: state.relics, stats: state.stats,
-    muted: state.muted, haptics: state.haptics, reducedEffects: state.reducedEffects, tutorialSeen: state.tutorialSeen,
+    muted: state.muted, haptics: state.haptics, reducedEffects: state.reducedEffects, expressFold: state.expressFold, tutorialSeen: state.tutorialSeen,
     campaign: state.campaign,
   })); } catch {}
 }
@@ -231,6 +235,7 @@ function startRun(runType = "endless", levelId = null) {
   state.runType = runType;
   state.levelId = levelId;
   state.levelComplete = false;
+  holding = false;
   state.runFragments = 0;
   state.score = 0;
   state.multiplier = 1;
@@ -254,7 +259,7 @@ function startRun(runType = "endless", levelId = null) {
   state.runRewards = [];
   if (runType !== "tutorial") state.stats.runs += 1;
   state.paused = false;
-  player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0 };
+  player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0, fold: 0 };
   gates = [];
   hazards = [];
   fragments = [];
@@ -328,7 +333,7 @@ function advanceTutorial() {
 
 function resetTutorialStep() {
   if (!tutorialSession) return;
-  player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0 };
+  player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0, fold: 0 };
   setupTutorialStep(); labels.push({ text: "TRY AGAIN", life: .8, max: .8, y: cy - orbitRadius - 28 });
 }
 
@@ -750,6 +755,16 @@ function updateGoals(kind, amount, absolute = false) {
   }
 }
 
+function updateFold(delta) {
+  const tucked = state.expressFold && holding && state.mode === "run" && performance.now() - holdStart >= FOLD_HOLD * 1000;
+  const before = player.fold;
+  player.fold = tucked ? Math.min(1, player.fold + delta * 7) : Math.max(0, player.fold - delta * 9);
+  if (before === 0 && player.fold > 0) { beep(170, .09, "sine"); vibrate(4); }
+  if (player.fold > 0) state.score += delta * 6 * player.fold;
+}
+function pressHold() { if (state.mode === "run") { holdStart = performance.now(); holding = true; } }
+function releaseHold() { holding = false; }
+
 function orbitalTravel(elapsed,duration) {
   const primitive=t=>{const capped=Math.min(t,(2.45-1.66)/.009);return 1.66*capped+.0045*capped*capped+2.45*(t-capped);};
   return primitive(elapsed+duration)-primitive(elapsed);
@@ -947,11 +962,13 @@ function update(delta) {
   const worldScale = delta>0 ? worldTravel(delta,oldFever)/delta : 1;
   const previousPlayer = playerPoint();
   const previousAngle=player.angle;
-  player.angle = normalize(player.angle + player.direction * orbitalTravel(state.elapsed-delta,delta));
+  updateFold(delta);
+  const speedScale = foldSpeed();
+  player.angle = normalize(player.angle + player.direction * orbitalTravel(state.elapsed-delta,delta) * speedScale);
   player.flip = Math.max(0, player.flip - delta * 7);
   player.glow = Math.max(0, player.glow - delta * 2.8);
   trail.unshift({ ...playerPoint(), life: 1 });
-  trail = trail.slice(0, state.fever > 0 ? 26 : 14);
+  trail = trail.slice(0, state.fever > 0 ? 26 : player.fold > .3 ? 22 : 14);
   for (const point of trail) point.life -= delta * 1.9;
 
   for (const gate of gates) {
@@ -964,7 +981,7 @@ function update(delta) {
     gate.gap = normalize(gate.gap + gate.rotation * delta * worldScale);
     if (!gate.resolved && gate.previousRadius > orbitRadius && gate.radius <= orbitRadius) {
       const travel=gateTravelTime(gate,gate.previousRadius-orbitRadius,ageBefore),crossing=crossingTime(travel,oldFever);
-      resolveGate(gate,normalize(previousAngle+player.direction*orbitalTravel(state.elapsed-delta,crossing)),normalize(gapBefore+gate.rotation*travel));
+      resolveGate(gate,normalize(previousAngle+player.direction*orbitalTravel(state.elapsed-delta,crossing)*speedScale),normalize(gapBefore+gate.rotation*travel));
       if(state.mode!=="run")return;
     }
   }
@@ -1550,7 +1567,8 @@ function drawPlayer(time, palette) {
   ctx.save();
   ctx.translate(point.x, point.y);
   ctx.rotate(player.angle + player.direction * Math.PI / 2 + player.flip * player.direction * 0.18);
-  ctx.scale(scale, scale);
+  ctx.scale(scale * (1 + player.fold * .08), scale * (1 - player.fold * .3));
+  if (player.fold > .05) drawFoldStreaks(palette);
   drawGlider(ctx, currentRider(), palette, 1, time, player.flip, state.fever > 0, player.glow);
   ctx.restore();
 }
@@ -1606,6 +1624,18 @@ function drawLabels(palette) {
     ctx.fillStyle = palette.ink; ctx.fillText(text, 2, 3);
     ctx.fillStyle = palette.gold; ctx.fillText(text, 0, 0);
     ctx.restore();
+  }
+  ctx.restore();
+}
+
+// Paper streaks peel off the tucked glider's wings (glider space: nose points +x).
+function drawFoldStreaks(palette) {
+  ctx.save(); ctx.globalAlpha = .55 * player.fold; ctx.fillStyle = palette.light;
+  const t = performance.now() / 90;
+  for (let i = 0; i < 4; i += 1) {
+    const y = (i - 1.5) * 9, phase = (t + i * .37) % 1, x = -26 - phase * 34, length = 16 + (i % 2) * 8;
+    ctx.globalAlpha = .55 * player.fold * (1 - phase);
+    ctx.beginPath(); ctx.moveTo(x, y - 1.2); ctx.lineTo(x - length, y); ctx.lineTo(x, y + 1.2); ctx.closePath(); ctx.fill();
   }
   ctx.restore();
 }
@@ -1914,6 +1944,7 @@ function updateHome() {
   ui.sound.checked = !state.muted;
   ui.haptics.checked = state.haptics;
   ui.effects.checked = state.reducedEffects;
+  ui.fold.checked = state.expressFold;
   renderGoals();
 }
 
@@ -2108,7 +2139,8 @@ function frame(time) {
 }
 
 window.addEventListener("resize", resize);
-canvas.addEventListener("pointerdown", () => awakening?.skippable ? finishAwakening() : reverse());
+canvas.addEventListener("pointerdown", () => { if (awakening?.skippable) finishAwakening(); else { reverse(); pressHold(); } });
+for (const type of ["pointerup", "pointercancel", "blur"]) window.addEventListener(type, releaseHold);
 document.querySelector("#play").addEventListener("click", playFromHome);
 ui.chapterPlay.addEventListener("click", () => launchCampaignLevel(ui.chapterPlay.dataset.level, ui.chapterPlay));
 document.querySelector("#openIslands").addEventListener("click", () => showScreen("campaign"));
@@ -2124,6 +2156,7 @@ for (const button of document.querySelectorAll("[data-campaign]")) button.addEve
 ui.sound.addEventListener("change", () => { state.muted = !ui.sound.checked; save(); });
 ui.haptics.addEventListener("change", () => { state.haptics = ui.haptics.checked; save(); vibrate(15); });
 ui.effects.addEventListener("change", () => { state.reducedEffects = ui.effects.checked; save(); });
+ui.fold.addEventListener("change", () => { state.expressFold = ui.fold.checked; save(); });
 ui.replayTutorial.addEventListener("click", startTutorial);
 ui.skipTutorial.addEventListener("click", skipTutorial);
 ui.continueRewards.addEventListener("click", claimReward);
@@ -2136,6 +2169,7 @@ ui.copyReport.addEventListener("click", async () => {
 });
 window.addEventListener("keydown", (event) => {
   if (event.repeat) return;
+  if (state.mode === "run" && ["Space", "ArrowLeft", "ArrowRight"].includes(event.code)) { pressHold(); window.addEventListener("keyup", releaseHold, { once: true }); }
   if(state.mode!=="run"&&event.target?.closest?.("button,input,select"))return;
   if (["Space", "ArrowLeft", "ArrowRight"].includes(event.code)) {
     event.preventDefault();
