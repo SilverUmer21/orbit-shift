@@ -142,6 +142,9 @@ let holdStart = 0, holding = false;
 function foldSpeed() { return 1 + FOLD_BOOST * player.fold; }
 let gates = [];
 let hazards = [];
+// Paper comets (beta): a folded star that crosses the orbit on a straight line, shown as a dotted warning first.
+let comets = [], nextComet = 0;
+const COMET_WARN = 1.1, COMET_TRAVEL = .9, COMET_SPEED = 430;
 let fragments = [];
 let particles = [];
 let rings = [];
@@ -262,6 +265,7 @@ function startRun(runType = "endless", levelId = null) {
   player = { angle: -Math.PI / 2, direction: 1, flip: 0, glow: 0, fold: 0 };
   gates = [];
   hazards = [];
+  comets = []; nextComet = 4;
   fragments = [];
   particles = [];
   rings = [];
@@ -374,7 +378,7 @@ function beginCrash(cause = "gate") {
     state.feverCharge = 0;
     state.multiplier = state.fever>0 ? 5 : 1;
     gates = gates.filter((gate) => gate.resolved || gate.radius > orbitRadius + 42);
-    hazards = [];
+    hazards = []; comets = [];
     flash = .75; shake = state.reducedEffects ? 2 : 8;
     rings.push({ radius: orbitRadius, life: .8, max: .8, color: currentCosmetic().gold, speed: 120 });
     labels.push({ text: "SHIELD", life: 1, max: 1, y: cy - orbitRadius - 28 });
@@ -758,7 +762,7 @@ function updateJourney(force = false) {
     state.stats.acts[act] = (state.stats.acts[act] || 0) + 1;
     updateGoals("act", state.runActMax, true);
   }
-  if (phase.transition) { gates = []; hazards = []; nextGate = phase.end - state.elapsed + .2; }
+  if (phase.transition) { gates = []; hazards = []; comets = []; nextGate = phase.end - state.elapsed + .2; }
   else nextGate = .15;
   ui.actLabel.textContent = phase.name;
   ui.actLabel.classList.remove("show");
@@ -964,6 +968,44 @@ function spawnFragment() {
   return true;
 }
 
+// Comets aim at where the ship will be when they arrive (give or take), so the player must reverse or tuck to dodge.
+// Only for real input, so the deterministic test autopilot never meets one; never right before a gate arrives.
+function cometsActive(phase) { return realInput && state.runType === "endless" && (state.elapsed >= 25 || ["void", "eclipse", "ascension"].includes(phase.id)); }
+function spawnComet() {
+  if (gates.some((gate) => !gate.resolved && (gate.radius - orbitRadius) / gate.speed < 2.6)) return false;
+  const arrive = COMET_WARN + COMET_TRAVEL;
+  const predicted = normalize(player.angle + player.direction * orbitalTravel(state.elapsed, arrive) * foldSpeed());
+  const cross = normalize(predicted + (Math.random() - .5) * .35);
+  // Headed at the planet (a small slant), so the comet crosses the orbit exactly once and then bursts on the planet.
+  const heading = cross + Math.PI + (Math.random() < .5 ? -1 : 1) * (.1 + Math.random() * .25);
+  comets.push({ cross, dx: Math.cos(heading), dy: Math.sin(heading), clock: 0, brushed: false, spin: Math.random() * TAU });
+  return true;
+}
+function cometPoint(comet) {
+  const along = (comet.clock - COMET_WARN - COMET_TRAVEL) * COMET_SPEED;
+  return { x: cx + Math.cos(comet.cross) * orbitRadius + comet.dx * along, y: cy + Math.sin(comet.cross) * orbitRadius + comet.dy * along };
+}
+function updateComets(delta, worldScale, phase) {
+  if (cometsActive(phase)) {
+    nextComet -= delta;
+    if (nextComet <= 0) nextComet = spawnComet() ? (["void", "eclipse", "ascension"].includes(phase.id) ? 5.5 : 8.5) + Math.random() * 2.5 : .5;
+  }
+  const ship = playerPoint();
+  for (const comet of comets) {
+    comet.clock += delta * worldScale; comet.spin += delta * 6;
+    if (comet.clock < COMET_WARN) continue;
+    const point = cometPoint(comet), distance = Math.hypot(point.x - ship.x, point.y - ship.y);
+    if (Math.hypot(point.x - cx, point.y - cy) < planetRadius * .9) { comet.done = true; burst(point, currentCosmetic().gold, 16, 160, "paper"); continue; }
+    if (distance < 19) { beginCrash("hazard"); if (state.mode !== "run") return; }
+    else if (distance < 48 && !comet.brushed) {
+      comet.brushed = true; state.score += 15 * state.multiplier;
+      labels.push({ text: "TAIL SPARK", life: .7, max: .7, y: cy - orbitRadius - 28 });
+      burst(ship, currentCosmetic().gold, 10, 140, "paper"); beep(1320, .05, "triangle");
+    }
+  }
+  comets = comets.filter((comet) => !comet.done && comet.clock < COMET_WARN + COMET_TRAVEL + 1.4);
+}
+
 function spawnHazard() {
   const gateSoon = gates.some((gate) => !gate.resolved && (gate.radius - orbitRadius) / gate.speed < 2.2);
   if (gateSoon) return false;
@@ -1051,6 +1093,7 @@ function update(delta) {
     else if (hazard.age>=.85 && hazard.life > 0.35 && !hazard.brushed && angleDistance(player.angle, hazard.angle) < 0.135 + .12) brushSpark(hazard);
   }
   hazards = hazards.filter((hazard) => hazard.life > 0);
+  updateComets(delta, worldScale, phase); if (state.mode !== "run") return;
 
   updateFragments(delta,worldScale,previousPlayer);
   updateSpawns(delta,phase);
@@ -1238,6 +1281,7 @@ function draw() {
   drawAwakening(time, palette);
   drawOrbit(time, palette);
   drawHazards(time, palette);
+  drawComets(time, palette);
   drawTrail(palette);
   if (state.mode !== "crash" && state.mode !== "results") drawPlayer(time, palette);
   drawParticles();
@@ -1691,6 +1735,41 @@ function drawLabels(palette) {
     ctx.restore();
   }
   ctx.restore();
+}
+
+// Comet warning: a dotted line along the whole path and a pulsing ring where it crosses the orbit; then a folded paper
+// star with three ribbon tails flies the line.
+function drawComets(time, palette) {
+  for (const comet of comets) {
+    const ox = cx + Math.cos(comet.cross) * orbitRadius, oy = cy + Math.sin(comet.cross) * orbitRadius;
+    const warn = Math.min(1, comet.clock / COMET_WARN), flying = comet.clock >= COMET_WARN;
+    ctx.save();
+    ctx.globalAlpha = flying ? .3 : .5 + .4 * Math.abs(Math.sin(time * 9));
+    ctx.strokeStyle = palette.gold; ctx.lineWidth = 3; ctx.setLineDash([3, 9]); ctx.lineCap = "round";
+    const toPlanet = Math.max(0, orbitRadius - planetRadius) / Math.max(.3, -(comet.dx * Math.cos(comet.cross) + comet.dy * Math.sin(comet.cross)));
+    ctx.beginPath(); ctx.moveTo(ox - comet.dx * 700, oy - comet.dy * 700); ctx.lineTo(ox + comet.dx * toPlanet, oy + comet.dy * toPlanet); ctx.stroke();
+    ctx.setLineDash([]);
+    if (!flying) { ctx.globalAlpha = .9; ctx.strokeStyle = palette.gold; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.arc(ox, oy, 32 - warn * 14, 0, TAU); ctx.stroke(); }
+    if (flying) {
+      const point = cometPoint(comet), angle = Math.atan2(comet.dy, comet.dx);
+      ctx.globalAlpha = 1; ctx.translate(point.x, point.y); ctx.rotate(angle);
+      for (let i = 0; i < 3; i += 1) {
+        ctx.globalAlpha = .7 - i * .18; ctx.fillStyle = i === 1 ? palette.gold : palette.paper;
+        const y = (i - 1) * 6, wave = Math.sin(time * 14 + i) * 3;
+        ctx.beginPath(); ctx.moveTo(-6, y - 2); ctx.quadraticCurveTo(-30, y + wave, -58 - i * 8, y); ctx.quadraticCurveTo(-30, y + wave + 2, -6, y + 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1; ctx.rotate(comet.spin);
+      ctx.fillStyle = palette.ink; drawStarShape(2, 3, 13);
+      ctx.fillStyle = palette.gold; drawStarShape(0, 0, 13);
+      ctx.fillStyle = palette.light; drawStarShape(0, 0, 5);
+    }
+    ctx.restore();
+  }
+}
+function drawStarShape(x, y, r) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i += 1) { const a = -Math.PI / 2 + i * Math.PI / 5, radius = i % 2 ? r * .45 : r; ctx.lineTo(x + Math.cos(a) * radius, y + Math.sin(a) * radius); }
+  ctx.closePath(); ctx.fill();
 }
 
 // A lost letter: a small folded envelope with a gold seal, bobbing in the gate's edge zone.
