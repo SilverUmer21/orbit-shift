@@ -25,7 +25,7 @@ const ui = {
   rewardCount: document.querySelector("#rewardCount"), rewardBonus: document.querySelector("#rewardBonus"), rewardCard: document.querySelector("#rewardCard"), equipReward: document.querySelector("#equipReward"),
   resultStarChip: document.querySelector("#resultStarChip"), resultStarTotal: document.querySelector("#resultStarTotal"),
   mapNext: document.querySelector("#mapNext"), ascensionBest: document.querySelector("#ascensionBest"), chapterPlay: document.querySelector("#chapterPlay"), chapterPlayLevel: document.querySelector("#chapterPlayLevel"),
-  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), openMail: document.querySelector("#openMail"), mailBadge: document.querySelector("#mailBadge"), lanterns: document.querySelector("#lanterns"),
+  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), extras: document.querySelector("#extrasToggle"), mailTabs: document.querySelector("#mailTabs"), cardBadge: document.querySelector("#cardBadge"), postcard: document.querySelector("#postcard"), cardStrip: document.querySelector("#cardStrip"), albumIsles: document.querySelector("#albumIsles"), albumPage: document.querySelector("#albumPage"), parcelOverlay: document.querySelector("#parcelOverlay"), parcelBox: document.querySelector("#parcelBox"), parcelGifts: document.querySelector("#parcelGifts"), parcelCollect: document.querySelector("#parcelCollect"), openMail: document.querySelector("#openMail"), mailBadge: document.querySelector("#mailBadge"), lanterns: document.querySelector("#lanterns"),
   pip: document.querySelector("#pip"), homeAscension: document.querySelector("#homeAscension"), mailbag: document.querySelector("#mailbag"), letterNight: document.querySelector("#letterNight"),
   letterCard: document.querySelector("#letterCard"), letterTitle: document.querySelector("#letterTitle"), letterScore: document.querySelector("#letterScore"), flyLetter: document.querySelector("#flyLetter"),
   shareLetter: document.querySelector("#shareLetter"), shareLetterMail: document.querySelector("#shareLetterMail"), practiceGuardian: document.querySelector("#practiceGuardian"), resumeOverlay: document.querySelector("#resumeOverlay"), resumeButton: document.querySelector("#resumeButton"), nearMiss: document.querySelector("#nearMiss"),
@@ -39,6 +39,7 @@ const cosmetics = [
   { id: "bloom", name: "Bloom", score: 0, bg: "#08191d", ink: "#12343a", paper: "#4fae91", mid: "#77d5aa", light: "#e6e3b3", accent: "#ef6e67", gold: "#edca62", shape: "leaf" },
   { id: "ember", name: "Ember", score: 250, bg: "#1b1118", ink: "#4b2632", paper: "#ba4f4c", mid: "#e7795f", light: "#f2d8a0", accent: "#62c6b4", gold: "#f1bd4e", shape: "flame" },
   { id: "void", name: "Void", score: 700, bg: "#0e1020", ink: "#25274d", paper: "#5753a6", mid: "#8b76c7", light: "#d9d1df", accent: "#76d9c1", gold: "#e4bd5d", shape: "moon" },
+  { id: "wax", name: "Wax seal", score: null, album: "ember", bg: "#1a1013", ink: "#45202a", paper: "#b8433f", mid: "#e0645a", light: "#f6e4c4", accent: "#ffcf6b", gold: "#ffdf8a", shape: "leaf" },
 ];
 const riders = [
   { id: "manta", name: "Manta", price: 0, shape: "manta" },
@@ -126,7 +127,7 @@ const state = {
   goals: initialGoals, goalCycle, goalsCompleted: Number(saved.goalsCompleted) || 0,
   unlockedTrails: saved.unlockedTrails || ["paper"], selectedTrail: saved.selectedTrail || "paper", relics: saved.relics || [],
   stats: initialStats,
-  daily: saved.daily || null, muted: Boolean(saved.muted), haptics: saved.haptics !== false, reducedEffects: Boolean(saved.reducedEffects), expressFold: saved.expressFold !== false,
+  daily: saved.daily || null, muted: Boolean(saved.muted), haptics: saved.haptics !== false, reducedEffects: Boolean(saved.reducedEffects), expressFold: saved.expressFold !== false, nightPostExtras: saved.nightPostExtras !== false,
   tutorialSeen: Boolean(saved.tutorialSeen), elapsed: 0, paused: false,
   runType: "endless", levelId: null, levelComplete: false, runFragments: 0, chapter: "bloom",
   campaign: initialCampaign,
@@ -201,7 +202,7 @@ function save() {
     goals: state.goals, goalCycle: state.goalCycle, goalsCompleted: state.goalsCompleted,
     unlockedTrails: state.unlockedTrails, selectedTrail: state.selectedTrail, relics: state.relics, stats: state.stats,
     muted: state.muted, haptics: state.haptics, reducedEffects: state.reducedEffects, expressFold: state.expressFold, tutorialSeen: state.tutorialSeen,
-    campaign: state.campaign, daily: state.daily,
+    campaign: state.campaign, daily: state.daily, nightPostExtras: state.nightPostExtras, post: state.post,
   })); } catch {}
 }
 
@@ -446,9 +447,10 @@ function finishRun() {
     }
   }
   if (state.dailyRun) finishDaily();
+  postRun(firstCampaignClear ? state.levelId : null);
   state.stars += state.runStars;
   for (const cosmetic of cosmetics) {
-    if (state.best >= cosmetic.score && !state.unlocked.includes(cosmetic.id)) { state.unlocked.push(cosmetic.id); state.runRewards.push({ type: "biome", id: cosmetic.id, label: `${cosmetic.name} palette` }); }
+    if (cosmetic.score != null && state.best >= cosmetic.score && !state.unlocked.includes(cosmetic.id)) { state.unlocked.push(cosmetic.id); state.runRewards.push({ type: "biome", id: cosmetic.id, label: `${cosmetic.name} palette` }); }
   }
   save();
   ui.resultScore.textContent = Math.floor(state.score);
@@ -579,7 +581,7 @@ function renderRewardSeal(index = 0) {
   drawRewardPreview();
 }
 
-const trailWords = { paper: "paper diamonds", pollen: "glowing pollen", spark: "bright sparks", ribbon: "paper ribbons", echo: "echo rings", crown: "crown gems", "bloom-wake": "petals" };
+const trailWords = { paper: "paper diamonds", pollen: "glowing pollen", spark: "bright sparks", ribbon: "paper ribbons", echo: "echo rings", crown: "crown gems", "bloom-wake": "petals", "pressed-petal": "pressed petals" };
 function rewardCopy(reward) {
   const name = rewardDisplayName(reward).replace(/^[^:]+:\s*/, "");
   if (reward.type === "trail") return { ribbon: "New trail!", type: "Trail", title: name.replace(/-/g, " "), desc: `Your glider leaves a trail of ${trailWords[reward.id] || "paper"}.` };
@@ -689,6 +691,8 @@ function drawRewardPreview() {
 function drawRewardMark(target,reward,palette,time) {
   if (reward.type === "trail") {
     for(let i=0;i<12;i++){target.globalAlpha=1-i/12;target.fillStyle=i%2?palette.accent:palette.gold;drawTrailPiece(target,reward.id,48-i*9,Math.sin(i*.3-time)*8,5,0,i);}
+  } else if (reward.type === "biome" && reward.id === "wax") {
+    target.save(); target.rotate(-.35); drawGlider(target,currentRider(),cosmetics.find(item=>item.id==="wax"),1.1,time,0,false,0); target.restore();
   } else if (reward.type === "biome") {
     OrbitArt.drawLivingPlanet(target,reward.id==="ember"?"ember-furnace":"bloom-crown",{x:0,y:0,radius:30,paletteId:reward.id,time,reduced:state.reducedEffects});
   } else if (reward.type === "clear") {
@@ -1666,7 +1670,8 @@ function drawTrail(palette) {
 function drawTrailPiece(target,id,x,y,size,angle,index) {
   target.save();target.translate(x,y);
   const diamond=(s,rotation)=>{target.save();target.rotate(rotation);target.beginPath();target.moveTo(0,-s);target.lineTo(s*.72,0);target.lineTo(0,s);target.lineTo(-s*.72,0);target.closePath();target.fill();target.restore();};
-  if(id==="bloom-wake"){target.rotate(angle+index*.15);target.beginPath();target.ellipse(0,0,size*.72,size*1.5,.45,0,TAU);target.fill();}
+  if(id==="pressed-petal"){target.rotate(angle*.5+index*.9);for(let k=0;k<5;k+=1){target.rotate(TAU/5);target.beginPath();target.ellipse(0,-size*.6,size*.34,size*.6,0,0,TAU);target.fill();}target.fillStyle="#FFF4DC";target.beginPath();target.arc(0,0,size*.26,0,TAU);target.fill();}
+  else if(id==="bloom-wake"){target.rotate(angle+index*.15);target.beginPath();target.ellipse(0,0,size*.72,size*1.5,.45,0,TAU);target.fill();}
   else if(id==="pollen"){target.beginPath();target.arc(0,0,size*.65,0,TAU);target.fill();}
   else if(id==="spark")diamond(size*1.25,angle+index);
   else if(id==="ribbon")target.fillRect(-size*1.5,-1,size*3,2);
@@ -2086,14 +2091,18 @@ function updateHome() {
   // First launch shows only the title, the world, Pip and PLAY; the rest appears after the first delivery.
   const returning = state.campaign.completed.length > 0 || state.best > 0;
   ui.homeAscension.hidden = !returning; ui.openMail.hidden = !returning; ui.lanterns.hidden = !returning;
-  const letterReady = returning && !dailyDone();
-  ui.mailBadge.hidden = !letterReady; pipRig?.setReady(letterReady); pipRig?.setReduced(state.reducedEffects || matchMedia?.("(prefers-reduced-motion: reduce)").matches);
-  if (returning) renderLanterns(playStreak());
+  keepLanterns();
+  const letterReady = returning && !dailyDone(), view = lanternView(), mail = Number(letterReady) + unreadCards().length + Number(view.parcel);
+  ui.mailBadge.hidden = !returning || mail === 0; ui.mailBadge.textContent = mail;
+  pipRig?.setReady(returning && mail > 0); pipRig?.setReduced(state.reducedEffects || matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+  ui.pip.classList.toggle("parcel", view.parcel);
+  if (returning) { renderLanterns(view); if (state.post.fx) { state.post.fx = ""; save(); } }
   placePip();
   ui.sound.checked = !state.muted;
   ui.haptics.checked = state.haptics;
   ui.effects.checked = state.reducedEffects;
   ui.fold.checked = state.expressFold;
+  ui.extras.checked = state.nightPostExtras;
   renderGoals();
 }
 
@@ -2103,19 +2112,21 @@ function playStreak() {
   for (const day = new Date(); days.has(day.toISOString().slice(0, 10)); day.setDate(day.getDate() - 1)) streak += 1;
   return streak;
 }
-function renderLanterns(streak) {
-  const lit = streak ? (streak - 1) % 7 + 1 : 0, W = 400, y0 = 6, sag = 34;
-  let svg = `<svg viewBox="0 0 ${W} 60" preserveAspectRatio="xMidYMin meet"><path d="M-10 ${y0} Q ${W / 2} ${y0 + sag} ${W + 10} ${y0}" fill="none" stroke="#7FA8A2" stroke-opacity=".55" stroke-width="1.6"/>`;
+function renderLanterns(view) {
+  const { slots, lit } = view, W = 400, y0 = 6, sag = 34, body = view.gold ? ["#FFF4DC", "#F3E6C8"] : ["#FFC94D", "#E0A93A"];
+  let svg = `<svg viewBox="0 0 ${W} 60" preserveAspectRatio="xMidYMin meet" class="${view.dim ? "dim" : ""}"><path d="M-10 ${y0} Q ${W / 2} ${y0 + sag} ${W + 10} ${y0}" fill="none" stroke="#7FA8A2" stroke-opacity=".55" stroke-width="1.6"/>`;
   for (let i = 0; i < 7; i += 1) {
-    const t = (i + 1) / 8, x = (1 - t) * (1 - t) * -10 + 2 * (1 - t) * t * (W / 2) + t * t * (W + 10), y = (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * (y0 + sag) + t * t * y0, on = i < lit;
-    svg += `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + 8}" stroke="#7FA8A2" stroke-opacity=".6" stroke-width="1.2"/><g transform="translate(${x} ${y + 8})" class="${on ? "lit" : ""}">`;
-    svg += i === 6
-      ? `${on ? '<circle cx="0" cy="12" r="18" fill="#FFC94D" opacity=".2"/>' : ""}<rect x="-10" y="2" width="20" height="18" rx="2" fill="${on ? "#FFF4DC" : "#1A4A50"}" stroke="${on ? "none" : "#2c5f66"}"/><rect x="-10" y="11" width="20" height="9" rx="1" fill="${on ? "#E9D6B0" : "#163F46"}"/><rect x="-2" y="2" width="4" height="18" fill="${on ? "#FF6F61" : "#2c5f66"}"/><path d="M0 2 Q-7 -6 -8 0 Q-4 3 0 2 Q4 3 8 0 Q7 -6 0 2Z" fill="${on ? "#FF6F61" : "#2c5f66"}"/>`
-      : `${on ? '<circle cx="0" cy="12" r="17" fill="#FFC94D" opacity=".22"/>' : ""}<rect x="-5" y="0" width="10" height="3.5" rx="1" fill="#12363D"/><path d="M-8 4 H8 Q11 12 8 21 H-8 Q-11 12 -8 4Z" fill="${on ? "#FFC94D" : "#1A4A50"}" stroke="${on ? "none" : "#2c5f66"}" stroke-width="1.2"/><path d="M0 4 H8 Q11 12 8 21 H0Z" fill="${on ? "#E0A93A" : "#163F46"}"/><path d="M-4 4 Q-6 12 -4 21 M4 4 Q6 12 4 21" stroke="${on ? "#C98A22" : "#2c5f66"}" stroke-width="1" fill="none"/><rect x="-5" y="21" width="10" height="3" rx="1" fill="#12363D"/>`;
-    svg += "</g>";
+    const t = (i + 1) / 8, x = (1 - t) * (1 - t) * -10 + 2 * (1 - t) * t * (W / 2) + t * t * (W + 10), y = (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * (y0 + sag) + t * t * y0, slot = slots[i], on = slot.on;
+    const newest = on && i === lit - 1 && (view.fx === "lit" || view.fx === "relit"), next = !on && i === lit && !view.tonight && !view.dim && lit < 7;
+    const cls = [on && !slot.moon ? "lit" : "", slot.moon ? "moon" : "", newest ? "ignite" : "", slot.moon && view.fx === "moon" ? "pop" : "", next ? "next" : "", i === 6 && view.parcel ? "ready" : ""].filter(Boolean).join(" ");
+    svg += `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + 8}" stroke="#7FA8A2" stroke-opacity=".6" stroke-width="1.2"/><g transform="translate(${x} ${y + 8})"><g class="${cls}">`;
+    if (slot.moon) svg += `<circle cx="0" cy="12" r="17" fill="#A8F0CF" opacity=".25"/><path d="M4 0 A12 12 0 1 0 13 18 A9.5 9.5 0 1 1 4 0Z" fill="#FFF4DC"/><path d="M-9 18 A12 12 0 0 0 13 18 A9.5 9.5 0 0 1 -3 18Z" fill="#E9D6B0"/><circle cx="-2" cy="10" r="1.3" fill="#3A1E14"/><path d="M-5 14 Q-2 16 1 14" stroke="#3A1E14" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M-6 2 Q-1 -6 7 -3 L4 1 Q0 0 -6 2Z" fill="#12363D"/>`;
+    else if (i === 6) svg += `${on || view.parcel ? '<circle cx="0" cy="12" r="20" fill="#FFC94D" opacity=".24"/>' : ""}<rect x="-10" y="2" width="20" height="18" rx="2" fill="${on ? "#FFF4DC" : "#1A4A50"}" stroke="${on ? "none" : "#2c5f66"}"/><rect x="-10" y="11" width="20" height="9" rx="1" fill="${on ? "#E9D6B0" : "#163F46"}"/><rect x="-2" y="2" width="4" height="18" fill="${on ? "#FF6F61" : "#2c5f66"}"/><path d="M0 2 Q-7 -6 -8 0 Q-4 3 0 2 Q4 3 8 0 Q7 -6 0 2Z" fill="${on ? "#FF6F61" : "#2c5f66"}"/>`;
+    else svg += `${on ? '<circle cx="0" cy="12" r="17" fill="#FFC94D" opacity=".22"/>' : ""}<rect x="-5" y="0" width="10" height="3.5" rx="1" fill="#12363D"/><path d="M-8 4 H8 Q11 12 8 21 H-8 Q-11 12 -8 4Z" fill="${on ? body[0] : "#1A4A50"}" stroke="${on ? "none" : next ? "#7FA8A2" : "#2c5f66"}" stroke-width="1.2" ${next ? 'stroke-dasharray="2 2"' : ""}/><path d="M0 4 H8 Q11 12 8 21 H0Z" fill="${on ? body[1] : "#163F46"}"/>${on && view.gold ? '<path d="M0 7 L1.6 11 L5.5 12.5 L1.6 14 L0 18 L-1.6 14 L-5.5 12.5 L-1.6 11Z" fill="#FFC94D"/>' : `<path d="M-4 4 Q-6 12 -4 21 M4 4 Q6 12 4 21" stroke="${on ? "#C98A22" : "#2c5f66"}" stroke-width="1" fill="none"/>`}${slot.relit ? '<path d="M-6 9 L-1 7 L0 12 L-5 14Z" fill="#FFF4DC" opacity=".9"/><path d="M-5.5 9.5 L-1 12.5 M-1.5 8 L-4.5 13" stroke="#C98A22" stroke-width=".7"/>' : ""}<rect x="-5" y="21" width="10" height="3" rx="1" fill="#12363D"/>`;
+    svg += "</g></g>";
   }
   ui.lanterns.innerHTML = svg + "</svg>";
-  ui.lanterns.setAttribute?.("aria-label", `${streak} night streak`);
+  ui.lanterns.setAttribute?.("aria-label", `${lit} lanterns lit${view.dim ? ", dimmed: fly tonight to relight them" : ""}`);
 }
 // Pip sits just outside the orbit, lower left of the planet drawn on the game canvas.
 // Pip's rig (pip.js); absent in the test sandbox. Ticked from the frame loop only while Home is showing.
@@ -2182,7 +2193,205 @@ function renderMailbag() {
   ui.letterScore.hidden = !done; ui.letterScore.textContent = done ? `${state.daily.score}` : "";
   ui.shareLetterMail.hidden = !done;
   ui.flyLetter.classList.toggle("secondary", done);
+  ui.mailbag.dataset.extras = state.nightPostExtras ? "on" : "off";
+  ui.mailbag.dataset.tab = state.nightPostExtras ? mailTab : "tonight";
+  const unread = unreadCards().length;
+  ui.cardBadge.hidden = unread === 0; ui.cardBadge.textContent = unread;
+  if (!state.nightPostExtras) return;
+  if (mailTab === "cards") renderPostcards();
+  if (mailTab === "album") renderAlbum();
 }
+function cardBack(card) {
+  const sent = state.post.cards[card.id], stamp = window.OrbitPost?.stamp({ kind: card.island === "ember" ? "level" : card.island === "moon" ? "moon" : card.island === "post" ? "parcel" : card.island === "sky" ? "night" : "level", biome: card.island, n: Math.max(1, campaignLevels.findIndex(level => level.id === card.id) + 1), got: true }) || "";
+  return `<p class="pc-line">${card.line}</p><b class="pc-sign">${card.from}<small>${card.place}</small></b><i class="pc-rule"></i><span class="pc-stamp">${stamp}</span><span class="pc-mark">${window.OrbitPost?.postmark(sent?.night || nightNumber()) || ""}</span><span class="pc-to">To: Pip &amp; pilot<br>Night Post Loft<br>The Sky</span>`;
+}
+// Postcards: the newest unread one first; viewing a card reads it. Tap the card to turn it over.
+function renderPostcards() {
+  const received = POSTCARDS.filter(card => state.post.cards[card.id]);
+  // Open on the newest unread card (latest night, then latest in the story), else the newest card.
+  const newest = list => list.reduce((best, card) => !best || state.post.cards[card.id].night >= state.post.cards[best.id].night ? card : best, null);
+  if (!received.some(card => card.id === cardView)) cardView = (newest(unreadCards()) || newest(received))?.id || null;
+  const card = POSTCARDS.find(item => item.id === cardView);
+  ui.postcard.classList.remove("flipped");
+  ui.postcard.classList.toggle("empty", !card);
+  ui.postcard.innerHTML = card ? `<span class="pc-face pc-front">${window.OrbitPost?.front(card) || ""}</span><span class="pc-face pc-back">${cardBack(card)}</span>`
+    : `<span class="pc-face pc-front"><span class="pc-empty"><b>No postcards yet</b><small>Islanders write when you wake their island</small></span></span>`;
+  if (card && !state.post.cards[card.id].read) { state.post.cards[card.id].read = true; save(); ui.cardBadge.hidden = unreadCards().length === 0; ui.cardBadge.textContent = unreadCards().length; }
+  ui.cardStrip.innerHTML = "";
+  for (const item of POSTCARDS) {
+    const sent = state.post.cards[item.id], thumb = document.createElement("button");
+    thumb.type = "button"; thumb.className = `card-thumb${sent ? "" : " missing"}${item.id === cardView ? " on" : ""}${sent && !sent.read ? " unread" : ""}`;
+    thumb.setAttribute("aria-label", sent ? `Postcard from ${item.from}` : "Postcard not yet received");
+    thumb.innerHTML = sent ? window.OrbitPost?.front(item) || "" : "<i></i>";
+    if (sent) thumb.addEventListener("click", () => { cardView = item.id; beep(520, .04, "triangle"); renderPostcards(); });
+    ui.cardStrip.append(thumb);
+  }
+}
+let albumView = "bloom", albumHint = "";
+function renderAlbum() {
+  const pages = albumPages(), page = pages.find(item => item.id === albumView) || pages[0], { got, total } = pageStamps(page), done = state.post.pages.includes(page.id);
+  ui.albumIsles.innerHTML = "";
+  for (const item of pages) {
+    const tab = document.createElement("button"), counts = pageStamps(item);
+    tab.type = "button"; tab.className = `album-isle isle-${item.id}${item.id === page.id ? " on" : ""}`; tab.setAttribute("aria-label", `${item.name} page, ${counts.got} of ${counts.total}`);
+    tab.innerHTML = `<i></i><span>${item.name}</span>`;
+    tab.addEventListener("click", () => { albumView = item.id; albumHint = ""; beep(430, .03, "triangle"); renderAlbum(); });
+    ui.albumIsles.append(tab);
+  }
+  const rows = page.rows.map(([label, stamps]) => `<p class="album-row">${label}</p>${stamps.map(stamp => `<button type="button" class="album-stamp${stamp.got ? " got" : ""}" data-how="${stamp.got ? stamp.label : stamp.how}">${window.OrbitPost?.stamp({ ...stamp, biome: page.id }) || ""}<small>${stamp.label}</small></button>`).join("")}`).join("");
+  ui.albumPage.innerHTML = `<header><b>${page.name}</b><span>${got}/${total}</span></header><div class="album-grid">${rows}</div><p class="album-hint">${albumHint || "Tap a stamp to see how to earn it"}</p>
+    <div class="album-reward${done ? " done" : ""}"><canvas width="192" height="104"></canvas><span><b>${done ? page.reward.name : "Fill the page"}</b><small>${done ? "Earned" : page.reward.name}</small></span>${done ? HANGAR_SEAL : `<i class="need-bar"><b style="width:${Math.round(got / total * 100)}%"></b></i>`}</div>`;
+  ui.albumPage.querySelectorAll?.(".album-stamp").forEach(button => button.addEventListener("click", () => { albumHint = button.dataset.how; ui.albumPage.querySelector(".album-hint").textContent = albumHint; beep(500, .03, "triangle"); }));
+  const mini = ui.albumPage.querySelector("canvas")?.getContext("2d");
+  if (mini) {
+    mini.save(); mini.translate(96, 52); mini.scale(2, 2);
+    if (page.reward.type === "trail") drawTrailSwatch(mini, page.reward.id, cosmetics[0]);
+    else if (page.reward.type === "biome") drawGlider(mini, currentRider(), cosmetics.find(item => item.id === page.reward.id), 1.15, 0, 0, false, .2);
+    else for (let i = 0; i < 3; i += 1) { mini.save(); mini.translate(-22 + i * 22, -2 + (i === 1 ? 4 : 0)); mini.fillStyle = "#FFF4DC"; mini.beginPath(); mini.moveTo(-6, -8); mini.lineTo(6, -8); mini.quadraticCurveTo(9, 0, 6, 9); mini.lineTo(-6, 9); mini.quadraticCurveTo(-9, 0, -6, -8); mini.fill(); mini.fillStyle = "#FFC94D"; mini.beginPath(); for (let k = 0; k < 8; k += 1) { const a = k / 8 * TAU - Math.PI / 2, rr = k % 2 ? 1.6 : 4.4; mini.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } mini.fill(); mini.restore(); }
+    mini.restore();
+  }
+}
+// The weekly parcel: saved on tap, then the lid lifts and the gifts come out one by one.
+function showParcel() {
+  const gift = claimParcel();
+  if (!gift) { showScreen("mailbag"); return; }
+  ui.parcelBox.innerHTML = window.OrbitPost?.parcel() || "";
+  const stamp = window.OrbitPost?.stamp({ kind: gift.gold ? "goldparcel" : "parcel", got: true }) || "";
+  ui.parcelGifts.innerHTML = `<span class="gift">${STAR_ICON}<b>+${gift.stars}</b><small>Stars</small></span><span class="gift">${stamp}<b>Stamp</b><small>${gift.gold ? "Gold week" : `Week ${gift.week}`}</small></span>${gift.moon ? `<span class="gift">${window.OrbitPost?.moonGift() || ""}<b>Moon</b><small>Keeps a night</small></span>` : ""}`;
+  ui.parcelOverlay.classList.remove("open"); ui.parcelOverlay.hidden = false;
+  beep(392, .08, "triangle");
+  setTimeout(() => { ui.parcelOverlay.classList.add("open"); beep(659, .1, "triangle"); setTimeout(() => beep(988, .14, "sine"), 160); vibrate(20); }, 520);
+}
+function closeParcel() { ui.parcelOverlay.hidden = true; ui.parcelOverlay.classList.remove("open"); updateHome(); pipRig?.react("hop"); }
+
+// Night Post extras (beta, Settings): the lantern string is kept by a Paper Moon or relit after one dark night, every
+// 7th night brings a parcel, islanders send postcards, and the Stamp Album collects what you've done. A lantern lights
+// when a flight ends (any mode), one per night.
+const POSTCARDS = [
+  { id: "first-light", island: "bloom", from: "Sprout", place: "First Light", line: "I woke up! I don't know what a morning is yet, but I'm ready for one." },
+  { id: "pollen-path", island: "bloom", from: "Clover", place: "Pollen Path", line: "The vines are dancing again. Grandma Bud cried happy dew. Come back for tea?" },
+  { id: "tangled-orbit", island: "bloom", from: "Twig & Twine", place: "Tangled Orbit", line: "We untangled ourselves! Mostly. Twine still has one knot. She named it Gerald." },
+  { id: "crown-of-petals", island: "bloom", from: "The Budkeeper", place: "Crown of Petals", line: "I kept every letter safe for so long, I forgot to read them. Thank you for being patient with an old flower. This one is for Ember." },
+  { id: "kindling", island: "ember", from: "Flick", place: "Kindling", line: "My head is warm again! Please keep me away from the curtains." },
+  { id: "cinder-step", island: "ember", from: "Ash & Soot", place: "Cinder Step", line: "We passed the cinder all the way down the line. Nobody dropped it. NOBODY." },
+  { id: "furnace-heart", island: "ember", from: "Old Wick", place: "Furnace Heart", line: "The furnace hums like it used to. I hum too now. The neighbours are thrilled." },
+  { id: "solar-forge", island: "ember", from: "The Forge Keeper", place: "Solar Forge", line: "I sealed this one years ago, waiting for someone brave. It says 'To Moon'. I think that's your job now." },
+  { id: "parcel-1", island: "post", from: "The Night Post", place: "Pip's loft", line: "Seven nights in a row! Pip wrapped this one himself. Please ignore the extra tape." },
+  { id: "letter-1", island: "sky", from: "A Stargazer", place: "Far away", line: "Someone far away flew the very same sky as you tonight. You both made it." },
+  { id: "moon-1", island: "moon", from: "Old Moon", place: "Fast asleep", line: "Zzz… kept your lanterns… zzz… lit. You're welcome… zzz." },
+  { id: "album-bloom", island: "bloom", from: "All of Bloom", place: "Bloom", line: "We pressed a petal from every corner of the island for you. Fly it proud." },
+];
+const bonusTrails = ["pressed-petal"];
+let mailTab = "tonight", cardView = null;
+function initialPost() {
+  const post = { held: 0, count: 0, last: null, moonAt: [], relitAt: [], parcels: 0, parcelFor: 0, best: 0, cards: {}, letters: 0, fevers: 0, delivered: 0, moonsUsed: 0, pages: [], gold: false, fx: "", ...(saved.post || {}) };
+  if (!saved.post) {
+    // Older saves: the string continues from the days already played; cleared islands' postcards arrive already read.
+    const days = new Set(state.stats.dates), key = offset => { const day = new Date(); day.setDate(day.getDate() - offset); return day.toISOString().slice(0, 10); };
+    let start = days.has(key(0)) ? 0 : days.has(key(1)) ? 1 : -1;
+    if (start >= 0) { while (days.has(key(start + post.count))) post.count += 1; post.last = nightNumber() - start; post.best = post.count; }
+    for (const id of state.campaign.completed) if (POSTCARDS.some(card => card.id === id)) post.cards[id] = { night: nightNumber(), read: true };
+    post.delivered = state.daily ? 1 : 0;
+  }
+  return post;
+}
+// Missed nights: one Paper Moon covers one night, and one dark night can still be relit by flying tonight.
+function keepLanterns(now = nightNumber()) {
+  const post = state.post;
+  if (!state.nightPostExtras || post.last == null) return;
+  const missed = now - post.last - 1;
+  if (missed <= 0) return;
+  if (post.held && missed <= 2) {
+    post.held = 0; post.last += 1; post.count += 1; post.moonAt.push(post.last); post.moonsUsed += 1; post.fx = "moon";
+    sendCard("moon-1"); save(); return;
+  }
+  if (missed >= 2) { post.count = 0; post.last = null; post.moonAt = []; post.relitAt = []; save(); }
+}
+function lightLantern(now = nightNumber()) {
+  if (!state.nightPostExtras) return;
+  keepLanterns(now);
+  const post = state.post;
+  if (post.last === now) return;
+  if (post.last === now - 2) { post.relitAt.push(now - 1); post.count += 1; post.fx = "relit"; }
+  else if (post.last !== now - 1) { post.count = 0; post.moonAt = []; post.relitAt = []; }
+  post.count += 1; post.last = now; post.best = Math.max(post.best, post.count);
+  if (post.fx !== "relit") post.fx = "lit";
+  post.moonAt = post.moonAt.filter(night => night > now - 8); post.relitAt = post.relitAt.filter(night => night > now - 8);
+}
+function lanternView(now = nightNumber()) {
+  if (!state.nightPostExtras) {
+    const streak = playStreak(), lit = streak ? (streak - 1) % 7 + 1 : 0;
+    return { lit, slots: Array.from({ length: 7 }, (_, i) => ({ on: i < lit })), dim: false, tonight: streak > 0, parcel: false, gold: false, fx: "" };
+  }
+  const post = state.post, alive = post.last != null && now - post.last <= 2, count = alive ? post.count : 0, lit = count ? (count - 1) % 7 + 1 : 0;
+  const slots = Array.from({ length: 7 }, (_, i) => { const night = post.last - (lit - 1 - i); return { on: i < lit, moon: i < lit && post.moonAt.includes(night), relit: i < lit && post.relitAt.includes(night) }; });
+  return { lit, slots, dim: alive && now - post.last === 2, tonight: post.last === now, parcel: parcelReady(now), gold: post.gold, fx: post.fx };
+}
+function parcelReady(now = nightNumber()) {
+  const post = state.post;
+  return state.nightPostExtras && post.last != null && now - post.last <= 2 && post.count > 0 && post.count % 7 === 0 && post.parcelFor < post.count;
+}
+// The weekly parcel: few stars on purpose (5, then 10, then 15), a week stamp, and a Paper Moon when none is held.
+function claimParcel() {
+  if (!parcelReady()) return null;
+  const post = state.post;
+  post.parcels += 1; post.parcelFor = post.count;
+  const gift = { week: post.parcels, stars: [5, 10][post.parcels - 1] || 15, moon: post.held === 0, gold: post.parcels % 4 === 0 };
+  state.stars += gift.stars; if (gift.moon) post.held = 1;
+  if (post.parcels === 1) sendCard("parcel-1");
+  gift.rewards = checkAlbum(); save();
+  return gift;
+}
+function sendCard(id) {
+  if (!state.nightPostExtras || state.post.cards[id]) return;
+  state.post.cards[id] = { night: nightNumber(), read: false };
+}
+function unreadCards() { return state.nightPostExtras ? POSTCARDS.filter(card => state.post.cards[card.id] && !state.post.cards[card.id].read) : []; }
+function albumPages() {
+  const post = state.post, cleared = id => state.campaign.completed.includes(id), cards = Object.keys(post.cards).length;
+  const islands = biome => campaignLevels.filter(level => level.biome === biome).map(level => ({ id: `clear-${level.id}`, kind: level.phases.some(phase => phase.guardian) ? "guard" : "level", n: campaignLevels.indexOf(level) + 1, label: level.name, got: cleared(level.id), how: `Clear ${level.name}` }));
+  const golds = biome => campaignLevels.filter(level => level.biome === biome).map(level => ({ id: `gold-${level.id}`, kind: "gold", label: `3★ ${level.name.split(" ")[0]}`, got: (state.campaign.ratings[level.id] || 0) >= 3, how: `Three stars on ${level.name}` }));
+  const count = (id, kind, label, have, need, how) => ({ id, kind, label, got: have >= need, progress: Math.min(1, have / need), how });
+  return [
+    { id: "bloom", name: "Bloom", reward: { type: "trail", id: "pressed-petal", name: "Pressed petal trail" }, rows: [["Islands", islands("bloom")], ["Gold postmarks", golds("bloom")], ["Specials", [
+      count("letters-10", "letter", "10 lost letters", post.letters, 10, "Catch 10 lost letters"), count("flow-5", "flow", "Flow ×5", state.bestStreak, 5, "Reach flow ×5"),
+      count("express-1", "express", "Express Post", post.fevers, 1, "Fill the Express Post bar"), count("survive-60", "orbit", "60s Ascension", state.stats.longestMs / 1000, 60, "Fly 60 seconds in one run")]]] },
+    { id: "ember", name: "Ember", reward: { type: "biome", id: "wax", name: "Wax seal paint" }, rows: [["Islands", islands("ember")], ["Gold postmarks", golds("ember")], ["Specials", [
+      count("letters-25", "letter", "25 lost letters", post.letters, 25, "Catch 25 lost letters"), count("flow-10", "flow", "Flow ×10", state.bestStreak, 10, "Reach flow ×10"),
+      count("express-10", "express", "10 Express", post.fevers, 10, "Fill the Express Post bar 10 times"), count("survive-100", "orbit", "100s Ascension", state.stats.longestMs / 1000, 100, "Fly 100 seconds in one run")]]] },
+    { id: "post", name: "Night Post", reward: { type: "lanterns", id: "gold", name: "Star lanterns" }, rows: [["Parcels", [1, 2, 3, 4].map(week => ({ id: `parcel-${week}`, kind: week === 4 ? "goldparcel" : "parcel", label: week === 4 ? "Gold week" : `Week ${week}`, got: post.parcels >= week, how: `Open ${week === 1 ? "a weekly parcel" : `${week} weekly parcels`}` }))],
+      ["Tonight's Letter", [count("letter-1", "night", "1 letter", post.delivered, 1, "Deliver Tonight's Letter"), count("letter-7", "night", "7 letters", post.delivered, 7, "Deliver 7 nightly letters"), count("letter-30", "night", "30 letters", post.delivered, 30, "Deliver 30 nightly letters"), count("moon-1", "moon", "Paper Moon", post.moonsUsed, 1, "Let a Paper Moon keep your lanterns")]],
+      ["Lanterns & mail", [count("nights-14", "lantern", "14 nights", post.best, 14, "Light 14 nights in a row"), count("nights-30", "lantern", "30 nights", post.best, 30, "Light 30 nights in a row"), count("cards-6", "card", "6 postcards", cards, 6, "Receive 6 postcards"), count("cards-12", "card", "12 postcards", cards, 12, "Receive all 12 postcards")]]] },
+  ];
+}
+function pageStamps(page) { const stamps = page.rows.flatMap(row => row[1]); return { got: stamps.filter(stamp => stamp.got).length, total: stamps.length }; }
+// A full page pays out once: Bloom a new trail, Ember a new paint, the Night Post gold star lanterns on Home.
+function checkAlbum() {
+  const granted = [];
+  if (!state.nightPostExtras) return granted;
+  for (const page of albumPages()) {
+    const { got, total } = pageStamps(page);
+    if (got < total || state.post.pages.includes(page.id)) continue;
+    state.post.pages.push(page.id); granted.push(page.reward);
+    if (page.reward.type === "trail" && !state.unlockedTrails.includes(page.reward.id)) state.unlockedTrails.push(page.reward.id);
+    if (page.reward.type === "biome" && !state.unlocked.includes(page.reward.id)) state.unlocked.push(page.reward.id);
+    if (page.reward.type === "lanterns") state.post.gold = true;
+    if (page.id === "bloom") sendCard("album-bloom");
+  }
+  return granted;
+}
+// Called from finishRun (rewards are saved there): counters, the night's lantern, postcards for first clears, album pages.
+function postRun(firstClearId) {
+  if (!state.nightPostExtras) return;
+  state.post.letters += state.runLetters; state.post.fevers += state.feverCount;
+  lightLantern();
+  if (firstClearId) sendCard(firstClearId);
+  if (state.dailyRun?.scored) { state.post.delivered += 1; sendCard("letter-1"); }
+  for (const reward of checkAlbum()) if (reward.type !== "lanterns") state.runRewards.push({ type: reward.type, id: reward.id, label: reward.name });
+}
+
+state.post = initialPost();
+keepLanterns();
 
 function renderGoals() {
   // Show only the goal closest to completion; the other two keep progressing in the background.
@@ -2194,7 +2403,7 @@ function renderGoals() {
 // previews it on the showcase stand, locked ones too; tapping the previewed slot again, or the big button, buys or equips.
 let hangarTab = "planes";
 const hangarPick = { planes: null, paint: null, trails: null };
-const trailNames = { paper: "Paper diamonds", pollen: "Pollen", spark: "Spark", ribbon: "Ribbon", echo: "Echo rings", crown: "Crown gems", "bloom-wake": "Petal wake" };
+const trailNames = { paper: "Paper diamonds", pollen: "Pollen", spark: "Spark", ribbon: "Ribbon", echo: "Echo rings", crown: "Crown gems", "bloom-wake": "Petal wake", "pressed-petal": "Pressed petal" };
 const STAR_ICON = '<svg aria-hidden="true" viewBox="0 0 48 48"><polygon points="24,4 29,17.12 43.02,17.82 32.08,26.63 35.76,40.18 24,32.5 12.24,40.18 15.92,26.63 4.98,17.82 19,17.12" fill="#FFC94D"/><polygon points="24,4 29,17.12 43.02,17.82 32.08,26.63 35.76,40.18 24,32.5" fill="#E0A93A"/></svg>';
 const HANGAR_SEAL = '<svg class="slot-seal" aria-hidden="true" viewBox="0 0 40 40"><path d="M20 2 L24 6 L30 4 L31 10 L37 12 L35 18 L39 22 L34 26 L35 32 L29 32 L26 38 L20 35 L14 38 L11 32 L5 32 L6 26 L1 22 L5 18 L3 12 L9 10 L10 4 L16 6Z" fill="#FFC94D"/><path d="M20 2 L24 6 L30 4 L31 10 L37 12 L35 18 L39 22 L34 26 L35 32 L29 32 L26 38 L20 35Z" fill="#E0A93A"/><path d="M13 20 L18 25 L28 14" fill="none" stroke="#3A1E14" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const HANGAR_LOCK = '<svg class="slot-lock" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 10 V7 a5 5 0 0 1 10 0 V10" fill="none" stroke="currentColor" stroke-width="2.6"/><rect x="4" y="10" width="16" height="12" rx="3" fill="currentColor"/></svg>';
@@ -2210,12 +2419,14 @@ function hangarItem(tab = hangarTab) {
   }
   if (tab === "paint") {
     const paint = cosmetics.find(item => item.id === hangarPick.paint) || cosmetics.find(item => item.id === state.selected) || cosmetics[0];
+    const page = paint.album && albumPages().find(item => item.id === paint.album), stamps = page && pageStamps(page);
     return { tab, id: paint.id, name: paint.name, state: state.selected === paint.id ? "on" : state.unlocked.includes(paint.id) ? "owned" : "locked",
-      need: `Best score ${paint.score}`, progress: state.best / Math.max(1, paint.score) };
+      need: page ? `Fill the ${page.name} album page` : `Best score ${paint.score}`, progress: page ? stamps.got / stamps.total : state.best / Math.max(1, paint.score) };
   }
-  const id = hangarPick.trails || state.selectedTrail, goals = trailStyles.indexOf(id);
+  const id = hangarPick.trails || state.selectedTrail, goals = trailStyles.indexOf(id), page = id === "pressed-petal" && albumPages()[0], stamps = page && pageStamps(page);
   return { tab, id, name: trailNames[id] || id, state: state.selectedTrail === id ? "on" : state.unlockedTrails.includes(id) ? "owned" : "locked",
-    need: id === "bloom-wake" ? "Clear First Light" : `Finish ${goals} goal${goals === 1 ? "" : "s"}`, progress: id === "bloom-wake" ? 0 : state.goalsCompleted / Math.max(1, goals) };
+    need: page ? "Fill the Bloom album page" : id === "bloom-wake" ? "Clear First Light" : `Finish ${goals} goal${goals === 1 ? "" : "s"}`,
+    progress: page ? stamps.got / stamps.total : id === "bloom-wake" ? 0 : state.goalsCompleted / Math.max(1, goals) };
 }
 function hangarAct(tab = hangarTab) {
   const item = hangarItem(tab);
@@ -2293,7 +2504,7 @@ function renderCosmetics() {
 function renderTrails() {
   ui.trails.innerHTML = "";
   const item = hangarItem("trails"), palette = cosmetics.find(c => c.id === state.selected) || cosmetics[0];
-  for (const trailName of trailStyles) {
+  for (const trailName of [...trailStyles, ...bonusTrails]) {
     const owned = state.unlockedTrails.includes(trailName), on = state.selectedTrail === trailName;
     ui.trails.append(hangarSlot("trails", trailName, slotState(trailName, item, on, owned, " locked"),
       `${trailNames[trailName]} trail${on ? ", equipped" : owned ? "" : ", locked"}`,
@@ -2500,6 +2711,10 @@ ui.sound.addEventListener("change", () => { state.muted = !ui.sound.checked; sav
 ui.haptics.addEventListener("change", () => { state.haptics = ui.haptics.checked; save(); vibrate(15); });
 ui.effects.addEventListener("change", () => { state.reducedEffects = ui.effects.checked; save(); });
 ui.fold.addEventListener("change", () => { state.expressFold = ui.fold.checked; save(); });
+ui.extras.addEventListener("change", () => { state.nightPostExtras = ui.extras.checked; if (state.nightPostExtras) keepLanterns(); save(); });
+ui.mailTabs.addEventListener("click", event => { const tab = event.target.closest?.("[data-mail]")?.dataset.mail; if (!tab || tab === mailTab) return; mailTab = tab; beep(360, .03, "triangle"); renderMailbag(); });
+ui.postcard.addEventListener("click", () => { if (ui.postcard.classList.contains?.("empty")) return; ui.postcard.classList.toggle("flipped"); beep(300, .05, "triangle"); });
+ui.parcelCollect.addEventListener("click", closeParcel);
 ui.replayTutorial.addEventListener("click", startTutorial);
 ui.skipTutorial.addEventListener("click", skipTutorial);
 ui.continueRewards.addEventListener("click", claimReward);
@@ -2535,8 +2750,9 @@ document.addEventListener("visibilitychange", () => {
 });
 ui.resumeButton.addEventListener("click", resumeRun);
 ui.practiceGuardian.addEventListener("click", () => startPractice(state.levelId));
-ui.openMail.addEventListener("click", () => showScreen("mailbag"));
-ui.pip.addEventListener("click", () => { if (!pipRig) { showScreen("mailbag"); return; } pipRig.react("tap"); setTimeout(() => { if (!ui.home.hidden) showScreen("mailbag"); }, 420); });
+function openMailbag() { mailTab = state.nightPostExtras && unreadCards().length ? "cards" : "tonight"; showScreen("mailbag"); }
+ui.openMail.addEventListener("click", () => { if (parcelReady()) showParcel(); else openMailbag(); });
+ui.pip.addEventListener("click", () => { const next = parcelReady() ? showParcel : openMailbag; if (!pipRig) { next(); return; } pipRig.react("tap"); setTimeout(() => { if (!ui.home.hidden) next(); }, 420); });
 ui.flyLetter.addEventListener("click", startDaily);
 ui.homeAscension.addEventListener("click", () => startRun("endless"));
 ui.shareLetter.addEventListener("click", () => sharePostcard(ui.shareLetter));
