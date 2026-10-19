@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Night Post Art Gallery</title><style>
+@font-face{font-family:"Lilita One";src:url(../../../fonts/lilita-one-latin.woff2)}@font-face{font-family:"Nunito";src:url(../../../fonts/nunito-latin-variable.woff2);font-weight:200 1000}
+body{margin:0;padding:24px;background:#061417;color:#FFF4DC;font-family:Nunito}
+.g{display:grid;grid-template-columns:repeat(4,318px);gap:18px}.g svg{width:318px;height:212px;border-radius:8px;display:block}
+.s{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;background:#F3E6C8;padding:14px;border-radius:12px;width:fit-content}.s svg{width:72px;height:86px}
+.p{width:240px;margin-top:20px}
+</style></head><body><div class="g" id="g"></div><div class="s" id="s"></div><div id="p" class="p"></div>
+<script src="../../../post-art.js"></script><script>
+const ids=["first-light","pollen-path","tangled-orbit","crown-of-petals","kindling","cinder-step","furnace-heart","solar-forge","parcel-1","letter-1","moon-1","album-bloom"];
+g.innerHTML=ids.map(id=>OrbitPost.front({id})).join("");
+const kinds=[["level",1,"bloom"],["level",5,"ember"],["guard"],["gold"],["letter"],["flow"],["express"],["orbit"],["parcel"],["goldparcel"],["night"],["moon"],["lantern"],["card"]];
+s.innerHTML=kinds.map(([kind,n,biome])=>OrbitPost.stamp({kind,n,biome,got:true})).join("")+OrbitPost.stamp({kind:"letter",got:false,progress:.4})+OrbitPost.stamp({kind:"gold",got:false});
+p.innerHTML=OrbitPost.parcel();
+</script></body></html>

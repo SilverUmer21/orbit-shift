@@ -1,6 +1,6 @@
 // Copies only the production game files into www/ for Capacitor (no labs, tests, docs, design or trailer).
 import { cpSync, rmSync, mkdirSync } from "node:fs";
-const files = ["index.html", "game.js", "pip.js", "art-renderers.js", "campaign-map.js", "archipelago-map.js", "styles.css", "journey.css", "remake.css"];
+const files = ["index.html", "game.js", "pip.js", "post-art.js", "art-renderers.js", "campaign-map.js", "archipelago-map.js", "styles.css", "journey.css", "remake.css"];
 const dirs = ["fonts", "vendor", "assets/archipelago"];
 rmSync("www", { recursive: true, force: true });
 mkdirSync("www", { recursive: true });
