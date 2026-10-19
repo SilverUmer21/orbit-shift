@@ -1,0 +1,146 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:"Lilita One";src:url("{{lilita}}") format("woff2")}
+@font-face{font-family:"Nunito";src:url("{{nunito}}") format("woff2");font-weight:200 1000}
+:root{--n900:#0A1F24;--n800:#0E2A30;--n700:#12363D;--n600:#1A4A50;--paper:#FFF4DC;--fold:#E9D6B0;--mint2:#A8F0CF;--mint5:#5ED6A6;--mint7:#2E9C80;--gold:#FFC94D;--goldS:#E0A93A;--lip:#E0703C;--coral:#FF6F61;--muted:#7FA8A2;--ink:#3A1E14;--display:"Lilita One",sans-serif;--ui:"Nunito",sans-serif}
+*{box-sizing:border-box;margin:0}
+body{background:#ECE8E0;font-family:var(--ui);padding:24px;color:var(--n800)}
+h1{font:400 30px var(--display);margin:0 0 4px}
+.sub{font-size:14px;margin-bottom:18px;color:#4E6A66;max-width:1500px}
+.row{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+.cap{font:800 13px var(--ui);margin:10px 0 0;max-width:390px;color:#2b3b3a}
+.cap b{font-family:var(--display);font-weight:400;font-size:16px;display:block;color:var(--n800)}
+.phone{position:relative;width:390px;height:844px;border-radius:34px;overflow:hidden;background:radial-gradient(circle at 50% 47%,#1d4a50 0,#123a40 24%,#0d2a30 52%,#0a2126 100%);box-shadow:0 18px 40px rgba(0,0,0,.25)}
+.phone.ember{background:radial-gradient(circle at 50% 47%,#4a2c2a 0,#2f1d22 26%,#1f151a 56%,#171015 100%)}
+.p320{width:320px;height:568px;border-radius:26px}
+.hills{position:absolute;left:-10%;right:-10%;bottom:0;height:150px}
+.hills i{position:absolute;left:0;right:0;bottom:0;border-radius:50% 50% 0 0}
+.hills i:nth-child(1){height:120px;background:#123e44;opacity:.8}
+.hills i:nth-child(2){height:80px;background:#174a4f;left:-20%;right:30%}
+.ember .hills i:nth-child(1){background:#2c1b20}.ember .hills i:nth-child(2){background:#372127}
+.star-dots{position:absolute;inset:0;background-image:radial-gradient(#ffffff22 1px,transparent 1.5px),radial-gradient(#ffffff18 1px,transparent 1.5px);background-size:57px 61px,89px 97px;background-position:10px 20px,40px 70px}
+/* top bar */
+.top{position:absolute;left:18px;right:18px;top:18px;display:flex;align-items:center;gap:10px}
+.sq{width:46px;height:46px;border-radius:15px;background:linear-gradient(100deg,#1d555b 0 56%,#174a50 56% 100%);box-shadow:inset 0 2px 0 rgba(255,244,220,.1),0 4px 0 var(--n900);display:grid;place-items:center;position:relative}
+.sq svg{width:30px;height:30px}
+.badge{position:absolute;right:-5px;top:-5px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--coral);color:#fff;font:900 11px/20px var(--ui);text-align:center;box-shadow:0 2px 0 #B8483E}
+.chip{margin-left:auto;display:flex;align-items:center;gap:4px;height:40px;padding:0 14px 0 4px;border-radius:20px;background:var(--n700);box-shadow:0 4px 0 var(--n900);color:var(--paper);font:400 20px var(--display)}
+.chip svg{width:40px;height:40px;margin:-8px 0 -6px -6px;transform:rotate(-12deg)}
+/* lantern string */
+.lanterns{position:absolute;left:0;top:68px;width:100%;height:96px}
+.lan-cap{position:absolute;left:0;right:0;top:136px;text-align:center;color:var(--gold);font:900 11px var(--ui);letter-spacing:2px;text-transform:uppercase}
+.lan-cap span{color:var(--muted)}
+/* wordmark */
+.word{position:absolute;left:0;right:0;top:160px;text-align:center;font:400 30px/1 var(--display);letter-spacing:1px;color:var(--paper);text-shadow:0 3px 0 var(--mint7)}
+.word em{font-style:normal;color:var(--gold);text-shadow:0 3px 0 var(--lip)}
+.chapter{position:absolute;left:0;right:0;top:198px;text-align:center;color:var(--mint2);font:900 11px var(--ui);letter-spacing:2px;text-transform:uppercase}
+.ember .chapter{color:#F2D8A0}
+/* hero */
+.orbit{position:absolute;left:50%;top:420px;width:310px;height:310px;margin:-155px 0 0 -155px;border-radius:50%;border:2px dashed rgba(255,244,220,.16)}
+.planet{position:absolute;left:50%;top:420px;width:186px;height:186px;margin:-93px 0 0 -93px;filter:drop-shadow(0 10px 18px rgba(0,0,0,.35))}
+.glider{position:absolute;width:96px;height:96px;left:252px;top:258px}
+.pip{position:absolute;left:30px;top:478px;width:118px;height:118px;filter:drop-shadow(0 8px 0 rgba(10,31,36,.35))}
+.pip-shadow{position:absolute;left:52px;top:604px;width:70px;height:10px;border-radius:50%;background:rgba(10,31,36,.45)}
+.folk{position:absolute;width:22px;height:30px}
+/* letter card */
+.letter{position:absolute;left:50%;top:630px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;width:272px;height:54px;padding:0 14px 0 8px;border-radius:18px;background:linear-gradient(100deg,#1d555b 0 56%,#174a50 56% 100%);box-shadow:inset 0 2px 0 rgba(255,244,220,.1),0 5px 0 var(--n900),0 0 0 2px rgba(255,201,77,.35)}
+.letter svg{width:44px;height:38px;flex:none}
+.letter b{display:block;font:400 17px/1 var(--display);color:var(--paper)}
+.letter small{display:block;margin-top:3px;font:900 10.5px var(--ui);letter-spacing:1px;text-transform:uppercase;color:var(--gold)}
+.letter i{margin-left:auto;font-style:normal;font:400 20px var(--display);color:var(--gold)}
+.letter.done{background:var(--n700);box-shadow:inset 0 2px 0 rgba(255,244,220,.06),0 5px 0 var(--n900)}
+.ember .letter{background:linear-gradient(100deg,#3a252d 0 56%,#33222A 56% 100%);box-shadow:inset 0 2px 0 rgba(255,244,220,.06),0 5px 0 #170E12}
+.letter.done b{color:var(--paper)}.letter.done small{color:var(--muted)}.letter.done i{color:var(--mint5)}
+/* action row */
+.actions{position:absolute;left:20px;right:20px;top:704px;display:flex;align-items:flex-start;justify-content:space-between}
+.side{display:grid;justify-items:center;gap:6px;color:var(--mint2);font:900 11px var(--ui);letter-spacing:1px;text-transform:uppercase}
+.side .sq{width:64px;height:64px;border-radius:20px}.side .sq svg{width:40px;height:40px}
+.play{width:206px;height:76px;border-radius:26px;background:linear-gradient(100deg,#FFD46E 0 56%,#FFC24A 56% 100%);box-shadow:inset 0 3px 0 rgba(255,255,255,.45),0 8px 0 var(--lip);display:grid;place-content:center;justify-items:center;gap:3px;color:var(--ink)}
+.play b{display:flex;align-items:center;gap:9px;font:400 38px/1 var(--display);letter-spacing:1.5px;text-transform:uppercase}
+.play b svg{width:24px;height:24px}
+.play small{font:900 11px var(--ui);color:rgba(58,30,20,.72)}
+.asc{position:absolute;left:50%;top:798px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;height:32px;padding:0 14px 0 8px;border-radius:16px;background:rgba(18,54,61,.85);box-shadow:0 3px 0 var(--n900);color:var(--paper);font:400 14px var(--display);letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.asc svg{width:24px;height:24px}.asc span{color:var(--gold)}
+.ember .asc{background:rgba(51,34,42,.9);box-shadow:0 3px 0 #170E12}
+/* first launch */
+.bigword{position:absolute;left:0;right:0;top:92px;text-align:center;font:400 78px/.86 var(--display);letter-spacing:2px;color:var(--paper);text-shadow:0 6px 0 var(--mint7)}
+.bigword em{display:block;font-style:normal;color:var(--gold);text-shadow:0 6px 0 var(--lip)}
+.hint{position:absolute;left:0;right:0;top:640px;text-align:center;color:var(--muted);font:900 11px var(--ui);letter-spacing:1.5px;text-transform:uppercase}
+/* 320 */
+.p320 .top{top:12px;left:14px;right:14px}.p320 .sq{width:40px;height:40px;border-radius:13px}.p320 .sq svg{width:26px;height:26px}.p320 .chip{height:34px;font-size:17px}.p320 .chip svg{width:34px;height:34px}
+.p320 .lanterns{top:50px;height:70px}.p320 .lan-cap{top:98px;font-size:9px}
+.p320 .word{top:114px;font-size:22px}.p320 .chapter{top:142px;font-size:9px}
+.p320 .orbit{top:272px;width:206px;height:206px;margin:-103px 0 0 -103px}.p320 .planet{top:272px;width:120px;height:120px;margin:-60px 0 0 -60px}
+.p320 .glider{width:70px;height:70px;left:198px;top:166px}
+.p320 .pip{left:18px;top:300px;width:78px;height:78px}.p320 .pip-shadow{left:34px;top:384px;width:46px;height:7px}
+.p320 .letter{top:398px;width:240px;height:44px;border-radius:15px}.p320 .letter svg{width:36px;height:30px}.p320 .letter b{font-size:15px}.p320 .letter small{font-size:9px}
+.p320 .actions{top:458px;left:14px;right:14px}.p320 .side .sq{width:52px;height:52px;border-radius:17px}.p320 .side .sq svg{width:32px;height:32px}.p320 .side{font-size:10px}
+.p320 .play{width:164px;height:62px;border-radius:22px}.p320 .play b{font-size:30px}.p320 .play small{font-size:10px}
+.p320 .asc{top:534px;height:26px;font-size:12px}.p320 .asc svg{width:20px;height:20px}
+.p320 .hills{height:100px}
+/* sheet */
+.sheet{width:390px;background:#fff;border-radius:22px;padding:18px;box-shadow:0 10px 26px rgba(0,0,0,.12)}
+.sheet h2{font:400 20px var(--display);margin-bottom:10px}
+.sheet .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{background:var(--n800);border-radius:16px;padding:12px;display:grid;justify-items:center;gap:6px;color:var(--mint2);font:900 10px var(--ui);letter-spacing:1px;text-transform:uppercase;text-align:center}
+.tile.paper{background:#F6EACB;color:var(--n800)}
+
+/* v2: big title, almost no text; the daily letter lives in Pip's hands */
+.title{position:absolute;left:0;right:0;top:126px;text-align:center;font:400 76px/.86 var(--display);letter-spacing:2px;color:var(--paper);text-shadow:0 6px 0 var(--mint7)}
+.title span{display:block;margin-left:-70px}
+.title em{display:block;margin-left:90px;font-style:normal;color:var(--gold);text-shadow:0 6px 0 var(--lip)}
+.title.first{top:96px}
+.p320 .title{top:86px;font-size:54px}.p320 .title span{margin-left:-50px}.p320 .title em{margin-left:64px}
+.orbit,.planet{top:478px!important}.glider{top:318px!important}
+.pip{top:560px!important;left:22px!important;width:128px!important;height:128px!important}
+.pip-shadow{top:694px!important;left:48px!important}
+.held{position:absolute;left:106px;top:600px;width:58px;height:50px;filter:drop-shadow(0 4px 0 rgba(10,31,36,.4));animation:none}
+.held-glow{position:absolute;left:96px;top:586px;width:78px;height:78px;border-radius:50%;background:radial-gradient(circle,rgba(255,201,77,.45),rgba(255,201,77,0) 70%)}
+.held .badge,.held-badge{position:absolute;left:150px;top:592px;min-width:20px;height:20px;border-radius:10px;background:var(--coral);color:#fff;font:900 11px/20px var(--ui);text-align:center;box-shadow:0 2px 0 #B8483E}
+.actions{top:716px!important}.asc{top:806px!important}
+.asc i{font-style:normal;color:var(--gold);display:flex;align-items:center;gap:3px}.asc i svg{width:16px;height:16px}
+.p320 .orbit,.p320 .planet{top:300px!important}.p320 .glider{top:194px!important}
+.p320 .pip{top:350px!important;left:12px!important;width:84px!important;height:84px!important}.p320 .pip-shadow{top:438px!important;left:30px!important}
+.p320 .held{left:68px;top:380px;width:40px;height:34px}.p320 .held-glow{left:60px;top:370px;width:56px;height:56px}.p320 .held-badge{left:100px;top:374px;min-width:17px;height:17px;font-size:10px;line-height:17px}
+.p320 .actions{top:462px!important}.p320 .asc{top:536px!important}
+</style></head><body>
+<h1>Home redesign v2 · The Night Post</h1>
+<p class="sub">Less text: big title back, no captions or repeated lines. The streak is the lantern string (read by looking), the daily letter is the glowing envelope Pip holds (tap Pip), Ascension sits under PLAY with your best.</p>
+<div class="row">
+<div><div class="phone">{{bg}}
+ <div class="top"><div class="sq">{{gear}}</div><div class="chip">{{star}}45</div><div class="sq">{{mailbox}}<span class="badge">2</span></div></div>
+ {{lanterns3}}
+ <p class="title"><span>ORBIT</span><em>SHIFT</em></p>
+ <div class="orbit"></div><img class="planet" src="{{bloom}}"><img class="glider" src="{{gliderBloom}}">
+ <div class="pip-shadow"></div>{{pip}}<div class="held-glow"></div>{{held}}<span class="held-badge">1</span>
+ <div class="actions"><div class="side"><div class="sq">{{shipicon}}<span class="badge">1</span></div>Hangar</div><div class="play"><b>{{playtri}}Play</b><small>Level 3</small></div><div class="side"><div class="sq">{{island}}</div>Islands</div></div>
+ <div class="asc">{{orbiticon}}Ascension <i>{{trophy}}640</i></div>
+</div><p class="cap"><b>A · Returning player</b>Pip holds tonight's letter (glow + badge = ready). Three lanterns lit, parcel at the end of the string.</p></div>
+
+<div><div class="phone ember">{{bg}}
+ <div class="top"><div class="sq">{{gear}}</div><div class="chip">{{star}}212</div><div class="sq">{{mailbox}}</div></div>
+ {{lanterns6}}
+ <p class="title"><span>ORBIT</span><em>SHIFT</em></p>
+ <div class="orbit"></div><img class="planet" src="{{ember}}"><img class="glider" src="{{gliderEmber}}">
+ <div class="pip-shadow"></div>{{pip}}{{heldDone}}
+ <div class="actions"><div class="side"><div class="sq">{{shipicon}}</div>Hangar</div><div class="play"><b>{{playtri}}Play</b><small>Level 6</small></div><div class="side"><div class="sq">{{island}}</div>Islands</div></div>
+ <div class="asc">{{orbiticon}}Ascension <i>{{trophy}}1 520</i></div>
+</div><p class="cap"><b>B · Ember, letter delivered</b>Hero follows progress. Delivered letter = calm envelope with a check, no text.</p></div>
+
+<div><div class="phone">{{bg}}
+ <div class="top"><div class="sq">{{gear}}</div><div class="chip">{{star}}0</div></div>
+ <p class="title first"><span>ORBIT</span><em>SHIFT</em></p>
+ <div class="orbit"></div><img class="planet" src="{{bloom}}"><img class="glider" src="{{gliderBloom}}">
+ <div class="pip-shadow"></div>{{pip}}
+ <div class="actions"><div class="side"><div class="sq">{{shipicon}}</div>Hangar</div><div class="play"><b>{{playtri}}Play</b></div><div class="side"><div class="sq">{{island}}</div>Islands</div></div>
+</div><p class="cap"><b>C · First launch</b>Title, world, Pip, PLAY. Nothing else until the first delivery.</p></div>
+
+<div><div class="phone p320">{{bg}}
+ <div class="top"><div class="sq">{{gear}}</div><div class="chip">{{star}}45</div><div class="sq">{{mailbox}}<span class="badge">2</span></div></div>
+ {{lanterns3s}}
+ <p class="title"><span>ORBIT</span><em>SHIFT</em></p>
+ <div class="orbit"></div><img class="planet" src="{{bloom}}"><img class="glider" src="{{gliderBloom}}">
+ <div class="pip-shadow"></div>{{pip}}<div class="held-glow"></div>{{held}}<span class="held-badge">1</span>
+ <div class="actions"><div class="side"><div class="sq">{{shipicon}}<span class="badge">1</span></div>Hangar</div><div class="play"><b>{{playtri}}Play</b><small>Level 3</small></div><div class="side"><div class="sq">{{island}}</div>Islands</div></div>
+ <div class="asc">{{orbiticon}}Ascension <i>{{trophy}}640</i></div>
+</div><p class="cap"><b>D · 320×568</b></p></div>
+</div></body></html>
