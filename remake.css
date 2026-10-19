@@ -668,3 +668,28 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 @keyframes letterFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)}}
 .share-button[hidden]{display:none}
 @media (prefers-reduced-motion:reduce){.letter-card .letter-art{animation:none}}
+
+/* Home breathing room (owner, 2026-10-19: "too packed, ORBIT SHIFT way too big"). The planet is gameplay and stays;
+   the chrome around it shrinks so the title no longer covers the glider's orbit. */
+.home .brand{margin-top:4px}
+.home h1{font-size:60px;line-height:.9}
+.home h1 span:first-child{transform:translateX(-13px);text-shadow:0 4px 0 var(--mint-700),0 8px 0 var(--night-900)}
+.home h1 span:last-child{transform:translateX(21px);text-shadow:0 4px 0 var(--ember-lip),0 8px 0 var(--night-900)}
+.home-top .icon-button.small{width:46px;height:46px;min-width:46px;border-radius:15px}
+.home-top .icon-button.small svg{width:28px;height:28px}
+.home-top .star-chip{height:36px;font-size:16px}
+.lanterns{height:44px;margin-bottom:-2px}
+@media (max-height:780px){
+  .home h1{font-size:54px}
+  .home h1 span:first-child{transform:translateX(-12px)}
+  .home h1 span:last-child{transform:translateX(19px)}
+}
+@media (max-height:620px){
+  .home h1{font-size:42px}
+  .home h1 span:first-child{transform:translateX(-9px);text-shadow:0 3px 0 var(--mint-700),0 6px 0 var(--night-900)}
+  .home h1 span:last-child{transform:translateX(14px);text-shadow:0 3px 0 var(--ember-lip),0 6px 0 var(--night-900)}
+  .home-top .icon-button.small{width:40px;height:40px;min-width:40px;border-radius:13px}
+  .home-top .icon-button.small svg{width:24px;height:24px}
+  .home-top .star-chip{height:32px;font-size:15px}
+  .lanterns{height:34px}
+}
