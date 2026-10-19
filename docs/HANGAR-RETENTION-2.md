@@ -144,3 +144,35 @@ All of this sits behind a flag until the owner has played it, like the other new
 3. Weekly parcel: 25★ + a stamp + a Moon. Should every 4th parcel add a trail (new art)?
 4. Postcards: should I draft the 12 islander lines for your approval?
 5. Album page reward: a new "pressed-petal" trail for Bloom (new art)?
+
+## 7. Owner decisions (2026-10-19)
+
+1. **Hangar: A · Sorting Room.** Built: showcase, folder tabs, sorting rack, preview-before-buy, adaptive action button, and the unfold + NEW postmark purchase.
+2. **Lanterns** (owner: "whatever you find interesting"): **dim-and-relight**, with at most **1 Paper Moon**. Missing a night without a Moon dims the string; flying within the next night relights it; only then does it reset.
+3. **Parcel** (owner: "we shouldn't be giving away many stars right away"):
+   - Stars ramp: **5★ in week 1, 10★ in week 2, then 15★ (cap)**.
+   - Each parcel also gives a week stamp, plus a Paper Moon if you don't hold one.
+   - Every 4th parcel gives a gold week stamp instead of a trail. No extra stars.
+4. **Postcards:** draft lines below, for approval.
+5. **Album page reward** (owner: "I can count on you"): I design a new **Pressed petal** trail for the Bloom page, then one for each island.
+
+## 8. Islander postcard lines: draft for approval
+
+One handwritten line each, signed by an islander. They arrive as the reward wrapper.
+
+| # | Arrives when | From | Line |
+|---|---|---|---|
+| 1 | First Light cleared | **Sprout**, First Light | "I woke up! I don't know what a morning is yet, but I'm ready for one." |
+| 2 | Pollen Path cleared | **Clover**, Pollen Path | "The vines are dancing again. Grandma Bud cried happy dew. Come back for tea?" |
+| 3 | Tangled Orbit cleared | **Twig & Twine**, Tangled Orbit | "We untangled ourselves! Mostly. Twine still has one knot. She named it Gerald." |
+| 4 | Crown of Petals cleared | **The Budkeeper** | "I kept every letter safe for so long, I forgot to read them. Thank you for being patient with an old flower. This one is for Ember." |
+| 5 | Kindling cleared | **Flick**, Kindling | "My head is warm again! Please keep me away from the curtains." |
+| 6 | Cinder Step cleared | **Ash & Soot**, Cinder Step | "We passed the cinder all the way down the line. Nobody dropped it. NOBODY." |
+| 7 | Furnace Heart cleared | **Old Wick**, Furnace Heart | "The furnace hums like it used to. I hum too now. The neighbours are thrilled." |
+| 8 | Solar Forge cleared | **The Forge Keeper** | "I sealed this one years ago, waiting for someone brave. It says 'To Moon'. I think that's your job now." |
+| 9 | First weekly parcel | **The Night Post** | "Seven nights in a row! Pip wrapped this one himself. Please ignore the extra tape." |
+| 10 | First Tonight's Letter delivered | **A Stargazer** | "Someone far away flew the very same sky as you tonight. You both made it." |
+| 11 | First Paper Moon used | **Old Moon** (asleep) | "Zzz… kept your lanterns… zzz… lit. You're welcome… zzz." |
+| 12 | Bloom album page complete | **All of Bloom** | "We pressed a petal from every corner of the island for you. Fly it proud." |
+
+Each card front is an illustration of the sender's island at night with the sender in it, built from shared paper pieces per island. The sender is new character art.

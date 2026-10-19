@@ -711,3 +711,86 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 @keyframes ascLaunch{0%,55%{transform:translateY(0);opacity:1}75%{transform:translateY(-9px);opacity:0}76%{transform:translateY(6px);opacity:0}100%{transform:translateY(0);opacity:1}}
 @media (max-height:620px){.ascension-tab{width:54px;padding:8px 5px 7px 8px}.ascension-tab .asc-icon{width:32px;height:32px}.ascension-tab i{font-size:12px}}
 @media (prefers-reduced-motion:reduce){.ascension-tab .asc-launch{animation:none}}
+
+/* Hangar · the Sorting Room: Pip's mail-sorting loft. Showcase stand, folder tabs, a paper sorting rack, one action. */
+#garage.hangar{--row:clamp(84px,14.5vh,128px)}
+#garage.hangar:not([hidden]){display:flex;flex-direction:column;gap:0;padding:max(20px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));background:radial-gradient(120% 70% at 50% 30%,#163F45 0,#0E2A30 45%,#0A1F24 100%)}
+#garage>header{display:flex;align-items:center;gap:14px;margin:0 4px 14px}
+#garage>header>div{flex:1}
+#garage>header h2{font-size:32px}
+.hangar-chip{display:flex;align-items:center;gap:6px;height:42px;padding:0 15px 0 8px;border-radius:21px;background:var(--night-700);box-shadow:0 4px 0 var(--night-900)}
+.hangar-chip svg{width:30px;height:30px}
+.hangar-chip strong{font:400 21px/1 var(--display);color:var(--paper)}
+.hangar-show{position:relative;flex:1 1 auto;min-height:140px;max-height:290px;border-radius:26px;overflow:hidden;background:radial-gradient(70% 80% at 55% 70%,#1F5A5E 0,#123A40 55%,#0B252A 100%);box-shadow:inset 0 0 0 2px rgba(168,240,207,.08)}
+#hangarShowcase{position:absolute;inset:0;width:100%;height:100%}
+.hangar-moon{position:absolute;right:24px;top:20px;width:30px;height:30px}
+.hangar-tag{position:absolute;left:22px;top:0;display:flex;flex-direction:column;align-items:center;transform-origin:50% 0;transform:rotate(-7deg);animation:hangarTag 4.5s ease-in-out infinite;filter:drop-shadow(0 3px 0 #C9B48C)}
+.hangar-tag i{width:2px;height:28px;background:var(--muted);opacity:.7}
+.hangar-tag b{position:relative;padding:8px 14px 8px 22px;background:var(--paper);color:var(--ink);font:400 19px/1 var(--display);letter-spacing:1px;white-space:nowrap;clip-path:polygon(12px 0,100% 0,100% 100%,12px 100%,0 50%)}
+.hangar-tag b::before{content:"";position:absolute;left:9px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:var(--night-600)}
+@keyframes hangarTag{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(-3deg)}}
+.hangar-tabs{flex:0 0 auto;display:flex;gap:6px;align-items:flex-end;height:46px;margin-top:14px}
+.hangar-tabs button{flex:1;min-height:0;height:40px;padding:0;border-radius:14px 14px 0 0;background:var(--night-700);box-shadow:none;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--muted);font:900 12.5px/1 var(--ui);letter-spacing:1.2px;text-transform:uppercase;transition:height .15s ease}
+.hangar-tabs button:active{transform:none;box-shadow:none}
+.hangar-tabs svg{width:20px;height:20px}
+#garage[data-tab=planes] .hangar-tabs [data-tab=planes],#garage[data-tab=paint] .hangar-tabs [data-tab=paint],#garage[data-tab=trails] .hangar-tabs [data-tab=trails]{height:46px;color:var(--ink);background:linear-gradient(100deg,#FFF4DC 0 56%,#F3E6C8 56% 100%)}
+.hangar-rack{flex:0 0 auto;height:calc(2 * var(--row) + 12px + 30px);padding:12px 12px 18px;border-radius:0 0 22px 22px;background:linear-gradient(100deg,#FFF4DC 0 56%,#F3E6C8 56% 100%);box-shadow:0 6px 0 #C9B48C}
+#garage .hangar-shelf{display:none;height:100%;min-height:0;margin:0;padding:0;overflow:visible;gap:12px 10px;grid-template-columns:repeat(3,1fr);grid-auto-rows:var(--row)}
+#garage[data-tab=planes] #riderGrid,#garage[data-tab=paint] #cosmetics,#garage[data-tab=trails] #trails{display:grid}
+#garage #cosmetics{grid-auto-rows:calc(2 * var(--row) + 12px)}
+#garage #trails{grid-template-columns:repeat(4,1fr)}
+#garage .slot{position:relative;min-height:0;height:100%;padding:0;border:0;border-radius:14px;background:linear-gradient(180deg,#0B252A,#12363D);box-shadow:inset 0 6px 10px rgba(0,0,0,.45),inset 0 -2px 0 rgba(255,244,220,.06);display:flex;align-items:center;justify-content:center;transition:transform .12s ease}
+#garage .slot:active{transform:translateY(2px);box-shadow:inset 0 6px 10px rgba(0,0,0,.45)}
+#garage .slot canvas{width:92%;height:auto;margin-top:-14px}
+#garage #trails .slot canvas{width:112%;max-width:none}
+#garage .slot b{position:absolute;left:0;right:0;bottom:9px;text-align:center;font:900 11px/1 var(--ui);letter-spacing:.6px;color:var(--paper);opacity:.92}
+#garage .slot.can b,#garage .slot.short b{bottom:17px}
+#garage .slot.short canvas{filter:saturate(.35) brightness(.72)}
+#garage .slot.locked canvas{filter:brightness(0) invert(.32) sepia(.35) hue-rotate(130deg);opacity:.7}
+#garage .slot.locked b{color:var(--muted)}
+#garage .slot.picked{outline:3px solid var(--mint-500);outline-offset:2px;transform:translateY(-3px)}
+#garage .slot.on::after{content:"";position:absolute;inset:-3px;border-radius:16px;box-shadow:0 0 0 3px var(--gold);pointer-events:none}
+.slot-seal{position:absolute;right:-7px;top:-8px;width:28px;height:28px;z-index:2}
+.slot-lock{position:absolute;top:8px;right:8px;width:15px;height:15px;color:var(--muted)}
+.slot-price{position:absolute;left:50%;bottom:-10px;transform:translateX(-50%);display:flex;align-items:center;gap:3px;padding:4px 9px 4px 6px;border-radius:10px;font:400 14px/1 var(--display);font-style:normal;white-space:nowrap;z-index:2;background:var(--night-600);color:var(--muted);box-shadow:0 3px 0 var(--night-900)}
+.slot-price svg{width:14px;height:14px}
+#garage .slot.can .slot-price{background:var(--fold-gold);color:var(--ink);box-shadow:0 3px 0 var(--ember-lip)}
+#garage .hangar-action{flex:0 0 auto;align-self:center;width:min(260px,100%);min-width:0;height:64px;margin-top:22px;padding:0 18px;border:0;border-radius:20px;display:flex;align-items:center;justify-content:center;gap:10px;font:400 25px/1 var(--display);letter-spacing:1.5px;text-transform:uppercase}
+#garage .hangar-action.buy{color:var(--ink);background:var(--fold-gold);box-shadow:inset 0 3px 0 rgba(255,255,255,.45),0 8px 0 var(--ember-lip)}
+#garage .hangar-action.owned{color:#0B3B30;background:var(--fold-mint);box-shadow:inset 0 3px 0 rgba(255,255,255,.4),0 8px 0 var(--mint-700)}
+#garage .hangar-action.on{color:var(--muted);background:transparent;border:2px solid var(--night-600);box-shadow:none}
+#garage .hangar-action.short,#garage .hangar-action.locked{flex-direction:column;gap:7px;color:var(--mint-200);background:var(--fold-night);box-shadow:inset 0 2px 0 rgba(255,244,220,.14),0 6px 0 var(--night-900);font:900 15px/1.2 var(--ui);letter-spacing:.4px;text-transform:none}
+.hangar-action .cost{display:flex;align-items:center;gap:4px}
+.hangar-action .cost svg{width:24px;height:24px}
+.need-bar{display:block;width:150px;height:8px;border-radius:4px;background:var(--night-900);overflow:hidden}
+.need-bar b{display:block;height:100%;background:var(--mint-500)}
+.short .need-bar b{background:var(--gold)}
+/* Buying: the plane unfolds out of its crease, a NEW postmark lands, paper confetti falls. */
+#garage .purchase-reveal{position:absolute;inset:0;z-index:6;display:block;min-height:0;border:0;border-radius:0;background:rgba(6,20,23,.88);animation:revealIn .25s ease-out both;overflow:hidden}
+.reveal-rays{position:absolute;left:50%;top:38%;width:640px;height:640px;margin:-320px 0 0 -320px;border-radius:50%;background:repeating-conic-gradient(rgba(255,201,77,.16) 0 9deg,transparent 9deg 22deg);-webkit-mask:radial-gradient(closest-side,#000 30%,transparent);mask:radial-gradient(closest-side,#000 30%,transparent);animation:revealRays 16s linear infinite}
+#garage .purchase-reveal canvas{position:absolute;left:50%;top:38%;width:min(300px,78%);height:auto;margin:0;transform:translate(-50%,-50%) rotate(-6deg);filter:drop-shadow(0 18px 14px rgba(0,0,0,.4));animation:revealUnfold .7s .1s cubic-bezier(.2,1.4,.4,1) both}
+.reveal-stamp{position:absolute;right:10%;top:calc(38% - 130px);width:100px;height:100px;animation:revealStamp .45s .7s cubic-bezier(.3,1.6,.5,1) both}
+.purchase-reveal>b{position:absolute;left:0;right:0;top:calc(38% + 100px);text-align:center;font:400 44px/1 var(--display);letter-spacing:2px;color:var(--paper);text-shadow:0 4px 0 #2E9C80,0 9px 0 var(--night-900);animation:revealName .4s .5s ease-out both}
+#garage .purchase-reveal .hangar-action{position:absolute;left:50%;bottom:max(18px,env(safe-area-inset-bottom));margin:0 0 0 -130px;width:260px;animation:revealName .35s .9s ease-out both}
+.reveal-confetti i{position:absolute;left:var(--x);top:-20px;width:10px;height:14px;background:var(--c);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);animation:revealConfetti 2.2s var(--d) ease-in both}
+#garage:has(.purchase-reveal) #hangarAction{visibility:hidden}
+@keyframes revealIn{from{opacity:0}}
+@keyframes revealRays{to{transform:rotate(360deg)}}
+@keyframes revealUnfold{0%{transform:translate(-50%,-50%) rotate(-6deg) scale(.4,0)}55%{transform:translate(-50%,-50%) rotate(-6deg) scale(.95,1.12)}100%{transform:translate(-50%,-50%) rotate(-6deg)}}
+@keyframes revealStamp{0%{opacity:0;transform:scale(2.6) rotate(-20deg)}100%{opacity:1;transform:scale(1) rotate(14deg)}}
+@keyframes revealName{from{opacity:0;transform:translateY(12px)}}
+@keyframes revealConfetti{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(560deg);opacity:.6}}
+@media (prefers-reduced-motion:reduce){.hangar-tag,.reveal-rays,.reveal-confetti i{animation:none}.reveal-confetti{display:none}#garage .purchase-reveal *{animation-duration:.01s!important;animation-delay:0s!important}}
+@media (max-height:620px){
+  #garage.hangar{--row:clamp(70px,13vh,92px)}
+  #garage>header{margin-bottom:10px}#garage>header h2{font-size:26px}
+  .hangar-chip{height:36px}.hangar-chip strong{font-size:18px}.hangar-chip svg{width:24px;height:24px}
+  .hangar-show{min-height:118px;border-radius:20px}.hangar-tag b{font-size:16px;padding:6px 12px 6px 20px}.hangar-tag i{height:20px}
+  .hangar-tabs{height:40px;margin-top:10px}.hangar-tabs button{height:34px;font-size:11px}
+  #garage[data-tab=planes] .hangar-tabs [data-tab=planes],#garage[data-tab=paint] .hangar-tabs [data-tab=paint],#garage[data-tab=trails] .hangar-tabs [data-tab=trails]{height:40px}
+  .hangar-rack{padding:10px 10px 16px;height:calc(2 * var(--row) + 10px + 26px)}#garage .hangar-shelf{gap:10px 8px}
+  #garage #cosmetics{grid-auto-rows:calc(2 * var(--row) + 10px)}
+  #garage .hangar-action{height:54px;margin-top:18px;font-size:22px}
+  #garage .slot canvas{width:70%;margin-top:-20px}#garage #trails .slot canvas{width:100%}#garage #cosmetics .slot canvas{width:88%}
+  #garage .slot b{font-size:10px;bottom:7px}#garage .slot.can b,#garage .slot.short b{bottom:14px}
+}
