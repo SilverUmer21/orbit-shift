@@ -211,7 +211,8 @@ function makeGoal(category, index) {
 }
 
 function resize() {
-  const ratio = Math.min(devicePixelRatio || 1, 2);
+  // Canvas sharpness is capped at 2x for performance; the trailer renderer raises the cap via window.orbitMaxPixelRatio.
+  const ratio = Math.min(devicePixelRatio || 1, window.orbitMaxPixelRatio || 2);
   width = canvas.clientWidth;
   height = canvas.clientHeight;
   cx = width / 2;
