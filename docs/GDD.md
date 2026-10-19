@@ -2,7 +2,7 @@
 
 Living document for the **Complete Remake** (`complete-remake-orbit-shift` branch). Read this before every work session and update it whenever something is built, decided or found.
 
-Last updated: 2026-10-18
+Last updated: 2026-10-19
 
 > ## ★ How we design (owner's rule, read first, every session)
 >
@@ -215,6 +215,32 @@ Research and proposal in `docs/RETENTION-STRATEGY.md`. Proposed waves: Tonight's
 - Re-render: `node trailer/render.cjs measure`, then `node trailer/render.cjs render trailer/out`, `python3 trailer/soundtrack.py trailer/out/events.json trailer/out/soundtrack.wav`, then ffmpeg (command in `trailer/README.md`). Needs the preview server on port 3112.
 - Before store use, swap "Coming soon to Google Play" for the official Get it on Google Play badge once the listing is live.
 
+### Trailer B — "Special Delivery"  ✅ rendered (2026-10-19), replaces Trailer A as the main trailer
+44.5 s, 1080×1920, `trailer/release/orbit-shift-special-delivery-1080x1920.mp4`. Plan, research and beat sheet: `docs/TRAILER-B.md`.
+
+**Brief (owner):** at most 45 s, important details shown slowly as an overview, the Special delivery envelope opening, featuring Results with the reward card, the Hangar and the Night Post.
+
+**Concept:** the trailer is a letter Pip delivers to the viewer.
+
+**Beats** (8 scenes, 4–13.5 s each, versus 2 s beats in Trailer A):
+1. **Envelope** "SPECIAL DELIVERY / To: You". Pip taps the wax seal; the letter unfolds into the live Home.
+2. **Premise:** "The night mail stopped." → "Pip needs a pilot.", then the fingertip presses PLAY. A match cut keeps the planet in place.
+3. **One 13.5 s take:** "Tap to turn" (orbit arrow flips), "Fly through the gap" (landing zone on the orbit), "Graze the edge" (edge glint, slow-motion PERFECT, freeze, gold postmark ×2).
+4. **Hold** in Ember (hold ring, speed ramp).
+5. **Rewards:** Furnace Lit, LEVEL CLEAR! stars, NEW TRAIL! card.
+6. **Hangar:** buy the Crescent, NEW postmark.
+7. **Night Post:** Tonight's Letter, a postcard turning over.
+8. **End card:** the letter folds up to Pip; logo, "One tap. Deliver the night.", "No ads · Plays offline".
+
+**Design:**
+- Captions are Night Post paper tags (cream, cut lip, gold marker on the key word), each on screen for about 2 s or longer (most 3–6 s).
+- Transitions are freeze-frame paper folds (letter fold, postcard slide, dissolve).
+- The in-run PERFECT tags stay on.
+- All footage is the real game on the virtual clock; staged gates are real gates with shifted gaps.
+- No game code changed.
+
+Re-render steps are in `trailer/README.md`.
+
 ### Step 3 — Hangar  ✅ built (2026-10-19): A · Sorting Room
 Pip's sorting loft:
 - A showcase (the previewed plane in the previewed paint, on a folded paper stand, flying the previewed trail, with a hanging name tag).
@@ -282,6 +308,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | 2026-10-19 | Postcard lines approved. Retention round 2 built behind the Night Post extras switch. A lantern now lights when a flight ends, not when the app is opened. `SAVE_VERSION` stays 5 and `trailStyles` stays 7 (the game's self-checks); the new save fields are additive, and Pressed petal lives in `bonusTrails`. |
 | 2026-10-19 | Hangar **A · Sorting Room** approved and built. Lanterns: dim-and-relight with at most 1 Paper Moon (owner left it to me). Parcel: few stars (5 → 10 → 15★ cap) plus a stamp plus a Moon; no trail every 4th parcel. Album page reward: a new Pressed-petal trail (owner left the design to me). Postcard lines drafted for approval. |
 | 2026-10-19 | Owner asked to start Step 3 (Hangar) and the next retention round together (parcel, Paper Moon, postcards, Stamp Album). Proposal written; awaiting picks. |
+| 2026-10-19 | Trailer B **"Special Delivery"** (owner): Trailer A switched screens too fast to follow. The new cut is a promo video of at most 45 s that shows the important details slowly as an overview. It opens on the Special delivery envelope and features Results with the reward card, the Hangar and the Night Post. Built as 44.5 s from the real game. |
 | 2026-10-19 | Trailer: owner chose concept **A · The Night Mail** (story-led, 30 s vertical, real gameplay, captions that move with the glider). |
 | 2026-10-19 | Tonight's Letter = **daily seeded run**: one Ascension-style delivery a day with the date as the random seed, so everyone flies the same sky. Gate formation rules are unchanged. One scored try, then a shareable postcard. |
 | 2026-10-19 | Home v1 feedback: too much and repeated text; keep the title big like before; Pip looks fine, add detail later. v2: no captions, the daily letter is held by Pip (tap Pip), lanterns read visually, Ascension pill shows only the trophy and best score. |

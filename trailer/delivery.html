@@ -1,0 +1,364 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Orbit Shift · Special Delivery · director</title>
+<style>
+@font-face{font-family:"Lilita One";src:url("../fonts/lilita-one-latin.woff2") format("woff2")}
+@font-face{font-family:"Nunito";src:url("../fonts/nunito-latin-variable.woff2") format("woff2");font-weight:200 1000}
+html,body{margin:0;width:432px;height:768px;overflow:hidden;background:#0A1F24}
+#stage{position:absolute;inset:0;overflow:hidden}
+.layer{position:absolute;inset:0;pointer-events:none}
+/* Night backdrop for the opener and the end card. */
+#bg{background:radial-gradient(circle at 50% 40%,#1d4a50,#0d2a30 62%,#0a2126)}
+#bg svg{position:absolute;inset:0;width:100%;height:100%}
+#cam{position:absolute;inset:0;transform-origin:0 0}
+#game{position:absolute;inset:0;width:432px;height:768px;border:0}
+#annot{position:absolute;left:0;top:0;width:432px;height:768px;overflow:visible}
+#vignette{background:radial-gradient(ellipse at 50% 52%,rgba(0,0,0,0) 58%,rgba(4,14,18,.5) 100%)}
+#streaks i{position:absolute;height:3px;border-radius:2px;background:#FFF4DC}
+/* Envelope opener. */
+#env{transform-origin:50% 50%}
+#envBox{position:absolute;left:36px;top:290px;width:360px;height:240px}
+#envBox svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+#envPip{position:absolute;width:96px;height:104px;margin:-52px 0 0 -48px}
+#envPip svg,#endPip svg{width:100%;height:100%;overflow:visible}
+/* The letter: a full-frame sheet folded in thirds; its face is a still of the next shot. */
+#letter{position:absolute;left:0;top:0;width:432px;height:768px;transform-origin:50% 50%;transform-style:preserve-3d}
+#letter .p,#freeze .p{position:absolute;left:0;width:432px;height:256px;transform-style:preserve-3d}
+.p.top{top:0;transform-origin:50% 100%}
+.p.mid{top:256px}
+.p.bot{top:512px;transform-origin:50% 0}
+#letter .f,#letter .b{position:absolute;inset:0;backface-visibility:hidden;background-size:432px 768px}
+#letter .b{transform:rotateX(180deg);background:linear-gradient(100deg,#FFF4DC 0 60%,#F1E2C2 60% 100%)}
+.top .f{background-position:0 0}.mid .f{background-position:0 -256px}.bot .f{background-position:0 -512px}
+#letter .f{--e:calc(10px * var(--edge,1))}
+#letter .top .f{box-shadow:inset 0 var(--e) 0 #FFF4DC,inset var(--e) 0 0 #FFF4DC,inset calc(-1 * var(--e)) 0 0 #FFF4DC,inset 0 -1px 0 rgba(10,31,36,calc(.35 * var(--edge,1)))}
+#letter .mid .f{box-shadow:inset var(--e) 0 0 #FFF4DC,inset calc(-1 * var(--e)) 0 0 #FFF4DC}
+#letter .bot .f{box-shadow:inset 0 calc(-1 * var(--e)) 0 #FFF4DC,inset var(--e) 0 0 #FFF4DC,inset calc(-1 * var(--e)) 0 0 #FFF4DC,inset 0 1px 0 rgba(10,31,36,calc(.35 * var(--edge,1)))}
+.crest{position:absolute;left:50%;top:50%;width:140px;height:140px;margin:-70px 0 0 -70px;opacity:.9}
+/* Freeze-frame transitions: the outgoing shot as paper. */
+#freeze .sheet{position:absolute;inset:0;transform-style:preserve-3d}
+#freeze .f,#freeze .b{position:absolute;inset:0;backface-visibility:hidden;background-size:432px 768px}
+#freeze .b{transform:rotateX(180deg);background:linear-gradient(100deg,#FFF4DC 0 60%,#F1E2C2 60% 100%)}
+#freeze .card{position:absolute;inset:0;background-size:cover;box-shadow:0 0 0 12px #FFF4DC,0 22px 0 4px #0A1F24,0 30px 60px rgba(0,0,0,.5)}
+/* Paper tags (captions). */
+.tag{position:absolute;left:50%;transform-origin:50% 0;width:max-content;max-width:392px}
+.tag .flip{transform-origin:50% 50%;filter:drop-shadow(0 6px 0 #0A1F24) drop-shadow(0 16px 18px rgba(0,0,0,.32))}
+.tag .face{position:relative;isolation:isolate;padding:13px 26px 12px 44px;background:linear-gradient(100deg,#FFF4DC 0 63%,#F1E2C2 63% 100%);clip-path:polygon(16px 0,100% 0,100% 100%,16px 100%,0 calc(100% - 16px),0 16px);font:400 34px/1.04 "Lilita One";letter-spacing:.6px;color:#0A1F24;text-align:center;text-transform:uppercase;white-space:nowrap}
+.tag .face::before{content:"";position:absolute;left:15px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:#0E2A30;box-shadow:inset 0 2px 0 rgba(0,0,0,.45),0 0 0 3px #E9D6B0}
+.tag .string{position:absolute;left:-40px;top:50%;width:64px;height:40px;margin-top:-34px;overflow:visible}
+.tag mark{background:none;color:inherit;position:relative;padding:0 3px}
+.tag mark::before{content:"";position:absolute;left:-3px;right:-3px;top:10%;bottom:4%;background:#FFC94D;border-radius:4px;transform-origin:0 50%;transform:skewX(-9deg) rotate(-1.6deg) scaleX(var(--mk,1));z-index:-1;box-shadow:inset 0 -6px 0 #E0A93A}
+.tag small{display:block;font:900 15px/1.2 "Nunito";letter-spacing:2.5px;color:#2E6F66;margin-top:6px}
+/* Paper fingertip. */
+#hand{position:absolute;left:0;top:0;width:0;height:0}
+#handArt{position:absolute;left:-46px;top:-6px;width:104px;height:139px;transform-origin:46px 0}
+#handFx{position:absolute;left:-60px;top:-60px;width:120px;height:120px;overflow:visible}
+/* Gold postmark. */
+#postmark{position:absolute;left:50%;top:50%;width:230px;height:230px;margin:-115px 0 0 -115px;opacity:0}
+#postmark svg{width:100%;height:100%;overflow:visible}
+/* End card. */
+#end{opacity:0}
+#endPip{position:absolute;left:156px;top:92px;width:120px;height:130px}
+#logoWrap{position:absolute;left:0;right:0;top:258px;height:170px;perspective:700px}
+#logo{position:absolute;left:0;right:0;top:0;text-align:center;font:400 84px/.9 "Lilita One";letter-spacing:3px;text-transform:uppercase;transform-origin:50% 100%}
+#logo span{display:block;color:#FFF4DC;text-shadow:0 6px 0 #2E9C80,0 12px 0 #0A1F24;transform:translateX(-20px)}
+#logo em{display:block;font-style:normal;color:#FFC94D;text-shadow:0 6px 0 #E0703C,0 12px 0 #0A1F24;transform:translateX(26px)}
+#orbBack,#orbFront{position:absolute;left:0;top:0;width:432px;height:768px}
+#store{position:absolute;left:50%;top:592px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:12px 20px;border-radius:16px;background:#0A1F24;box-shadow:0 0 0 2px #FFC94D;font:900 15px "Nunito";color:#FFF4DC;letter-spacing:1px;white-space:nowrap}
+#store b{color:#FFC94D}
+#noads{position:absolute;left:0;right:0;top:662px;text-align:center;font:900 13px "Nunito";color:#A8F0CF;letter-spacing:3px;text-transform:uppercase}
+#black{background:#06141A;opacity:0}
+</style></head><body><div id="stage">
+<div class="layer" id="bg"><svg id="bgArt" viewBox="0 0 432 768"></svg></div>
+<div id="cam"><iframe id="game" src="../index.html"></iframe><svg id="annot" viewBox="0 0 432 768"></svg></div>
+<div class="layer" id="vignette"></div>
+<div class="layer" id="streaks"></div>
+<div class="layer" id="env">
+  <div id="envBox"><svg id="envBack" viewBox="0 0 300 200"></svg></div>
+  <div id="letterSlot" class="layer"></div>
+  <div id="envBoxF" style="position:absolute;left:36px;top:290px;width:360px;height:240px"><svg id="envFront" viewBox="0 0 300 200" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"></svg></div>
+  <div id="letterTop" class="layer"></div>
+  <div id="envPip"></div>
+</div>
+<div class="layer" id="end"><canvas id="orbBack" width="1080" height="1920"></canvas><div id="endPip"></div><div id="logoWrap"><div id="logo"><span>Orbit</span><em>Shift</em></div></div><canvas id="orbFront" width="1080" height="1920"></canvas><div id="store">COMING SOON TO <b>GOOGLE PLAY</b></div><div id="noads">No ads · Plays offline</div></div>
+<div class="layer" id="freeze" style="perspective:1100px"></div>
+<div class="layer" id="caps"></div>
+<div class="layer"><div id="hand"><svg id="handFx" viewBox="-60 -60 120 120"></svg><svg id="handArt" viewBox="0 0 104 139"></svg></div></div>
+<div id="postmark"></div>
+<div class="layer" id="black"></div>
+</div>
+<script src="../pip.js"></script>
+<script>
+// Special Delivery overlay. render(s) applies one frame of the edit; the node script computes timing, this page draws.
+const $ = id => document.getElementById(id);
+const TAU = Math.PI * 2, CX = 216, CY = 422.4, ORBIT = 162;
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const ease = t => { t = clamp(t); return t * t * (3 - 2 * t); };
+const easeOut = t => { t = clamp(t); return 1 - (1 - t) ** 3; };
+const easeIn = t => { t = clamp(t); return t * t * t; };
+const back = (t, c = 1.6) => { t = clamp(t); return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2; };
+const lerp = (a, b, t) => a + (b - a) * t;
+const f1 = n => n.toFixed(1);
+let G = null; // the game window, for drawGlider and its ship/paint data
+const gameReady = () => G || (G = $("game").contentWindow, G);
+
+// ---------- backdrop: night gradient, twinkling paper stars, a faint dashed orbit, folded paper hills.
+const STARS = Array.from({ length: 30 }, (_, i) => ({ x: (i * 137.5) % 432, y: (i * 89.3 + 40) % 560, s: 2 + (i % 4) * 1.3, ph: i * 1.7 }));
+function starPath(x, y, s) { return `M${f1(x)} ${f1(y - s * 2)} L${f1(x + s * .5)} ${f1(y - s * .5)} L${f1(x + s * 2)} ${f1(y)} L${f1(x + s * .5)} ${f1(y + s * .5)} L${f1(x)} ${f1(y + s * 2)} L${f1(x - s * .5)} ${f1(y + s * .5)} L${f1(x - s * 2)} ${f1(y)} L${f1(x - s * .5)} ${f1(y - s * .5)}Z`; }
+function drawBg(t, ring) {
+  let svg = "";
+  for (const st of STARS) svg += `<path d="${starPath(st.x, st.y, st.s)}" fill="#FFF4DC" opacity="${f1(.18 + .5 * (.5 + .5 * Math.sin(t * 2.2 + st.ph)) * (st.s / 6))}"/>`;
+  if (ring) svg += `<ellipse cx="216" cy="${ring.y}" rx="${ring.rx}" ry="${ring.ry}" transform="rotate(-8 216 ${ring.y})" fill="none" stroke="#A8F0CF" stroke-opacity="${ring.o * .35}" stroke-width="2" stroke-dasharray="2 10" stroke-linecap="round" stroke-dashoffset="${f1(-t * 24)}"/>`;
+  svg += `<path d="M0 640 Q60 610 120 628 T240 622 T360 632 T432 618 V768 H0Z" fill="#12363D"/><path d="M0 640 Q60 610 120 628 T240 622 L240 768 H0Z" fill="#163F46"/>
+    <path d="M0 690 Q80 664 170 684 T330 676 T432 684 V768 H0Z" fill="#0E2A30"/><path d="M0 736 Q100 712 216 730 T432 724 V768 H0Z" fill="#0A1F24"/>`;
+  $("bgArt").innerHTML = svg;
+}
+
+// ---------- envelope parts (300x200 user units, drawn at 1.1x). The flap swings on its top edge.
+const SEAL_BLOB = Array.from({ length: 16 }, (_, i) => { const a = i / 16 * TAU, r = i % 2 ? 22 : 25.5; return `${f1(150 + Math.cos(a) * r)},${f1(112 + Math.sin(a) * r)}`; }).join(" ");
+const GLIDER = "M31,0 L5,-7 L-17,-24 L-29,-18 L-20,0 L-29,18 L-17,24 L5,7Z"; // Manta silhouette for the seal emboss
+function flapPath(s) { return `M0 0 L300 0 L150 ${f1(118 * s)}Z`; }
+function drawEnvelope(p) {
+  // p: { flap: 1 closed .. -1 open, seal: 0 whole .. 1 cracked & gone, glow }
+  const open = p.flap < 0;
+  const flap = `<g><path d="${flapPath(p.flap)}" fill="${open ? "#D9C39A" : "#FFF4DC"}"/>${open ? "" : `<path d="M150 0 L300 0 L150 ${f1(118 * p.flap)}Z" fill="#F1E2C2"/>`}</g>`;
+  $("envBack").innerHTML = `<rect x="4" y="10" width="300" height="196" rx="12" fill="#0A1F24" opacity=".55"/><rect x="0" y="0" width="300" height="200" rx="12" fill="#C9B48C"/><rect x="10" y="8" width="280" height="150" rx="6" fill="#B8A27A"/>${open ? flap : ""}`;
+  // Seal halves split along a jagged crack and tumble apart.
+  const c = p.seal, glow = p.glow || 0;
+  let seal = "";
+  if (c < 1) {
+    const sealBody = `<polygon points="${SEAL_BLOB}" fill="#FF6F61"/><circle cx="150" cy="112" r="17" fill="#E0574A"/><path d="${GLIDER}" transform="translate(151 112) rotate(-90) scale(.42)" fill="#FF8A7E"/><circle cx="150" cy="112" r="17" fill="none" stroke="#C7463B" stroke-width="2" stroke-dasharray="2 3"/>`;
+    if (c <= 0) seal = `${glow ? `<circle cx="150" cy="112" r="${f1(30 + glow * 8)}" fill="#FFC94D" opacity="${f1(.18 * glow)}"/>` : ""}${sealBody}`;
+    else {
+      const k = easeOut(c), dx = 8 + k * 26, dy = k * k * 60, rot = k * 30, o = 1 - ease(c * 1.25);
+      seal = `<defs><clipPath id="sl"><path d="M100 60 L152 60 L146 92 L156 104 L144 118 L154 132 L148 170 L100 170Z"/></clipPath><clipPath id="sr"><path d="M200 60 L152 60 L146 92 L156 104 L144 118 L154 132 L148 170 L200 170Z"/></clipPath></defs>
+        <g opacity="${f1(o)}" transform="translate(${f1(-dx)} ${f1(dy)}) rotate(${f1(-rot)} 150 112)"><g clip-path="url(#sl)">${sealBody}</g></g>
+        <g opacity="${f1(o)}" transform="translate(${f1(dx)} ${f1(dy * 1.1)}) rotate(${f1(rot)} 150 112)"><g clip-path="url(#sr)">${sealBody}</g></g>
+        ${[[-1, -1.2, 4], [1, -1.5, 3], [-1.4, .3, 3], [1.3, .1, 3.5], [0, -1.8, 2.5]].map(([vx, vy, r], i) => `<circle cx="${f1(150 + vx * k * 70)}" cy="${f1(112 + vy * k * 60 + k * k * 120)}" r="${r}" fill="${i % 2 ? "#FFC94D" : "#FFF4DC"}" opacity="${f1(o)}"/>`).join("")}
+        <circle cx="150" cy="112" r="${f1(20 + k * 70)}" fill="none" stroke="#FFC94D" stroke-width="${f1(4 * (1 - k))}" stroke-dasharray="3 7" opacity="${f1(1 - k)}"/>`;
+    }
+  }
+  const stamp = `<g transform="translate(240 120) rotate(6)"><rect x="-2" y="-2" width="44" height="54" fill="#FFF4DC"/>${Array.from({ length: 9 }, (_, i) => `<circle cx="${f1(-2 + i * 5.5)}" cy="-2" r="1.8" fill="#C9B48C"/><circle cx="${f1(-2 + i * 5.5)}" cy="52" r="1.8" fill="#C9B48C"/>`).join("")}<rect x="3" y="3" width="34" height="44" fill="#1A4A50"/><circle cx="20" cy="27" r="9" fill="#5ED6A6"/><path d="M20 18 A9 9 0 0 1 20 36Z" fill="#2E9C80"/><path d="${GLIDER}" transform="translate(23 12) rotate(20) scale(.3)" fill="#FFF4DC"/></g>
+    <g fill="none" stroke="#7FA8A2" stroke-width="2" opacity=".8"><circle cx="226" cy="176" r="15"/><path d="M243 168 q6 -4 12 0 t12 0 t12 0 M243 177 q6 -4 12 0 t12 0 t12 0 M243 186 q6 -4 12 0 t12 0 t12 0"/></g>
+    <text x="226" y="179" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="6" fill="#7FA8A2" letter-spacing=".5">NIGHT</text>`;
+  $("envFront").innerHTML = `<path d="M0 12 Q0 0 12 0 L150 116 L0 196Z" fill="#F6EAD0"/><path d="M300 12 Q300 0 288 0 L150 116 L300 196Z" fill="#E6D3AC"/>
+    <path d="M0 188 L150 104 L300 188 Q300 200 288 200 L12 200 Q0 200 0 188Z" fill="#FFF4DC"/><path d="M150 104 L300 188 Q300 200 288 200 L150 200Z" fill="#F3E6C8"/>
+    <text x="26" y="150" font-family="Nunito" font-weight="900" font-size="10.5" letter-spacing="2.4" fill="#E0703C">SPECIAL DELIVERY</text>
+    <text x="24" y="186" font-family="Lilita One" font-size="36" fill="#12363D">To: You</text>${stamp}${open ? "" : flap}${seal}`;
+}
+
+// ---------- the letter (opener) and freeze-frame sheets share one builder.
+function sheet(img, back = "") {
+  return `<div class="p top"><div class="f" style="background-image:url(${img})"></div><div class="b">${back}</div></div><div class="p mid"><div class="f" style="background-image:url(${img})"></div></div><div class="p bot"><div class="f" style="background-image:url(${img})"></div><div class="b">${back}</div></div>`;
+}
+const CREST = `<svg class="crest" viewBox="0 0 100 100">${Array.from({ length: 24 }, (_, i) => `<circle cx="${f1(50 + Math.cos(i / 24 * TAU) * 44)}" cy="${f1(50 + Math.sin(i / 24 * TAU) * 44)}" r="2.6" fill="#E0A93A"/>`).join("")}<circle cx="50" cy="50" r="38" fill="none" stroke="#E0A93A" stroke-width="2" stroke-dasharray="3 3"/><path d="${GLIDER}" transform="translate(52 50) rotate(-30) scale(.9)" fill="#E0A93A"/><text x="50" y="84" text-anchor="middle" font-family="Lilita One" font-size="9" fill="#C98A22" letter-spacing="1">NIGHT POST</text></svg>`;
+let letterImg = null;
+function drawLetter(L) {
+  // L: { img, slot:'in'|'top', x, y, s, bot: 0 folded..1 flat, top: 0..1, edge, rot }
+  const host = L.slot === "top" ? $("letterTop") : $("letterSlot"), other = L.slot === "top" ? $("letterSlot") : $("letterTop");
+  if (other.firstChild) other.innerHTML = "";
+  if (!host.firstChild || letterImg !== L.img) { letterImg = L.img; host.innerHTML = `<div id="letter">${sheet(L.img, CREST)}</div>`; }
+  const el = $("letter");
+  el.style.transform = `translate(${f1(L.x - 216)}px, ${f1(L.y - 384)}px) scale(${L.s.toFixed(4)}) rotate(${(L.rot || 0).toFixed(2)}deg)`;
+  el.querySelector(".top").style.transform = `translateZ(${L.top < 1 ? 1 : 0}px) rotateX(${f1(-180 * (1 - L.top))}deg)`;
+  el.querySelector(".bot").style.transform = `translateZ(${L.bot < 1 ? 2 : 0}px) rotateX(${f1(180 * (1 - L.bot))}deg)`;
+  el.style.setProperty("--edge", String(L.edge ?? 1));
+}
+
+// ---------- paper tags. A slot keeps its text so a change of line flips the tag over its crease.
+const slots = {};
+const STRING = `<svg class="string" viewBox="0 0 64 40"><path d="M50 26 Q30 30 18 18 T-6 2" fill="none" stroke="#7FA8A2" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+function tagHTML(text) { return text.split("|").map(line => line.replace(/\*(.+?)\*/g, "<mark>$1</mark>")).join("<br>").replace(/\{(.+?)\}/g, "<small>$1</small>"); }
+function drawCaps(t, caps) {
+  const host = $("caps"), seen = new Set();
+  for (const c of caps || []) {
+    seen.add(c.id);
+    let slot = slots[c.id];
+    if (!slot) { const el = document.createElement("div"); el.className = "tag"; el.innerHTML = `<div class="flip"><div class="face"></div>${STRING}</div>`; host.append(el); slot = slots[c.id] = { el, text: null, shown: null, changed: -9, prev: null }; }
+    if (slot.text !== c.text) { if (slot.text !== null && c.age > .4) { slot.prev = slot.text; slot.changed = t; } slot.text = c.text; }
+    const fp = clamp((t - slot.changed) / .34), showText = fp < .5 && slot.prev ? slot.prev : slot.text;
+    const face = slot.el.querySelector(".face");
+    if (slot.shown !== showText) { slot.shown = showText; face.innerHTML = tagHTML(showText); }
+    const k = back(c.age / .42, 1.4), out = c.left < .28 ? 1 - clamp(c.left / .28) : 0;
+    const swing = 2.6 * Math.sin(c.age * 7.5) * Math.exp(-c.age * 3.2);
+    const sinceFlip = t - slot.changed, mk = sinceFlip < .9 && fp >= .5 ? clamp((sinceFlip - .3) / .3) : clamp((c.age - .32) / .3);
+    face.style.setProperty("--mk", mk.toFixed(3));
+    slot.el.style.top = `${c.y}px`;
+    slot.el.style.opacity = c.age <= 0 || out >= 1 ? 0 : 1;
+    slot.el.style.transform = `translateX(-50%) translateX(${c.x || 0}px) perspective(700px) rotateX(${f1(out > 0 ? -95 * easeIn(out) : 90 * (1 - k))}deg) rotate(${f1(swing + (c.r || 0))}deg) scale(${c.s ?? 1})`;
+    const flipAngle = fp < 1 && slot.prev ? (fp < .5 ? fp * 2 * 90 : -(1 - fp) * 2 * 90) : 0;
+    slot.el.querySelector(".flip").style.transform = `perspective(700px) rotateX(${f1(flipAngle)}deg)`;
+  }
+  for (const [id, slot] of Object.entries(slots)) if (!seen.has(id)) slot.el.style.opacity = 0;
+}
+
+// ---------- game-space annotations (inside the camera): direction arrow, landing zone, gap guides, edge glint, ripples.
+const pt = (a, r) => [CX + Math.cos(a) * r, CY + Math.sin(a) * r];
+function arc(a0, a1, r) {
+  const [x0, y0] = pt(a0, r), [x1, y1] = pt(a1, r), large = Math.abs(a1 - a0) > Math.PI ? 1 : 0, sweep = a1 > a0 ? 1 : 0;
+  return `M${f1(x0)} ${f1(y0)} A${r} ${r} 0 ${large} ${sweep} ${f1(x1)} ${f1(y1)}`;
+}
+function drawAnnot(t, A) {
+  let svg = "";
+  if (!A) { $("annot").innerHTML = ""; return; }
+  if (A.zone && A.zone.o > 0) {
+    const z = A.zone, pulse = .75 + .25 * Math.sin(t * 9);
+    svg += `<path d="${arc(z.a0, z.a1, ORBIT)}" fill="none" stroke="#FFC94D" stroke-width="${f1(18 + z.flash * 10)}" stroke-linecap="round" opacity="${f1(z.o * (.5 + .35 * z.flash) * pulse)}"/>`;
+    svg += `<path d="${arc(z.a0, z.a1, ORBIT)}" fill="none" stroke="#FFF4DC" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="1 7" opacity="${f1(z.o * .9)}"/>`;
+    for (const a of [z.a0, z.a1]) { const [x0, y0] = pt(a, ORBIT - 13), [x1, y1] = pt(a, ORBIT + 13); svg += `<path d="M${f1(x0)} ${f1(y0)} L${f1(x1)} ${f1(y1)}" stroke="#FFC94D" stroke-width="4" stroke-linecap="round" opacity="${f1(z.o)}"/>`; }
+    if (z.r > ORBIT + 14) for (const a of [z.g0, z.g1]) {
+      const [x0, y0] = pt(a, z.r - 12), [x1, y1] = pt(a, ORBIT + 16);
+      svg += `<path d="M${f1(x0)} ${f1(y0)} L${f1(x1)} ${f1(y1)}" stroke="#FFC94D" stroke-width="2.4" stroke-dasharray="3 6" stroke-linecap="round" opacity="${f1(z.o * .85)}"/>`;
+      const [ex, ey] = pt(a, z.r); svg += `<circle cx="${f1(ex)}" cy="${f1(ey)}" r="${f1(12 + 2 * Math.sin(t * 8))}" fill="none" stroke="#FFC94D" stroke-width="3" opacity="${f1(z.o)}"/>`;
+    }
+  }
+  if (A.glint && A.glint.o > 0) {
+    const g = A.glint, [x, y] = pt(g.a, g.r), s = g.s * (1 + .18 * Math.sin(t * 10));
+    svg += `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(15 * s)}" fill="#FFC94D" opacity="${f1(g.o * .22)}"/>`;
+    svg += `<path d="${starPath(x, y, 6.5 * s)}" transform="rotate(${f1(t * 60)} ${f1(x)} ${f1(y)})" fill="#FFF4DC" opacity="${f1(g.o)}"/>`;
+    svg += `<path d="${arc(g.a - g.side * .2, g.a, g.r)}" fill="none" stroke="#FFC94D" stroke-width="5" stroke-linecap="round" opacity="${f1(g.o * .85)}"/>`;
+  }
+  if (A.arrow && A.arrow.o > 0 && A.arrow.len > .02) {
+    const w = A.arrow, a0 = w.a + w.dir * .34, a1 = a0 + w.dir * .72 * w.len, r = ORBIT;
+    const [px, py] = pt(a1, r), tx = -Math.sin(a1) * w.dir, ty = Math.cos(a1) * w.dir, nx = Math.cos(a1), ny = Math.sin(a1);
+    const head = `M${f1(px + tx * 13)} ${f1(py + ty * 13)} L${f1(px - tx * 5 + nx * 11)} ${f1(py - ty * 5 + ny * 11)} L${f1(px - tx * 5 - nx * 11)} ${f1(py - ty * 5 - ny * 11)}Z`;
+    svg += `<g opacity="${f1(w.o)}"><path d="${arc(Math.min(a0, a1), Math.max(a0, a1), r)}" fill="none" stroke="#0A1F24" stroke-width="10" stroke-linecap="round" opacity=".55"/>
+      <path d="${arc(Math.min(a0, a1), Math.max(a0, a1), r)}" fill="none" stroke="#FFC94D" stroke-width="5" stroke-linecap="round" stroke-dasharray="7 7" stroke-dashoffset="${f1(-t * 40 * w.dir * (a1 > a0 ? 1 : -1))}"/>
+      <path d="${head}" fill="#FFC94D" stroke="#0A1F24" stroke-width="2.5" stroke-linejoin="round" paint-order="stroke"/></g>`;
+  }
+  for (const r of A.ripples || []) svg += `<circle cx="${f1(r.x)}" cy="${f1(r.y)}" r="${f1(r.r)}" fill="none" stroke="${r.c || "#FFF4DC"}" stroke-width="3" stroke-dasharray="4 6" opacity="${f1(r.o)}"/>`;
+  $("annot").innerHTML = svg;
+}
+
+// ---------- paper fingertip: index finger up, folded two-tone, gold cuff, cut-lip shadow.
+const HAND = (() => {
+  const shape = `M40 14 Q40 2 52 2 Q64 2 64 14 V56 Q74 50 82 56 Q92 54 96 64 Q104 66 102 82 V100 Q102 120 86 128 L80 139 H34 L30 128 Q16 118 14 100 L10 80 Q8 70 18 68 Q28 68 30 80 L34 88 V58 Q34 54 40 54Z`;
+  return `<defs><clipPath id="handShade"><path d="M62 -10 L120 -10 L120 160 L48 160Z"/></clipPath></defs>
+    <path d="${shape}" transform="translate(4 6)" fill="#0A1F24" opacity=".55"/>
+    <path d="${shape}" fill="#FFF4DC"/><path d="${shape}" fill="#E9D6B0" clip-path="url(#handShade)"/>
+    <path d="M64 58 Q66 72 64 80 M82 58 Q84 72 82 82" fill="none" stroke="#C9B48C" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M18 72 Q28 76 36 92" fill="none" stroke="#C9B48C" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M30 120 H88 L86 139 H32Z" fill="#FFC94D"/><path d="M60 120 H88 L86 139 H58Z" fill="#E0A93A"/>
+    <ellipse cx="52" cy="10" rx="6" ry="4" fill="#FFFFFF" opacity=".55"/>`;
+})();
+$("handArt").innerHTML = HAND;
+function drawHand(h) {
+  const host = $("hand");
+  host.style.opacity = h ? h.o : 0;
+  if (!h) return;
+  const press = h.press || 0;
+  host.style.transform = `translate(${f1(h.x)}px, ${f1(h.y)}px)`;
+  $("handArt").style.transform = `translate(${f1(h.dx || 0)}px, ${f1(press * 5 + (h.dy || 0))}px) scale(${(1 - press * .07).toFixed(3)}) rotate(${f1(h.rot || -6)}deg)`;
+  let fx = "";
+  for (const r of h.ripples || []) fx += `<circle cx="0" cy="0" r="${f1(r.r)}" fill="none" stroke="#FFF4DC" stroke-width="3" stroke-dasharray="4 6" opacity="${f1(r.o)}"/>`;
+  if (h.ring !== undefined && h.ring !== null) {
+    const R = 34, C = TAU * R, fill = clamp(h.ring);
+    fx += `<circle cx="0" cy="0" r="${R}" fill="none" stroke="#0A1F24" stroke-width="9" opacity=".45"/>
+      <circle cx="0" cy="0" r="${R}" fill="none" stroke="#FFC94D" stroke-width="6" stroke-linecap="round" stroke-dasharray="${f1(C * fill)} ${f1(C)}" transform="rotate(-90)"/>
+      <circle cx="0" cy="0" r="${R + 11}" fill="none" stroke="#FFC94D" stroke-width="2" stroke-dasharray="2 7" opacity="${f1(.8 * fill)}" transform="rotate(${f1((h.spin || 0) * 120)})"/>`;
+  }
+  $("handFx").innerHTML = fx;
+}
+
+// ---------- gold postmark: same family as the Hangar's NEW stamp (scalloped dots, half-shaded disc, dashed ring).
+function postmarkSVG(n) {
+  return `<svg viewBox="0 0 100 100">${Array.from({ length: 30 }, (_, i) => `<circle cx="${f1(50 + Math.cos(i / 30 * TAU) * 46)}" cy="${f1(50 + Math.sin(i / 30 * TAU) * 46)}" r="3.3" fill="#FFC94D"/>`).join("")}
+    <circle cx="50" cy="50" r="41" fill="#FFC94D"/><path d="M50 9 A41 41 0 0 1 50 91Z" fill="#E0A93A"/><circle cx="50" cy="50" r="34" fill="none" stroke="#3A1E14" stroke-width="2" stroke-dasharray="3 3"/>
+    <text x="50" y="50" text-anchor="middle" font-family="Lilita One" font-size="17" fill="#3A1E14" letter-spacing=".5">PERFECT</text>
+    <text x="50" y="70" text-anchor="middle" font-family="Lilita One" font-size="16" fill="#3A1E14">${n}</text>
+    <g fill="none" stroke="#FFC94D" stroke-width="3.2" stroke-linecap="round"><path d="M100 36 q9 -5 18 0 t18 0 t18 0"/><path d="M102 50 q9 -5 18 0 t18 0 t18 0"/><path d="M100 64 q9 -5 18 0 t18 0 t18 0"/></g></svg>`;
+}
+let pmN = null;
+function drawPostmark(p) {
+  const el = $("postmark");
+  el.style.opacity = p ? p.o : 0;
+  if (!p) return;
+  if (pmN !== p.n) { pmN = p.n; el.innerHTML = postmarkSVG(p.n); }
+  el.style.left = `${p.x ?? 216}px`; el.style.top = `${p.y ?? 384}px`;
+  el.style.transform = `scale(${p.s.toFixed(3)}) rotate(${f1(p.r)}deg)`;
+}
+
+// ---------- freeze-frame transitions: the outgoing shot folds like the letter, slides away like a postcard, or dissolves.
+let freezeKey = null;
+function drawFreeze(F) {
+  const host = $("freeze");
+  if (!F) { if (host.firstChild) host.innerHTML = ""; freezeKey = null; return; }
+  const key = F.type + F.img.length + F.img.slice(-24);
+  if (freezeKey !== key) {
+    freezeKey = key;
+    host.innerHTML = F.type === "fold" ? `<div class="sheet">${sheet(F.img, CREST)}</div>` : F.type === "card" ? `<div class="card" style="background-image:url(${F.img})"></div>` : `<div class="card" style="background-image:url(${F.img});box-shadow:none"></div>`;
+  }
+  const p = F.p;
+  if (F.type === "fold") {
+    // Bottom third folds up, then the top third folds down; the folded letter then lifts away.
+    const bot = ease(p / .42), top = ease((p - .18) / .42), lift = F.glide ? ease((p - .55) / .45) : easeIn((p - .6) / .4);
+    const el = host.firstChild;
+    el.querySelector(".bot").style.transform = `translateZ(${bot > 0 ? 2 : 0}px) rotateX(${f1(180 * bot)}deg)`;
+    el.querySelector(".top").style.transform = `translateZ(${top > 0 ? 1 : 0}px) rotateX(${f1(-180 * top)}deg)`;
+    el.style.transform = `translateY(${f1(lift * (F.toY ?? -560))}px) translateX(${f1(lift * (F.toX ?? 0))}px) scale(${(1 - (1 - (F.sc ?? .55)) * ease((p - .45) / .4)).toFixed(3)}) rotate(${f1(lift * (F.rot ?? -10))}deg)`;
+    el.style.opacity = 1 - clamp((p - (F.glide ? .94 : .9)) / (F.glide ? .06 : .1));
+  } else if (F.type === "card") {
+    // Shrinks into a bordered postcard, tilts and slides off to the left.
+    const shrink = easeOut(p / .35), slide = easeIn((p - .3) / .7), el = host.firstChild;
+    el.style.transform = `translateX(${f1(-slide * 560)}px) translateY(${f1(slide * 60)}px) scale(${(1 - .16 * shrink).toFixed(3)}) rotate(${f1(-3 * shrink - 9 * slide)}deg)`;
+  } else host.firstChild.style.opacity = 1 - ease(p);
+}
+
+// ---------- end card: Pip, the folded logo, the real glider orbiting it on a dashed ellipse, store line.
+const endPip = window.OrbitPip.create($("endPip"), { random: () => .5, dozeAfter: 1e9 });
+const envPip = window.OrbitPip.create($("envPip"), { random: () => .5, dozeAfter: 1e9 });
+function drawOrbitGlider(t, o) {
+  const back = $("orbBack").getContext("2d"), front = $("orbFront").getContext("2d"), k = 1080 / 432;
+  for (const g of [back, front]) { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 1080, 1920); g.setTransform(k, 0, 0, k, 0, 0); }
+  if (o <= 0) return;
+  const ox = 216, oy = 336, rx = 186, ry = 62, tilt = -.14;
+  back.save(); back.globalAlpha = .5 * o; back.translate(ox, oy); back.rotate(tilt); back.setLineDash([2, 10]); back.lineDashOffset = -t * 30; back.strokeStyle = "#A8F0CF"; back.lineWidth = 2; back.lineCap = "round"; back.beginPath(); back.ellipse(0, 0, rx, ry, 0, 0, TAU); back.stroke(); back.restore();
+  const w = gameReady(); if (!w || !w.drawGlider) return;
+  const a = -Math.PI * .1 + t * 1.25, x = Math.cos(a) * rx, y = Math.sin(a) * ry, dx = -Math.sin(a) * rx, dy = Math.cos(a) * ry;
+  const g = Math.sin(a) < 0 ? back : front;
+  g.save(); g.globalAlpha = o; g.translate(ox, oy); g.rotate(tilt); g.translate(x, y); g.rotate(Math.atan2(dy, dx));
+  const s = .8 + .25 * Math.sin(a);
+  w.drawGlider(g, w.eval("currentRider()"), w.eval("currentCosmetic()"), s, t, 0, false, .2);
+  g.restore();
+}
+
+window.render = s => {
+  const t = s.t || 0;
+  $("bg").style.opacity = s.bg ?? 0;
+  if ((s.bg ?? 0) > 0) drawBg(t, s.ring);
+  $("cam").style.visibility = s.hideGame ? "hidden" : "visible";
+  const c = s.cam || { z: 1, x: 216, y: 384 };
+  $("cam").style.transform = `translate(${f1(216 - c.x * c.z)}px, ${f1(384 - c.y * c.z)}px) scale(${c.z.toFixed(4)})`;
+  drawAnnot(t, s.annot);
+  const hudO = s.hud ?? 1, gw = gameReady(); if (gw?.document && gw.__hudO !== hudO) { gw.__hudO = hudO; for (const el of gw.document.querySelectorAll('.hud,.fever,.campaign-run,.shield')) el.style.opacity = hudO; }
+  $("vignette").style.opacity = s.vignette ?? .6;
+  const sk = $("streaks"); sk.style.opacity = s.streaks || 0;
+  if (s.streaks && !sk.children.length) for (let i = 0; i < 16; i++) sk.append(document.createElement("i"));
+  [...sk.children].forEach((e, i) => { const y = (i * 53 + 20) % 768, ph = ((t * 1.9 + i * .37) % 1); e.style.top = `${y}px`; e.style.width = `${60 + (i % 3) * 40}px`; e.style.left = `${i % 2 ? 432 - ph * 540 : -130 + ph * 540}px`; e.style.opacity = .22 + (i % 4) * .09; });
+  // Opener.
+  const E = s.env;
+  $("env").style.display = E ? "block" : "none";
+  if (E) {
+    drawEnvelope(E);
+    for (const id of ["envBox", "envBoxF"]) { $(id).style.transform = `translate(${f1(E.x || 0)}px, ${f1(E.y || 0)}px) rotate(${f1(E.rot || 0)}deg)`; $(id).style.opacity = E.o ?? 1; }
+    if (E.letter) drawLetter(E.letter); else { $("letterSlot").innerHTML = ""; $("letterTop").innerHTML = ""; letterImg = null; }
+    const P = E.pip; $("envPip").style.opacity = P ? P.o : 0;
+    if (P) { $("envPip").style.left = `${f1(P.x)}px`; $("envPip").style.top = `${f1(P.y)}px`; $("envPip").style.transform = `rotate(${f1(P.rot || 0)}deg) scale(${P.flipX ? -1 : 1}, 1)`; if (P.react) envPip.react(P.react); envPip.tick(1 / 30); }
+  }
+  drawFreeze(s.freeze);
+  // End card.
+  const en = s.end; $("end").style.opacity = en ? en.o : 0;
+  if (en) {
+    const lt = en.t;
+    $("logo").style.transform = `rotateX(${f1((1 - back((lt - .75) / .55, 1.2)) * 88)}deg)`; $("logo").style.opacity = clamp((lt - .75) / .15);
+    drawOrbitGlider(lt - .4, clamp((lt - 1.1) / .4));
+    $("store").style.opacity = clamp((lt - 1.75) / .3); $("store").style.transform = `translateX(-50%) translateY(${f1(12 * (1 - easeOut((lt - 1.75) / .4)))}px)`;
+    $("noads").style.opacity = clamp((lt - 2.0) / .3);
+    if (en.react) endPip.react(en.react);
+    endPip.tick(1 / 30);
+  } else drawOrbitGlider(0, 0);
+  drawCaps(t, s.caps);
+  drawHand(s.hand);
+  drawPostmark(s.postmark);
+  $("black").style.opacity = s.black || 0;
+};
+window.preload = () => Promise.all([document.fonts.load('34px "Lilita One"'), document.fonts.load('900 15px "Nunito"')]).then(() => document.fonts.ready);
+</script></body></html>

@@ -2,13 +2,13 @@
 const fs = require('fs'), path = require('path');
 const { chromium } = require('/opt/node-tools/node_modules/playwright');
 const ROOT = path.join(__dirname, '..');
-async function openDirector({ scale = 2.5, port = 3112 } = {}) {
+async function openDirector({ scale = 2.5, port = 3112, director = 'director.html' } = {}) {
   const browser = await chromium.launch();
   const context = await browser.newContext({ viewport: { width: 432, height: 768 }, deviceScaleFactor: scale });
   await context.addInitScript({ content: `window.orbitMaxPixelRatio = 3;\n` + fs.readFileSync(path.join(__dirname, 'vclock.js'), 'utf8') });
   const page = await context.newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message));
-  await page.goto(`http://127.0.0.1:${port}/trailer/director.html`);
+  await page.goto(`http://127.0.0.1:${port}/trailer/${director}`);
   const frame = page.frames().find(f => f.url().endsWith('/index.html'));
   await frame.waitForFunction('typeof state !== "undefined" && typeof startRun === "function"');
   await frame.evaluate(`(() => {
