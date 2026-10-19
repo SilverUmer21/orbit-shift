@@ -1922,6 +1922,7 @@ function showScreen(name) {
   ui[name].hidden = false;
   state.mode = name;
   if (name === "home") {
+    pipRig?.react("enter");
     player.direction = 1;
     player.flip = 0;
     trail = [];
@@ -2105,7 +2106,7 @@ function updateHome() {
   const returning = state.campaign.completed.length > 0 || state.best > 0;
   ui.homeAscension.hidden = !returning; ui.openMail.hidden = !returning; ui.lanterns.hidden = !returning;
   const letterReady = returning && !dailyDone();
-  ui.mailBadge.hidden = !letterReady; ui.pip.classList.toggle("ready", letterReady);
+  ui.mailBadge.hidden = !letterReady; pipRig?.setReady(letterReady); pipRig?.setReduced(state.reducedEffects || matchMedia?.("(prefers-reduced-motion: reduce)").matches);
   if (returning) renderLanterns(playStreak());
   placePip();
   ui.sound.checked = !state.muted;
@@ -2136,8 +2137,18 @@ function renderLanterns(streak) {
   ui.lanterns.setAttribute?.("aria-label", `${streak} night streak`);
 }
 // Pip sits just outside the orbit, lower left of the planet drawn on the game canvas.
+// Pip's rig (pip.js); absent in the test sandbox. Ticked from the frame loop only while Home is showing.
+const pipRig = window.OrbitPip?.create(ui.pip) || null;
+function tickPip(delta) {
+  if (!pipRig || ui.home.hidden) return;
+  // The glider's position relative to Pip's head, in roughly -1..1, for his "watch" idle.
+  const size = parseFloat(ui.pip.style?.getPropertyValue?.("--size")) || 112, left = parseFloat(ui.pip.style?.left) || 0, top = parseFloat(ui.pip.style?.top) || 0;
+  const headX = left + size / 2, headY = top + size * .33, glider = playerPoint();
+  pipRig.setGlider((glider.x - headX) / 160, (glider.y - headY) / 160);
+  pipRig.tick(delta);
+}
 function placePip() {
-  const size = Math.round(Math.max(74, Math.min(112, width * .27)));
+  const size = Math.round(Math.max(88, Math.min(128, width * .32)));
   ui.pip.style?.setProperty("--size", `${size}px`);
   ui.pip.style?.setProperty("left", `${Math.max(6, cx - orbitRadius * .74 - size / 2)}px`);
   ui.pip.style?.setProperty("top", `${cy + orbitRadius * .62 - size / 2}px`);
@@ -2368,6 +2379,7 @@ function frame(time) {
   for (let step = 0; step < steps; step += 1) update(delta / steps);
   if (!coveredModes.has(state.mode)) draw();
   drawHomePreview(time / 1000);
+  tickPip(delta);
   drawBloomChapterPreview(time / 1000);
   requestAnimationFrame(frame);
 }
@@ -2427,7 +2439,7 @@ document.addEventListener("visibilitychange", () => {
 ui.resumeButton.addEventListener("click", resumeRun);
 ui.practiceGuardian.addEventListener("click", () => startPractice(state.levelId));
 ui.openMail.addEventListener("click", () => showScreen("mailbag"));
-ui.pip.addEventListener("click", () => { ui.pip.classList.remove("wave"); void ui.pip.offsetWidth; ui.pip.classList.add("wave"); showScreen("mailbag"); });
+ui.pip.addEventListener("click", () => { if (!pipRig) { showScreen("mailbag"); return; } pipRig.react("tap"); setTimeout(() => { if (!ui.home.hidden) showScreen("mailbag"); }, 420); });
 ui.flyLetter.addEventListener("click", startDaily);
 ui.homeAscension.addEventListener("click", () => startRun("endless"));
 ui.shareLetter.addEventListener("click", () => sharePostcard(ui.shareLetter));
