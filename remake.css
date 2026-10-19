@@ -688,3 +688,18 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   .home-top .star-chip{height:32px;font-size:15px}
   .lanterns{height:34px}
 }
+
+/* Home bottom (owner, 2026-10-19): a smaller PLAY on its own row; Hangar · Ascension · Islands beneath it. */
+.home .action-row{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"play play play" "hangar asc islands";align-items:start;row-gap:16px;column-gap:10px;width:100%}
+.home .action-row>.side-action:first-child{grid-area:hangar}
+.home .action-row>.side-action:last-child{grid-area:islands}
+.home #play{grid-area:play;justify-self:center;width:min(210px,70%);height:64px;border-radius:22px}
+.home #play .play-label{font-size:32px}
+.home #play .play-label svg{width:21px;height:21px}
+.home #homeAscension{grid-area:asc;justify-self:center;margin:15px 0 0}
+@media (max-height:620px){
+  .home .action-row{row-gap:10px}
+  .home #play{height:54px;width:min(180px,64%);border-radius:19px}
+  .home #play .play-label{font-size:27px}
+  .home #homeAscension{margin-top:12px}
+}
