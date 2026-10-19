@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pip preview</title>
+<style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#1d4a50,#0d2a30 60%,#0a2126);font-family:Nunito,Arial,sans-serif;color:#FFF4DC}
+.stage{position:relative;width:360px;height:420px}
+#pip{position:absolute;left:30px;top:60px;width:300px;height:322px;cursor:pointer}
+#pip svg{width:100%;height:100%;overflow:visible}
+.buttons{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:420px;margin-top:6px}
+button{border:0;border-radius:12px;padding:8px 12px;background:#12363D;color:#A8F0CF;font-weight:900;cursor:pointer}
+</style></head><body><div><div class="stage"><div id="pip"></div></div>
+<div class="buttons"><button data-a="enter">enter</button><button data-a="look">look</button><button data-a="hop">hop</button><button data-a="wave">wave</button><button data-a="peek">peek</button><button data-a="present">present</button><button data-a="catch">catch</button><button data-a="loop">loop</button><button data-a="watch">watch</button><button data-a="yawn">yawn</button><button data-a="tap">tap</button><button id="ready">letter ready: off</button></div></div>
+<script src="../../../pip.js"></script>
+<script>
+const pip=OrbitPip.create(document.querySelector('#pip'));window.pip=pip;let last=performance.now(),manual=false,ready=false;
+pip.setGlider(.8,-.6);
+function loop(now){if(!manual){pip.tick((now-last)/1000);}last=now;requestAnimationFrame(loop)}requestAnimationFrame(loop);
+document.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>pip.react(b.dataset.a));
+document.querySelector('#pip').onclick=()=>pip.react('tap');
+document.querySelector('#ready').onclick=e=>{ready=!ready;pip.setReady(ready);e.target.textContent='letter ready: '+(ready?'on':'off')};
+window.setManual=v=>manual=v;
+</script></body></html>
