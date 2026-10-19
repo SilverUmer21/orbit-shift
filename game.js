@@ -2151,7 +2151,11 @@ function placePip() {
   const size = Math.round(Math.max(88, Math.min(128, width * .32)));
   ui.pip.style?.setProperty("--size", `${size}px`);
   ui.pip.style?.setProperty("left", `${Math.max(6, cx - orbitRadius * .74 - size / 2)}px`);
-  ui.pip.style?.setProperty("top", `${cy + orbitRadius * .62 - size / 2}px`);
+  // Never lower than the button row (short phones).
+  const rowTop = ui.home.querySelector?.(".action-row")?.offsetTop;
+  let top = cy + orbitRadius * .62 - size / 2;
+  if (rowTop > 0) top = Math.min(top, rowTop - size * 1.075 - 2);
+  ui.pip.style?.setProperty("top", `${top}px`);
 }
 
 // Tonight's Letter: one daily Ascension delivery, the same sky for everyone that night. Only gameplay randomness
