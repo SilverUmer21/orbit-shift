@@ -183,7 +183,7 @@ Design canvas (mockups and boards): https://claude.ai/artifact/DzV3n7kg777bLBkug
 | Reward card | ✅ Built (Step 1) | Full-screen overlay, one card per reward: coral ribbon (NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!), counter dots, art drawn by game renderers, gold CLAIM, "Equip now" for trails/paints. After the last card, stars fly into the results star badge, which counts up; the next-plane bar fills from old to new total. Chapter clears keep the chapter stage art. |
 | Island map | ✅ Built (Step 2) | PixiJS island art kept. Paper label cards pinned beside islands (night cards when locked / Void), gold progress bar per chapter, pulsing dashed ring + bobbing NEXT pin on the chapter to play, star chip in the header, folded Ascension button with best score. |
 | Chapter screen | ✅ Built (Step 2, spacing pass) | Chapter planet removed (owner). "Stepping stones" (option A): levels zig-zag (28% / 72%) down the whole space between the story and PLAY on a dotted trail that turns mint (coral in Ember) up to the next level. Stars arc above each level; name and "Level N · 45s" centred below. Next level: big gold pulsing node, coral NEXT tag, gold name. Locked: lock node, muted label, GUARDIAN tag on guardian levels. Only the node, stars and label are tappable. One big PLAY for the next level. |
-| **Hangar** | ⏳ Step 3 ← next | Currently only restyled cards; full redesign planned. |
+| Hangar | ✅ Built (Step 3, A · Sorting Room, 2026-10-19) | Pip's sorting loft:<br>• **Showcase** (`#hangarShowcase` canvas, drawn only while the Hangar is open): the previewed plane, paint and trail combined, on a folded paper stand, with a hanging name tag `#hangarName`.<br>• **Folder tabs** `#hangarTabs` switch one shelf at a time (`#riderGrid`, `#cosmetics`, `#trails`; ids kept).<br>• **Slots:** gold seal = equipped; mint outline = previewed; gold price tag = affordable; muted = too expensive; silhouette and lock = earned elsewhere.<br>• **`#hangarAction`:** BUY ★N / EQUIP / Equipped / a locked condition with a progress bar.<br>• **Tap to preview, tap again to buy or equip.** A purchase saves first, then plays the unfold, the NEW postmark and confetti, then EQUIP. |
 | Awakening celebration | Unchanged | Canvas celebration on chapter clear. |
 
 ## 8. Roadmap
@@ -214,7 +214,16 @@ Research and proposal in `docs/RETENTION-STRATEGY.md`. Proposed waves: Tonight's
 - Re-render: `node trailer/render.cjs measure`, then `node trailer/render.cjs render trailer/out`, `python3 trailer/soundtrack.py trailer/out/events.json trailer/out/soundtrack.wav`, then ffmpeg (command in `trailer/README.md`). Needs the preview server on port 3112.
 - Before store use, swap "Coming soon to Google Play" for the official Get it on Google Play badge once the listing is live.
 
-### Step 3 — Hangar  ← proposed, awaiting owner decisions
+### Step 3 — Hangar  ✅ built (2026-10-19): A · Sorting Room
+Pip's sorting loft:
+- A showcase (the previewed plane in the previewed paint, on a folded paper stand, flying the previewed trail, with a hanging name tag).
+- Folder tabs: Planes / Paint / Trails.
+- A paper sorting rack.
+- One action button: Buy / Equip / Equipped, or a locked item's condition with a progress bar.
+
+Tap a slot to preview it (locked ones too); tap it again or the button to buy or equip. Buying plays the unfold, the NEW postmark and confetti, then Equip. Fits 390×844, 390×760 and 320×568 without scrolling. Prices and unlock rules are unchanged.
+
+**Next: retention round 2** (parcel, Paper Moon, postcards, Stamp Album, Pressed-petal trail). Decisions are in `docs/HANGAR-RETENTION-2.md` §7; postcard lines are awaiting approval in §8.
 Research, two directions (A · Sorting Room recommended, B · Island Dock) and the retention round (weekly parcel, Paper Moon freeze with dim-and-relight, islander postcards, Stamp Album) in `docs/HANGAR-RETENTION-2.md`; boards `design/paper-night/previews/hangar-directions.png` and `retention-wave2.png`.
 - Showcase: selected old ship on a floating-island stand.
 - Tabs Planes / Paint / Trails, one grid at a time.
@@ -232,8 +241,8 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | B1 | Results | Goal-reward stars are added to the total but not shown in "+X stars" (can show +0 after earning +18). | Medium | ✅ Fixed (Step 0): `state.runGoalStars` counted in the total, no double counting |
 | B2 | Chapter list | Earned ★ and unearned ☆ look almost the same in gold; 0-star levels look complete. | Medium | ✅ Fixed (Step 0): solid gold vs faint stars |
 | B3 | Map 320 px | Island labels wrap and overlap the Ember/Void islands; title wraps to two lines. | Medium | ✅ Fixed (Step 0): labels positioned from the map layout via container units, no wrapping; map and chapter titles fit |
-| B4 | Hangar | Trails/paints have no labels or unlock hints; hint only on mouse hover. | Medium | Step 3 |
-| B5 | Hangar 320 px | Only ~1.5 rows of planes visible; paints/trails take most space. | Low | Step 3 |
+| B4 | Hangar | Trails/paints have no labels or unlock hints; hint only on mouse hover. | Medium | ✅ Fixed in the Sorting Room: every item is named, and locked ones preview with their condition and progress on the action button |
+| B5 | Hangar 320 px | Only ~1.5 rows of planes visible; paints/trails take most space. | Low | ✅ Fixed: one shelf at a time; the whole Hangar fits 320×568 with no scrolling |
 | B6 | Reward card | Placeholder glyphs (✦ ~ ◆ ●); rewards must be tapped through to discover. | Low | ✅ Fixed (Step 1): one card per reward with real art and dots |
 | B7 | Map | Void lock is an emoji 🔒, looks different per phone. | Low | ✅ Fixed (Step 0): drawn folded lock + "Locked" |
 | B8 | Progression | The 6th goal tries to unlock Bloom Wake (the Bloom chapter trail); its hint says "complete 6 goals". | Low | ✅ Fixed (Step 0): goals only unlock goal trails; hint says "clear First Light" |
@@ -269,6 +278,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 - An interim layout had Pip perched by the logo; it was replaced the same day. |
 | 2026-10-19 | The owner picked the 390×844 look, so the title is 60 px on all phones taller than 620 px (the 780 px step is removed). **The new animated Pip (`pip.js`) is wired into Home.** He is ticked from the game's frame loop only while Home shows, flies in each time Home opens, presents the letter when it's ready, watches the real glider, and hops on tap before the Mailbag opens (0.42 s). |
 | 2026-10-19 | Home felt packed on the owner's phone (the title covered the glider's orbit). The title is 60 px (54 px at ≤780 px tall, 42 px at ≤620 px); top buttons, lantern string and Pip are a little smaller. The planet is gameplay, so it stays as it is. |
+| 2026-10-19 | Hangar **A · Sorting Room** approved and built. Lanterns: dim-and-relight with at most 1 Paper Moon (owner left it to me). Parcel: few stars (5 → 10 → 15★ cap) plus a stamp plus a Moon; no trail every 4th parcel. Album page reward: a new Pressed-petal trail (owner left the design to me). Postcard lines drafted for approval. |
 | 2026-10-19 | Owner asked to start Step 3 (Hangar) and the next retention round together (parcel, Paper Moon, postcards, Stamp Album). Proposal written; awaiting picks. |
 | 2026-10-19 | Trailer: owner chose concept **A · The Night Mail** (story-led, 30 s vertical, real gameplay, captions that move with the glider). |
 | 2026-10-19 | Tonight's Letter = **daily seeded run**: one Ascension-style delivery a day with the date as the random seed, so everyone flies the same sky. Gate formation rules are unchanged. One scored try, then a shareable postcard. |

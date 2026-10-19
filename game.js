@@ -8,7 +8,7 @@ const ui = {
   resultScore: document.querySelector("#resultScore"), resultStats: document.querySelector("#resultStats"),
   resultEyebrow: document.querySelector("#resultEyebrow"), resultObjectives: document.querySelector("#resultObjectives"), resultHome: document.querySelector("#resultHome"),
   record: document.querySelector("#recordText"), unlock: document.querySelector("#unlockText"),
-  cosmetics: document.querySelector("#cosmetics"), riderGrid: document.querySelector("#riderGrid"),
+  cosmetics: document.querySelector("#cosmetics"), riderGrid: document.querySelector("#riderGrid"), hangarShowcase: document.querySelector("#hangarShowcase"), hangarName: document.querySelector("#hangarName"), hangarAction: document.querySelector("#hangarAction"), hangarTabs: document.querySelector("#hangarTabs"),
   homeBest: document.querySelector("#homeBest"), homeStars: document.querySelector("#homeStars"), garageStars: document.querySelector("#garageStars"),
   resultStars: document.querySelector("#resultStars"), preview: document.querySelector("#riderPreview"),
   tutorialPanel: document.querySelector("#tutorialPanel"), tutorialStep: document.querySelector("#tutorialStep"), tutorialCopy: document.querySelector("#tutorialCopy"), skipTutorial: document.querySelector("#skipTutorial"), replayTutorial: document.querySelector("#replayTutorial"),
@@ -1895,26 +1895,6 @@ function currentCosmetic() {
 function currentRider() { return riders.find((item) => item.id === state.selectedRider) || riders[0]; }
 function colorAlpha(hex, alpha) { const value = parseInt(hex.slice(1), 16); return `rgba(${value >> 16},${value >> 8 & 255},${value & 255},${alpha})`; }
 
-function renderCosmetics() {
-  ui.cosmetics.innerHTML = "";
-  for (const cosmetic of cosmetics) {
-    const unlocked = state.unlocked.includes(cosmetic.id);
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `cosmetic${state.selected === cosmetic.id ? " selected" : ""}${unlocked ? "" : " locked"}`;
-    button.style.setProperty("--swatch", cosmetic.paper);
-    button.textContent = unlocked ? "*" : ".";
-    button.title = unlocked ? cosmetic.name : `${cosmetic.name}: reach ${cosmetic.score}`;
-    button.setAttribute("aria-label", button.title);
-    button.addEventListener("click", () => {
-      if (!unlocked) return;
-      state.selected = cosmetic.id; save();
-      if (state.mode === "garage") renderGarage(); else renderCosmetics();
-    });
-    ui.cosmetics.append(button);
-  }
-}
-
 function showScreen(name) {
   ui.shell.classList.remove("playing");
   ui.shell.classList.remove("crashing");
@@ -1929,7 +1909,7 @@ function showScreen(name) {
     trail = [];
     updateHome();
   }
-  if (name === "garage") renderGarage();
+  if (name === "garage") { hangarPick.planes = hangarPick.paint = hangarPick.trails = null; renderGarage(); }
   if (name === "mailbag") renderMailbag();
   if (name === "campaign") {
     renderCampaignMap();
@@ -2210,54 +2190,157 @@ function renderGoals() {
   ui.goals.innerHTML = goal ? `<div class="voyage-goal"><b>${goal.label}</b><i style="--progress:${Math.min(100,goal.progress/goal.target*100)}%"></i><span>${Math.min(goal.progress,goal.target)}/${goal.target}</span></div>` : "";
 }
 
+// Hangar · the Sorting Room: Pip's mail-sorting loft. One shelf open at a time (planes, paint, trails). Tapping a slot
+// previews it on the showcase stand, locked ones too; tapping the previewed slot again, or the big button, buys or equips.
+let hangarTab = "planes";
+const hangarPick = { planes: null, paint: null, trails: null };
+const trailNames = { paper: "Paper diamonds", pollen: "Pollen", spark: "Spark", ribbon: "Ribbon", echo: "Echo rings", crown: "Crown gems", "bloom-wake": "Petal wake" };
+const STAR_ICON = '<svg aria-hidden="true" viewBox="0 0 48 48"><polygon points="24,4 29,17.12 43.02,17.82 32.08,26.63 35.76,40.18 24,32.5 12.24,40.18 15.92,26.63 4.98,17.82 19,17.12" fill="#FFC94D"/><polygon points="24,4 29,17.12 43.02,17.82 32.08,26.63 35.76,40.18 24,32.5" fill="#E0A93A"/></svg>';
+const HANGAR_SEAL = '<svg class="slot-seal" aria-hidden="true" viewBox="0 0 40 40"><path d="M20 2 L24 6 L30 4 L31 10 L37 12 L35 18 L39 22 L34 26 L35 32 L29 32 L26 38 L20 35 L14 38 L11 32 L5 32 L6 26 L1 22 L5 18 L3 12 L9 10 L10 4 L16 6Z" fill="#FFC94D"/><path d="M20 2 L24 6 L30 4 L31 10 L37 12 L35 18 L39 22 L34 26 L35 32 L29 32 L26 38 L20 35Z" fill="#E0A93A"/><path d="M13 20 L18 25 L28 14" fill="none" stroke="#3A1E14" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const HANGAR_LOCK = '<svg class="slot-lock" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 10 V7 a5 5 0 0 1 10 0 V10" fill="none" stroke="currentColor" stroke-width="2.6"/><rect x="4" y="10" width="16" height="12" rx="3" fill="currentColor"/></svg>';
+const NEW_POSTMARK = `<svg class="reveal-stamp" aria-hidden="true" viewBox="0 0 100 100">${Array.from({ length: 28 }, (_, i) => `<circle cx="${(50 + Math.cos(i / 28 * TAU) * 46).toFixed(1)}" cy="${(50 + Math.sin(i / 28 * TAU) * 46).toFixed(1)}" r="3.4" fill="#FFC94D"/>`).join("")}<circle cx="50" cy="50" r="41" fill="#FFC94D"/><path d="M50 9 A41 41 0 0 1 50 91Z" fill="#E0A93A"/><circle cx="50" cy="50" r="33" fill="none" stroke="#3A1E14" stroke-width="2.2" stroke-dasharray="3 3"/><text x="50" y="58" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="27" fill="#3A1E14">NEW</text></svg>`;
+
+// The previewed item on a shelf and what the big button can do with it: on (equipped), owned, buy, short (stars) or locked.
+function hangarItem(tab = hangarTab) {
+  if (tab === "planes") {
+    const rider = riders.find(item => item.id === hangarPick.planes) || currentRider();
+    const owned = state.ownedRiders.includes(rider.id);
+    return { tab, id: rider.id, name: rider.name, price: rider.price, state: state.selectedRider === rider.id ? "on" : owned ? "owned" : state.stars >= rider.price ? "buy" : "short",
+      need: `Need ${rider.price - state.stars} more`, progress: state.stars / Math.max(1, rider.price) };
+  }
+  if (tab === "paint") {
+    const paint = cosmetics.find(item => item.id === hangarPick.paint) || cosmetics.find(item => item.id === state.selected) || cosmetics[0];
+    return { tab, id: paint.id, name: paint.name, state: state.selected === paint.id ? "on" : state.unlocked.includes(paint.id) ? "owned" : "locked",
+      need: `Best score ${paint.score}`, progress: state.best / Math.max(1, paint.score) };
+  }
+  const id = hangarPick.trails || state.selectedTrail, goals = trailStyles.indexOf(id);
+  return { tab, id, name: trailNames[id] || id, state: state.selectedTrail === id ? "on" : state.unlockedTrails.includes(id) ? "owned" : "locked",
+    need: id === "bloom-wake" ? "Clear First Light" : `Finish ${goals} goal${goals === 1 ? "" : "s"}`, progress: id === "bloom-wake" ? 0 : state.goalsCompleted / Math.max(1, goals) };
+}
+function hangarAct(tab = hangarTab) {
+  const item = hangarItem(tab);
+  if (item.state === "buy") {
+    state.stars -= item.price; state.ownedRiders.push(item.id); purchasePreview = item.id; save(); beep(820, .14, "triangle"); vibrate(25);
+  } else if (item.state === "owned") {
+    if (tab === "planes") state.selectedRider = item.id; else if (tab === "paint") state.selected = item.id; else state.selectedTrail = item.id;
+    save(); beep(620, .07, "triangle"); vibrate(10);
+  } else {
+    if (item.state !== "on") { ui.hangarAction.animate([{ transform: "translateX(-4px)" }, { transform: "translateX(4px)" }, { transform: "none" }], { duration: 180 }); beep(120, .08, "square"); }
+    return;
+  }
+  renderGarage(); updateHome();
+}
+function pickHangar(tab, id) {
+  if (hangarItem(tab).id === id) { hangarAct(tab); return; }
+  hangarPick[tab] = id; beep(430, .03, "triangle"); renderGarage();
+}
+function hangarSlot(tab, id, className, label, html, draw) {
+  const slot = document.createElement("button");
+  slot.type = "button"; slot.className = `slot ${className}`; slot.setAttribute("aria-label", label);
+  slot.innerHTML = `<canvas width="264" height="168"></canvas>${html}`;
+  const mini = slot.querySelector("canvas").getContext("2d"); mini.save(); mini.translate(132, 84); mini.scale(2, 2); draw(mini); mini.restore();
+  slot.addEventListener("click", () => pickHangar(tab, id));
+  return slot;
+}
+function slotState(id, item, on, owned, extra = "") { return `${on ? " on" : ""}${item.id === id ? " picked" : ""}${owned ? "" : extra}`; }
+function drawTrailSwatch(target, id, palette, time = 0) {
+  for (let i = 15; i >= 0; i -= 1) {
+    const t = i / 15, x = 44 - t * 92, y = -10 + Math.sin(t * 2.2) * 14 + t * 6 + Math.sin(time * 3 + i) * .6;
+    target.globalAlpha = .25 + (1 - t) * .75; target.fillStyle = i % 2 ? palette.accent : palette.gold;
+    drawTrailPiece(target, id, x, y, 3 + (1 - t) * 6, -.3 + t, i);
+  }
+  target.globalAlpha = 1;
+}
 function renderGarage() {
-  ui.garageStars.textContent = `${state.stars} stars`;
+  ui.garageStars.textContent = state.stars;
+  ui.garage.dataset.tab = hangarTab;
+  const paint = currentCosmetic();
   ui.riderGrid.innerHTML = "";
-  const palette = currentCosmetic();
   if (purchasePreview) {
     const rider = riders.find(item => item.id === purchasePreview);
     if (rider) {
+      // The new plane unfolds out of its crease and a gold NEW postmark lands, the same family as PERFECT.
       const reveal = document.createElement("div"); reveal.className = "purchase-reveal";
-      reveal.innerHTML = `<canvas width="180" height="92"></canvas><b>${rider.name}</b><button class="primary" type="button">Equip</button>`;
-      const mini = reveal.querySelector("canvas").getContext("2d"); mini.translate(90, 46); drawGlider(mini, rider, palette, 1.65, performance.now() / 1000, 0, false, .25);
-      reveal.querySelector("button").addEventListener("click", () => { state.selectedRider = rider.id; purchasePreview = null; save(); renderGarage(); updateHome(); });
+      reveal.innerHTML = `<i class="reveal-rays"></i><canvas width="720" height="440"></canvas>${NEW_POSTMARK}<i class="reveal-confetti">${Array.from({ length: 16 }, (_, i) => `<i style="--x:${(i * 37 + 7) % 100}%;--d:${(i % 8) * .11}s;--c:${["#FFC94D", "#FF6F61", "#A8F0CF", "#FFF4DC", "#5ED6A6"][i % 5]}"></i>`).join("")}</i><b>${rider.name}</b><button class="hangar-action owned" type="button">Equip</button>`;
+      const mini = reveal.querySelector("canvas").getContext("2d"); mini.translate(360, 220); mini.rotate(-.12); drawGlider(mini, rider, paint, 8, 0, 0, false, .25);
+      reveal.querySelector("button").addEventListener("click", () => { state.selectedRider = rider.id; hangarPick.planes = rider.id; purchasePreview = null; save(); renderGarage(); updateHome(); });
       ui.riderGrid.append(reveal);
     }
   }
+  const plane = hangarItem("planes");
   for (const rider of riders) {
-    const owned = state.ownedRiders.includes(rider.id);
-    const card = document.createElement("button");
-    card.type = "button";
-    card.className = `rider-card${owned ? "" : " locked"}${state.selectedRider === rider.id ? " selected" : ""}`;
-    card.innerHTML = `<canvas width="130" height="78"></canvas><b>${rider.name}</b><small>${state.selectedRider === rider.id ? "Equipped" : owned ? "Equip" : `${rider.price} stars`}</small>`;
-    const mini = card.querySelector("canvas").getContext("2d");
-    mini.translate(65,39); drawGlider(mini,rider,palette,1.45,0,0,false,0);
-    card.addEventListener("click", () => {
-      if (!owned) {
-        if (state.stars < rider.price) { card.animate([{transform:"translateX(-3px)"},{transform:"translateX(3px)"},{transform:"none"}],{duration:180}); beep(120,.08,"square"); return; }
-        state.stars -= rider.price; state.ownedRiders.push(rider.id); purchasePreview = rider.id; save(); beep(820,.14,"triangle"); vibrate(25); renderGarage(); updateHome(); return;
-      }
-      state.selectedRider = rider.id; save(); renderGarage(); updateHome();
-    });
-    ui.riderGrid.append(card);
+    const owned = state.ownedRiders.includes(rider.id), on = state.selectedRider === rider.id;
+    ui.riderGrid.append(hangarSlot("planes", rider.id, slotState(rider.id, plane, on, owned, state.stars >= rider.price ? " can" : " short"),
+      `${rider.name}${on ? ", equipped" : owned ? "" : `, ${rider.price} stars`}`,
+      `${on ? HANGAR_SEAL : ""}<b>${rider.name}</b>${owned ? "" : `<em class="slot-price">${STAR_ICON}${rider.price}</em>`}`,
+      mini => drawGlider(mini, rider, paint, 1.45, 0, 0, false, 0)));
   }
   renderCosmetics();
   renderTrails();
+  renderHangarAction();
 }
-
+function renderCosmetics() {
+  ui.cosmetics.innerHTML = "";
+  const item = hangarItem("paint"), rider = riders.find(r => r.id === hangarPick.planes) || currentRider();
+  for (const cosmetic of cosmetics) {
+    const owned = state.unlocked.includes(cosmetic.id), on = state.selected === cosmetic.id;
+    ui.cosmetics.append(hangarSlot("paint", cosmetic.id, slotState(cosmetic.id, item, on, owned, " locked"),
+      `${cosmetic.name} paint${on ? ", equipped" : owned ? "" : `, best score ${cosmetic.score}`}`,
+      `${on ? HANGAR_SEAL : ""}${owned ? "" : HANGAR_LOCK}<b>${cosmetic.name}</b>`,
+      mini => drawGlider(mini, rider, cosmetic, 1.45, 0, 0, false, 0)));
+  }
+}
 function renderTrails() {
   ui.trails.innerHTML = "";
-  for (const [index, trailName] of trailStyles.entries()) {
-    const unlocked = state.unlockedTrails.includes(trailName);
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `trail${state.selectedTrail === trailName ? " selected" : ""}${unlocked ? "" : " locked"}`;
-    button.style.setProperty("--trail", ["#e6e3b3","#77d5aa","#edca62","#ef6e67","#8b76c7","#f4f1de","#4fae91"][index]);
-    button.title = unlocked ? trailName : trailName === "bloom-wake" ? "bloom-wake: clear First Light" : `${trailName}: complete ${index} goals`;
-    button.setAttribute("aria-label", button.title);
-    button.addEventListener("click", () => { if (!unlocked) return; state.selectedTrail = trailName; save(); renderTrails(); });
-    ui.trails.append(button);
+  const item = hangarItem("trails"), palette = cosmetics.find(c => c.id === state.selected) || cosmetics[0];
+  for (const trailName of trailStyles) {
+    const owned = state.unlockedTrails.includes(trailName), on = state.selectedTrail === trailName;
+    ui.trails.append(hangarSlot("trails", trailName, slotState(trailName, item, on, owned, " locked"),
+      `${trailNames[trailName]} trail${on ? ", equipped" : owned ? "" : ", locked"}`,
+      `${on ? HANGAR_SEAL : ""}${owned ? "" : HANGAR_LOCK}<b>${trailNames[trailName].split(" ")[0]}</b>`,
+      mini => drawTrailSwatch(mini, trailName, palette)));
   }
+}
+function renderHangarAction() {
+  const item = hangarItem();
+  ui.hangarName.textContent = item.name;
+  ui.hangarAction.className = `hangar-action ${item.state}`;
+  ui.hangarAction.innerHTML = item.state === "buy" ? `Buy <span class="cost">${STAR_ICON}${item.price}</span>`
+    : item.state === "owned" ? "Equip" : item.state === "on" ? "Equipped"
+    : `<span>${item.need}</span><i class="need-bar"><b style="width:${Math.round(Math.min(1, item.progress) * 100)}%"></b></i>`;
+}
+// The showcase: the previewed plane in the previewed paint on its paper stand, flying the previewed trail.
+function drawHangarShowcase(time) {
+  const canvas = ui.hangarShowcase;
+  if (ui.garage.hidden || !canvas?.offsetParent) return;
+  const ratio = Math.min(devicePixelRatio || 1, 2), w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== Math.round(w * ratio) || canvas.height !== Math.round(h * ratio)) { canvas.width = Math.round(w * ratio); canvas.height = Math.round(h * ratio); }
+  const g = canvas.getContext("2d"); g.setTransform(ratio, 0, 0, ratio, 0, 0); g.clearRect(0, 0, w, h);
+  const rider = riders.find(r => r.id === hangarPick.planes) || currentRider();
+  const paint = cosmetics.find(c => c.id === hangarPick.paint) || cosmetics.find(c => c.id === state.selected) || cosmetics[0];
+  const trailId = hangarPick.trails || state.selectedTrail, scale = Math.min(w / 120, h / 82), bob = state.reducedEffects ? 0 : Math.sin(time * 1.8) * 4;
+  const sx = w * .6, sy = h * .47 + bob, standY = h * .83;
+  g.fillStyle = "rgba(255,244,220,.5)";
+  for (let i = 0; i < 24; i += 1) { g.globalAlpha = .15 + (i % 5) * .08 + Math.sin(time * 1.3 + i) * .06; g.fillRect((i * .3819 % 1) * w, (i * .577 + .13) % .7 * h, 2, 2); }
+  g.globalAlpha = 1;
+  const glow = g.createRadialGradient(sx, standY - 20, 4, sx, standY - 20, w * .42); glow.addColorStop(0, "rgba(255,201,77,.24)"); glow.addColorStop(1, "rgba(255,201,77,0)");
+  g.fillStyle = glow; g.fillRect(0, 0, w, h);
+  // Folded paper stand.
+  const sw = Math.min(190, w * .52); g.save(); g.translate(sx, standY);
+  g.fillStyle = "rgba(10,31,36,.5)"; g.beginPath(); g.ellipse(0, 22, sw * .46, 6, 0, 0, TAU); g.fill();
+  g.fillStyle = "#E9D6B0"; g.beginPath(); g.moveTo(-sw * .4, 4); g.lineTo(sw * .4, 4); g.lineTo(sw * .3, 22); g.lineTo(-sw * .3, 22); g.fill();
+  g.fillStyle = "#C9B48C"; g.beginPath(); g.moveTo(0, 4); g.lineTo(sw * .4, 4); g.lineTo(sw * .3, 22); g.lineTo(0, 22); g.fill();
+  g.fillStyle = "#FFF4DC"; g.beginPath(); g.moveTo(-sw * .4, 4); g.lineTo(0, -5); g.lineTo(sw * .4, 4); g.fill();
+  g.fillStyle = "#F3E6C8"; g.beginPath(); g.moveTo(0, -5); g.lineTo(sw * .4, 4); g.lineTo(0, 4); g.fill(); g.restore();
+  // Trail streaming behind, as if flying.
+  const drift = state.reducedEffects ? 0 : time * 34;
+  for (let i = 22; i >= 0; i -= 1) {
+    const d = ((i * 14 + drift) % 308) / 308, x = sx - 22 * scale * .5 - d * w * .55, y = sy + 6 + d * h * .26 - Math.sin(d * 3) * 10;
+    g.globalAlpha = (1 - d) * .95; g.fillStyle = i % 2 ? paint.accent : paint.gold;
+    drawTrailPiece(g, trailId, x, y, Math.max(2, (1 - d) * 9.5), -.4 + d, i);
+  }
+  g.globalAlpha = 1;
+  g.save(); g.translate(sx, sy); g.rotate(-.1); drawGlider(g, rider, paint, scale * .8, time, 0, false, .25); g.restore();
 }
 
 function drawHomePreview(time) {
@@ -2390,6 +2473,7 @@ function frame(time) {
   for (let step = 0; step < steps; step += 1) update(delta / steps);
   if (!coveredModes.has(state.mode)) draw();
   drawHomePreview(time / 1000);
+  drawHangarShowcase(time / 1000);
   tickPip(delta);
   drawBloomChapterPreview(time / 1000);
   requestAnimationFrame(frame);
@@ -2406,6 +2490,8 @@ document.querySelector("#ascension").addEventListener("click", () => startRun("e
 for(const button of document.querySelectorAll("[data-chapter]"))button.addEventListener("click",()=>{if(!button.disabled){window.OrbitArchipelago?.pulse();openChapter(button.dataset.chapter);}});
 document.querySelector("#retry").addEventListener("click", () => state.dailyRun ? startDaily() : startRun(state.runType, state.levelId));
 document.querySelector("#openGarage").addEventListener("click", () => showScreen("garage"));
+ui.hangarAction.addEventListener("click", () => hangarAct());
+ui.hangarTabs.addEventListener("click", event => { const tab = event.target.closest?.("[data-tab]")?.dataset.tab; if (!tab || tab === hangarTab) return; hangarTab = tab; beep(360, .03, "triangle"); renderGarage(); });
 document.querySelector("#openSettings").addEventListener("click", () => showScreen("settings"));
 ui.resultHome.addEventListener("click", () => state.runType === "campaign" ? openChapter(currentCampaignLevel().biome) : showScreen("home"));
 for (const button of document.querySelectorAll("[data-home]")) button.addEventListener("click", () => showScreen("home"));
