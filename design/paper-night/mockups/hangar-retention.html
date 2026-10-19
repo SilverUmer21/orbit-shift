@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hangar &amp; Retention Mockups</title>
+<style>
+@font-face{font-family:"Lilita One";src:url(../../../fonts/lilita-one-latin.woff2) format("woff2")}
+@font-face{font-family:"Nunito";src:url(../../../fonts/nunito-latin-variable.woff2) format("woff2");font-weight:200 1000}
+:root{--n9:#0A1F24;--n8:#0E2A30;--n7:#12363D;--n6:#1A4A50;--paper:#FFF4DC;--fold:#E9D6B0;--m2:#A8F0CF;--m5:#5ED6A6;--m7:#2E9C80;--gold:#FFC94D;--goldS:#E0A93A;--lip:#E0703C;--coral:#FF6F61;--muted:#7FA8A2;--ink:#3A1E14;
+--display:"Lilita One",sans-serif;--ui:"Nunito",sans-serif;--fgold:linear-gradient(100deg,#FFD46E 0 56%,#FFC24A 56% 100%);--fnight:linear-gradient(100deg,#22595F 0 56%,#1A4A50 56% 100%);--fmint:linear-gradient(100deg,#7AE6BA 0 56%,#5ED6A6 56% 100%)}
+*{box-sizing:border-box;margin:0}
+body{background:#061417;font-family:var(--ui);color:var(--paper);display:flex;flex-wrap:wrap;gap:40px;padding:40px}
+.phone{position:relative;width:390px;height:844px;overflow:hidden;background:radial-gradient(120% 70% at 50% 35%,#163F45 0,#0E2A30 45%,#0A1F24 100%);border-radius:0}
+.bgshot{position:absolute;inset:0;width:100%;height:100%}
+/* header */
+.hdr{position:absolute;left:20px;right:20px;top:20px;height:64px;display:flex;align-items:center;gap:14px}
+.back{width:56px;height:56px;border-radius:18px;background:var(--fnight);box-shadow:inset 0 2px 0 rgba(255,244,220,.14),0 5px 0 var(--n9);display:grid;place-items:center}
+.back svg{width:30px;height:30px}
+.hdr h2{font:400 34px/1 var(--display);letter-spacing:1.5px;text-shadow:0 3px 0 var(--n9);flex:1}
+.chip{height:44px;padding:0 16px 0 8px;border-radius:22px;background:var(--n7);box-shadow:0 4px 0 var(--n9);display:flex;align-items:center;gap:6px;font:400 22px/1 var(--display)}
+.chip svg{width:32px;height:32px}
+/* showcase */
+.show{position:absolute;left:16px;right:16px;top:100px;height:268px;border-radius:26px;overflow:hidden;background:radial-gradient(70% 80% at 50% 62%,#1F5A5E 0,#123A40 55%,#0B252A 100%);box-shadow:inset 0 0 0 2px rgba(168,240,207,.08)}
+.show .sky i{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--paper);opacity:.5}
+.show .moon{position:absolute;right:34px;top:28px;width:34px;height:34px}
+.stand{position:absolute;left:50%;bottom:26px;width:190px;height:44px;transform:translateX(-50%)}
+.glow{position:absolute;left:50%;bottom:44px;width:260px;height:120px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(255,201,77,.28),transparent);}
+.hero{position:absolute;left:54%;top:76px;width:205px;transform:translateX(-50%) rotate(-6deg);filter:drop-shadow(0 14px 10px rgba(0,0,0,.35))}
+.trailarc{position:absolute;left:0;top:0;width:100%;height:100%}
+.tag{position:absolute;left:26px;top:-4px;transform-origin:50% 0;transform:rotate(-7deg)}
+.tag .str{width:2px;height:40px;background:var(--muted);margin:0 auto;opacity:.7}
+.tag b{display:block;padding:8px 14px 8px 20px;background:var(--paper);color:var(--ink);font:400 20px/1 var(--display);letter-spacing:1px;clip-path:polygon(12px 0,100% 0,100% 100%,12px 100%,0 50%);box-shadow:0 3px 0 var(--fold)}
+.tag b::before{content:"";position:absolute;left:9px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:var(--n6)}
+.tag small{display:block;margin-top:6px;font:900 11px/1 var(--ui);letter-spacing:1.5px;color:var(--m2);text-align:center;text-transform:uppercase}
+/* folder tabs + rack */
+.tabs{position:absolute;left:16px;right:16px;top:384px;height:46px;display:flex;gap:6px;align-items:flex-end}
+.tabs span{flex:1;height:40px;border-radius:14px 14px 0 0;background:var(--n7);display:flex;align-items:center;justify-content:center;gap:7px;font:900 13px/1 var(--ui);letter-spacing:1.2px;color:var(--muted);text-transform:uppercase}
+.tabs span svg{width:22px;height:22px}
+.tabs span.on{height:46px;background:#E9D6B0;color:var(--ink);background:linear-gradient(100deg,#FFF4DC 0 56%,#F3E6C8 56% 100%)}
+.rack{position:absolute;left:16px;right:16px;top:430px;height:300px;border-radius:0 0 22px 22px;background:linear-gradient(100deg,#FFF4DC 0 56%,#F3E6C8 56% 100%);padding:12px;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:10px;box-shadow:0 6px 0 #C9B48C}
+.rack.four{grid-template-columns:repeat(4,1fr)}
+.cub{position:relative;border-radius:14px;background:linear-gradient(180deg,#0B252A,#12363D);box-shadow:inset 0 6px 10px rgba(0,0,0,.45),inset 0 -2px 0 rgba(255,244,220,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:visible}
+.cub img{width:86%;margin-top:-10px}
+.cub .tr{position:absolute;inset:6px 6px 22px;border-radius:10px;background-size:230% auto;background-position:46% 62%;background-repeat:no-repeat}
+.cub.sil .tr{filter:brightness(0) invert(.32) sepia(.3) hue-rotate(130deg);opacity:.75}
+.cub .nm{position:absolute;bottom:8px;font:900 11px/1 var(--ui);letter-spacing:.8px;color:var(--paper);opacity:.9}
+.cub.dim img{filter:saturate(.35) brightness(.7)}
+.cub.sil img{filter:brightness(0) invert(.32) sepia(.3) hue-rotate(130deg);opacity:.75}
+.cub.sel{outline:3px solid var(--m5);outline-offset:2px;transform:translateY(-3px)}
+.cub.eq::after{content:"";position:absolute;inset:-3px;border-radius:16px;box-shadow:0 0 0 3px var(--gold)}
+.seal{position:absolute;right:-7px;top:-8px;width:30px;height:30px;z-index:2}
+.price{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);display:flex;align-items:center;gap:3px;padding:4px 9px 4px 6px;border-radius:10px;font:400 14px/1 var(--display);white-space:nowrap;z-index:2}
+.price svg{width:15px;height:15px}
+.price.can{background:var(--fgold);color:var(--ink);box-shadow:0 3px 0 var(--lip)}
+.price.cant{background:var(--n6);color:var(--muted);box-shadow:0 3px 0 var(--n9)}
+.price .bar{display:block;width:30px;height:4px;border-radius:2px;background:var(--n9);margin-left:4px;overflow:hidden}
+.price .bar i{display:block;height:100%;background:var(--gold)}
+.lock{position:absolute;top:8px;right:8px;width:16px;height:16px;opacity:.8}
+/* CTA */
+.cta{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);width:250px;height:66px;border-radius:20px;display:flex;align-items:center;justify-content:center;gap:10px;font:400 26px/1 var(--display);letter-spacing:1.5px;text-transform:uppercase}
+.cta.gold{background:var(--fgold);color:var(--ink);box-shadow:inset 0 3px 0 rgba(255,255,255,.45),0 8px 0 var(--lip)}
+.cta.mint{background:var(--fmint);color:#0B3B30;box-shadow:inset 0 3px 0 rgba(255,255,255,.4),0 8px 0 var(--m7)}
+.cta.night{background:var(--fnight);color:var(--m2);box-shadow:inset 0 2px 0 rgba(255,244,220,.14),0 6px 0 var(--n9);font:900 15px/1.2 var(--ui);letter-spacing:.5px;text-transform:none;flex-direction:column;gap:7px}
+.cta svg{width:26px;height:26px}
+.cta .pbar{width:150px;height:8px;border-radius:4px;background:var(--n9);overflow:hidden}.cta .pbar i{display:block;height:100%;background:var(--m5)}
+/* purchase moment */
+.veil{position:absolute;inset:0;background:rgba(6,20,23,.62)}
+.rays{position:absolute;left:50%;top:235px;width:620px;height:620px;transform:translate(-50%,-50%);background:repeating-conic-gradient(rgba(255,201,77,.16) 0 9deg,transparent 9deg 22deg);border-radius:50%;mask:radial-gradient(closest-side,#000 30%,transparent 100%);-webkit-mask:radial-gradient(closest-side,#000 30%,transparent 100%)}
+.unfold{position:absolute;left:50%;top:150px;width:300px;transform:translateX(-50%) rotate(-8deg);filter:drop-shadow(0 18px 14px rgba(0,0,0,.4))}
+.crease{position:absolute;left:50%;top:150px;width:300px;height:184px;transform:translateX(-50%) rotate(-8deg)}
+.stamp{position:absolute;right:38px;top:118px;width:104px;height:104px;transform:rotate(14deg)}
+.conf i{position:absolute;width:10px;height:14px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.bignm{position:absolute;left:0;right:0;top:372px;text-align:center;font:400 44px/1 var(--display);letter-spacing:2px;text-shadow:0 4px 0 #2E9C80,0 9px 0 var(--n9)}
+.bigsub{position:absolute;left:0;right:0;top:428px;text-align:center;font:900 13px/1 var(--ui);letter-spacing:2px;color:var(--m2);text-transform:uppercase}
+/* direction B */
+.island{position:absolute;left:50%;top:300px;width:300px;transform:translateX(-50%)}
+.heroB{position:absolute;left:50%;top:170px;width:270px;transform:translateX(-50%) rotate(-5deg);filter:drop-shadow(0 30px 16px rgba(0,0,0,.35))}
+.arrow{position:absolute;top:250px;width:48px;height:48px;border-radius:16px;background:var(--fnight);box-shadow:0 4px 0 var(--n9);display:grid;place-items:center}
+.arrow svg{width:22px;height:22px}
+.nameB{position:absolute;left:0;right:0;top:520px;text-align:center;font:400 40px/1 var(--display);letter-spacing:2px;text-shadow:0 4px 0 var(--m7),0 8px 0 var(--n9)}
+.dots{position:absolute;left:0;right:0;top:574px;display:flex;justify-content:center;gap:8px}
+.dots i{width:9px;height:9px;border-radius:50%;background:var(--n6)}.dots i.on{background:var(--gold);width:22px;border-radius:5px}
+.dots i.own{background:var(--m7)}
+.pills{position:absolute;left:30px;right:30px;top:612px;height:50px;border-radius:25px;background:var(--n8);box-shadow:inset 0 2px 6px rgba(0,0,0,.4);display:flex;padding:5px;gap:4px}
+.pills span{flex:1;border-radius:20px;display:flex;align-items:center;justify-content:center;gap:6px;font:900 13px/1 var(--ui);letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+.pills span svg{width:20px;height:20px}.pills span.on{background:var(--paper);color:var(--ink)}
+/* home overlays */
+.lant{position:absolute;left:0;right:0;top:68px;height:72px}
+.pipbox{position:absolute;left:22px;top:619px;width:105px;height:113px}
+.pipbox .pip-svg{width:100%;height:100%;overflow:visible}
+.parcelHeld{position:absolute;left:70px;top:672px;width:44px;height:44px;transform:rotate(-8deg);filter:drop-shadow(0 4px 0 rgba(0,0,0,.25))}
+.ring{position:absolute;left:8px;top:604px;width:134px;height:134px;border-radius:50%;box-shadow:0 0 0 2px rgba(255,201,77,.55),0 0 28px 6px rgba(255,201,77,.25)}
+.spark{position:absolute;width:12px;height:12px}
+/* parcel open */
+.sheet{position:absolute;left:18px;right:18px;top:190px;height:470px;border-radius:30px;background:linear-gradient(100deg,#FFF4DC 0 56%,#F3E6C8 56% 100%);box-shadow:0 8px 0 #C9B48C,0 30px 60px rgba(0,0,0,.5);color:var(--ink)}
+.sheet h3{position:absolute;left:0;right:0;top:-34px;text-align:center;font:400 46px/1 var(--display);color:var(--gold);letter-spacing:2px;text-shadow:0 4px 0 var(--lip),0 9px 0 var(--n9)}
+.box{position:absolute;left:50%;top:70px;width:230px;height:190px;transform:translateX(-50%)}
+.gifts{position:absolute;left:24px;right:24px;top:286px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.gift{height:150px;border-radius:20px;background:var(--n7);box-shadow:inset 0 4px 8px rgba(0,0,0,.4),0 4px 0 #C9B48C;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--paper);font:400 24px/1 var(--display)}
+.gift svg{width:62px;height:62px}
+.gift small{font:900 11px/1 var(--ui);letter-spacing:1.2px;color:var(--m2);text-transform:uppercase}
+/* drawer (mailbag) */
+.dtabs{position:absolute;left:16px;right:16px;top:100px;height:50px;border-radius:25px;background:var(--n8);box-shadow:inset 0 2px 6px rgba(0,0,0,.4);display:flex;padding:5px;gap:4px}
+.dtabs span{position:relative;flex:1;border-radius:20px;display:flex;align-items:center;justify-content:center;gap:6px;font:900 12.5px/1 var(--ui);letter-spacing:.8px;color:var(--muted);text-transform:uppercase}
+.dtabs span svg{width:22px;height:22px}.dtabs span.on{background:var(--paper);color:var(--ink)}
+.dtabs .badge{position:absolute;right:6px;top:-6px;min-width:20px;height:20px;border-radius:10px;background:var(--coral);color:#fff;font:900 11px/20px var(--ui);text-align:center}
+.pc{position:absolute;width:318px;height:212px;border-radius:10px;box-shadow:0 14px 24px rgba(0,0,0,.45)}
+.pcfront{left:44px;top:182px;transform:rotate(7deg);overflow:hidden}
+.pcback{left:28px;top:388px;transform:rotate(-4deg);background:linear-gradient(100deg,#FFF4DC 0 56%,#F7EBD0 56% 100%);color:var(--ink)}
+.pcback .line{position:absolute;left:18px;width:170px;height:1.5px;background:#D9C59C}
+.pcback p{position:absolute;left:18px;top:26px;width:180px;font:italic 800 15.5px/1.55 var(--ui);color:#4A2E22}
+.pcback .sig{position:absolute;left:18px;bottom:22px;font:400 17px/1 var(--display);color:var(--m7);letter-spacing:.5px}
+.pcback .div{position:absolute;left:206px;top:18px;bottom:18px;width:1.5px;background:#D9C59C}
+.pcback .pstamp{position:absolute;right:16px;top:14px;width:70px;height:84px}
+.pcback .pmark{position:absolute;right:52px;top:58px;width:100px;height:60px;opacity:.75}
+.pcback .to{position:absolute;left:222px;top:118px;font:900 12px/1.7 var(--ui);color:#6B4A38}
+.flipHint{position:absolute;left:0;right:0;bottom:44px;text-align:center;font:900 12px/1 var(--ui);letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+.strip{position:absolute;left:16px;right:16px;top:640px;display:flex;gap:10px;justify-content:center}
+.strip i{width:44px;height:30px;border-radius:4px;background:var(--n6);box-shadow:0 3px 0 var(--n9);transform:rotate(-4deg)}.strip i:nth-child(2n){transform:rotate(3deg)}
+.strip i.got{background:var(--paper)}.strip i.new{background:var(--gold)}
+/* album */
+.page{position:absolute;left:16px;right:16px;top:166px;height:600px;border-radius:24px;background:linear-gradient(100deg,#FFF4DC 0 56%,#F3E6C8 56% 100%);box-shadow:0 6px 0 #C9B48C;color:var(--ink);padding:18px 16px}
+.page h4{font:400 28px/1 var(--display);letter-spacing:1px;display:flex;align-items:center;gap:10px}
+.page h4 img{width:38px;height:38px}
+.page h4 b{margin-left:auto;font:400 20px/1 var(--display);color:var(--m7)}
+.isles{position:absolute;right:18px;top:-20px;display:flex;gap:6px}
+.isles i{width:40px;height:40px;border-radius:50%;box-shadow:0 3px 0 var(--n9);display:grid;place-items:center}
+.isles i img{width:32px}
+.grid{margin-top:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px 10px}
+.st{height:98px;position:relative;display:flex;flex-direction:column;align-items:center}
+.st svg{width:72px;height:86px}
+.st small{font:900 9.5px/1 var(--ui);letter-spacing:.5px;color:#8A6A52;margin-top:2px;text-align:center}
+.rowlbl{grid-column:1/-1;font:900 11px/1 var(--ui);letter-spacing:1.5px;color:#A3876A;text-transform:uppercase;margin:4px 0 -4px}
+.reward{position:absolute;left:16px;right:16px;bottom:16px;height:70px;border-radius:18px;background:var(--n7);color:var(--paper);display:flex;align-items:center;gap:12px;padding:0 14px;box-shadow:inset 0 2px 0 rgba(255,244,220,.08)}
+.reward img{width:96px;height:52px;object-fit:cover;object-position:60% 30%;border-radius:10px;background:#0B252A}
+.reward b{font:400 19px/1.1 var(--display);letter-spacing:.5px}
+.reward small{display:block;font:900 11px/1 var(--ui);color:var(--m2);letter-spacing:1px;margin-top:5px;text-transform:uppercase}
+.reward .pbar{margin-left:auto;width:64px;height:8px;border-radius:4px;background:var(--n9);overflow:hidden}.reward .pbar i{display:block;height:100%;background:var(--gold)}
+</style></head><body>
+
+<!-- ============ H-A1 · Sorting Room · Planes ============ -->
+<section class="phone" id="A1">
+  <div class="hdr"><span class="back" data-back></span><h2>Hangar</h2><span class="chip" data-star>180</span></div>
+  <div class="show" data-sky>
+    <div class="glow"></div><svg class="stand" data-stand></svg>
+    <svg class="trailarc" data-trail="spark"></svg>
+    <img class="hero" src="hangar-assets/ship-crescent-bloom.png" alt="">
+    <div class="tag"><div class="str"></div><b>Crescent</b></div>
+  </div>
+  <div class="tabs"><span class="on" data-ic="plane">Planes</span><span data-ic="paint">Paint</span><span data-ic="trail">Trails</span></div>
+  <div class="rack">
+    <div class="cub"><img src="hangar-assets/ship-manta-bloom.png" alt=""><span class="nm">Manta</span></div>
+    <div class="cub eq"><svg class="seal" data-seal></svg><img src="hangar-assets/ship-dart-bloom.png" alt=""><span class="nm">Dart</span></div>
+    <div class="cub sel"><img src="hangar-assets/ship-crescent-bloom.png" alt=""><span class="price can" data-p="100"></span></div>
+    <div class="cub dim"><img src="hangar-assets/ship-splitwing-bloom.png" alt=""><span class="price cant" data-p="200"></span></div>
+    <div class="cub dim"><img src="hangar-assets/ship-shuttle-bloom.png" alt=""><span class="price cant" data-p="350"></span></div>
+    <div class="cub dim"><img src="hangar-assets/ship-ringsail-bloom.png" alt=""><span class="price cant" data-p="550"></span></div>
+  </div>
+  <div class="cta gold" data-buy="100">Buy</div>
+</section>
+
+<!-- ============ H-A2 · Sorting Room · Trails (locked item previewed) ============ -->
+<section class="phone" id="A2">
+  <div class="hdr"><span class="back" data-back></span><h2>Hangar</h2><span class="chip" data-star>180</span></div>
+  <div class="show" data-sky>
+    <div class="glow"></div>
+    <img src="hangar-assets/trail-crown.png" alt="" style="position:absolute;left:-10px;top:40px;width:400px;transform:rotate(-4deg)">
+    <div class="tag"><div class="str"></div><b>Crown gems</b></div>
+  </div>
+  <div class="tabs"><span data-ic="plane">Planes</span><span data-ic="paint">Paint</span><span class="on" data-ic="trail">Trails</span></div>
+  <div class="rack four">
+    <div class="cub eq"><svg class="seal" data-seal></svg><i class="tr" style="background-image:url(hangar-assets/trail-paper.png)"></i><span class="nm">Paper</span></div>
+    <div class="cub"><i class="tr" style="background-image:url(hangar-assets/trail-pollen.png)"></i><span class="nm">Pollen</span></div>
+    <div class="cub"><i class="tr" style="background-image:url(hangar-assets/trail-spark.png)"></i><span class="nm">Spark</span></div>
+    <div class="cub sil"><svg class="lock" data-lock></svg><i class="tr" style="background-image:url(hangar-assets/trail-ribbon.png)"></i><span class="nm">Ribbon</span></div>
+    <div class="cub sil"><svg class="lock" data-lock></svg><i class="tr" style="background-image:url(hangar-assets/trail-echo.png)"></i><span class="nm">Echo</span></div>
+    <div class="cub sil sel"><svg class="lock" data-lock></svg><i class="tr" style="background-image:url(hangar-assets/trail-crown.png)"></i><span class="nm">Crown</span></div>
+    <div class="cub sil"><svg class="lock" data-lock></svg><i class="tr" style="background-image:url(hangar-assets/trail-bloom-wake.png)"></i><span class="nm">Petals</span></div>
+    <div class="cub" style="background:none;box-shadow:inset 0 0 0 2px #E2CFA6"></div>
+  </div>
+  <div class="cta night"><span>Finish 5 goals</span><span class="pbar"><i style="width:60%"></i></span></div>
+</section>
+
+<!-- ============ H-A3 · Sorting Room · New plane unfolds ============ -->
+<section class="phone" id="A3">
+  <div class="hdr"><span class="back" data-back></span><h2>Hangar</h2><span class="chip" data-star>80</span></div>
+  <div class="tabs"><span class="on" data-ic="plane">Planes</span><span data-ic="paint">Paint</span><span data-ic="trail">Trails</span></div>
+  <div class="rack"><div class="cub"></div><div class="cub"></div><div class="cub"></div><div class="cub"></div><div class="cub"></div><div class="cub"></div></div>
+  <div class="veil"></div><div class="rays"></div>
+  <svg class="crease" viewBox="0 0 300 184"><path d="M10 92 L150 20 L290 92 L150 164Z" fill="none" stroke="#FFF4DC" stroke-opacity=".25" stroke-width="2" stroke-dasharray="6 6"/></svg>
+  <img class="unfold" src="hangar-assets/ship-crescent-bloom.png" alt="">
+  <svg class="stamp" data-newstamp></svg>
+  <div class="conf" data-conf></div>
+  <div class="bignm">Crescent</div>
+  <div class="cta mint">Equip</div>
+</section>
+
+<!-- ============ H-B1 · Island Dock carousel ============ -->
+<section class="phone" id="B1">
+  <div class="hdr"><span class="back" data-back></span><h2>Hangar</h2><span class="chip" data-star>180</span></div>
+  <div class="glow" style="top:260px;bottom:auto;width:340px;height:240px"></div>
+  <img class="island" src="../../../assets/archipelago/bloom-island.svg" alt="">
+  <img class="heroB" src="hangar-assets/ship-crescent-bloom.png" alt="">
+  <span class="arrow" style="left:14px" data-arrow="l"></span><span class="arrow" style="right:14px" data-arrow="r"></span>
+  <div class="nameB">Crescent</div>
+  <div class="dots"><i class="own"></i><i class="own"></i><i class="on"></i><i></i><i></i><i></i></div>
+  <div class="pills"><span class="on" data-ic="plane">Planes</span><span data-ic="paint">Paint</span><span data-ic="trail">Trails</span></div>
+  <div class="cta gold" data-buy="100">Buy</div>
+</section>
+
+<!-- ============ R1 · Home, 7th night: Pip brings the parcel ============ -->
+<section class="phone" id="R1">
+  <img class="bgshot" src="hangar-assets/home-clean.png" alt="">
+  <svg class="lant" data-lanterns="7"></svg>
+  <div class="ring"></div>
+  <div class="pipbox" data-pip="present"></div>
+  <svg class="parcelHeld" data-parcel></svg>
+  <svg class="spark" style="left:132px;top:610px" data-spark></svg><svg class="spark" style="left:10px;top:640px;transform:scale(.7)" data-spark></svg>
+</section>
+
+<!-- ============ R2 · The parcel opens ============ -->
+<section class="phone" id="R2">
+  <img class="bgshot" src="hangar-assets/home-clean.png" alt=""><div class="veil" style="background:rgba(6,20,23,.9)"></div>
+  <div class="sheet"><h3>Parcel!</h3>
+    <svg class="box" data-openbox viewBox="0 0 230 190"></svg>
+    <div class="gifts">
+      <div class="gift"><svg data-starbig></svg>+25<small>Stars</small></div>
+      <div class="gift"><svg data-giftstamp viewBox="0 0 72 86"></svg>Stamp<small>Album</small></div>
+      <div class="gift"><svg data-moon viewBox="0 0 64 64"></svg>Moon<small>Freeze</small></div>
+    </div>
+  </div>
+  <div class="cta gold">Collect</div>
+</section>
+
+<!-- ============ R3 · Home after a missed night: the Paper Moon held the string ============ -->
+<section class="phone" id="R3">
+  <img class="bgshot" src="hangar-assets/home-clean.png" alt="">
+  <svg class="lant" data-lanterns="5" data-moonat="3"></svg>
+  <div class="pipbox" data-pip="look"></div>
+</section>
+
+<!-- ============ R4 · Mailbag · islander postcard ============ -->
+<section class="phone" id="R4">
+  <div class="hdr"><span class="back" data-back></span><h2>Mailbag</h2></div>
+  <div class="dtabs"><span data-ic="env">Tonight</span><span class="on" data-ic="card">Postcards<b class="badge">1</b></span><span data-ic="book">Album</span></div>
+  <div class="pc pcfront"><svg data-postcard viewBox="0 0 318 212" width="318" height="212"></svg></div>
+  <div class="pc pcback">
+    <p>Dear pilot, the vines are dancing again! Grandma Bud cried happy dew. Come back for tea?</p>
+    <div class="div"></div><svg class="pstamp" data-pcstamp viewBox="0 0 72 86"></svg><svg class="pmark" data-pmark viewBox="0 0 100 60"></svg>
+    <div class="to">To: Pip &amp; pilot<br>Night Post Loft<br>The Sky</div>
+    <div class="sig">Clover, Pollen Path</div>
+  </div>
+  <div class="strip"><i class="got"></i><i class="new"></i><i></i><i></i><i></i><i></i></div>
+  <div class="flipHint">Tap to turn over</div>
+</section>
+
+<!-- ============ R5 · Mailbag · Stamp Album, Bloom page ============ -->
+<section class="phone" id="R5">
+  <div class="hdr"><span class="back" data-back></span><h2>Mailbag</h2></div>
+  <div class="dtabs"><span data-ic="env">Tonight</span><span data-ic="card">Postcards</span><span class="on" data-ic="book">Album</span></div>
+  <div class="page">
+    <div class="isles"><i style="background:#2E9C80"><img src="hangar-assets/planet-bloom.png" alt=""></i><i style="background:#1A4A50;opacity:.8"><img src="hangar-assets/planet-ember.png" alt="" style="filter:grayscale(.6)"></i><i style="background:#1A4A50;opacity:.55"></i></div>
+    <h4><img src="hangar-assets/planet-bloom.png" alt="">Bloom <b>7/12</b></h4>
+    <div class="grid" data-album></div>
+    <div class="reward"><img src="hangar-assets/trail-bloom-wake.png" alt=""><div><b>Fill the page</b><small>Pressed-petal trail</small></div><span class="pbar"><i style="width:58%"></i></span></div>
+  </div>
+</section>
+
+<script src="../../../pip.js"></script>
+<script>
+const $$ = s => [...document.querySelectorAll(s)];
+const STAR = `<svg viewBox="0 0 48 48"><polygon points="24,4 29,17.12 43.02,17.82 32.08,26.63 35.76,40.18 24,32.5 12.24,40.18 15.92,26.63 4.98,17.82 19,17.12" fill="#FFC94D"/><polygon points="24,4 29,17.12 43.02,17.82 32.08,26.63 35.76,40.18 24,32.5" fill="#E0A93A"/></svg>`;
+const BACK = `<svg viewBox="0 0 48 48"><path d="M28 8 L10 24 L28 40 V30 H40 V18 H28 Z" fill="#FFF4DC"/><path d="M10 24 L28 40 V30 H40 V24 Z" fill="#E9D6B0"/></svg>`;
+const IC = {
+  plane: `<svg viewBox="0 0 48 48"><path d="M4 24 L44 10 L30 40 L24 28 Z" fill="currentColor"/><path d="M24 28 L44 10 L30 40Z" fill="currentColor" opacity=".6"/></svg>`,
+  paint: `<svg viewBox="0 0 48 48"><path d="M8 8 H30 L40 18 V40 H8Z" fill="currentColor" opacity=".35"/><path d="M8 8 H30 L8 40Z" fill="currentColor"/><circle cx="31" cy="31" r="7" fill="#FF6F61"/></svg>`,
+  trail: `<svg viewBox="0 0 48 48"><path d="M40 10 L44 14 L40 18 L36 14Z" fill="currentColor"/><path d="M30 18 L33 21 L30 24 L27 21Z" fill="currentColor" opacity=".8"/><path d="M21 26 L23.5 28.5 L21 31 L18.5 28.5Z" fill="currentColor" opacity=".6"/><path d="M12 33 L14 35 L12 37 L10 35Z" fill="currentColor" opacity=".45"/><path d="M5 39 L6.5 40.5 L5 42 L3.5 40.5Z" fill="currentColor" opacity=".3"/></svg>`,
+  env: `<svg viewBox="0 0 48 48"><path d="M5 12 H43 V38 H5Z" fill="currentColor" opacity=".35"/><path d="M5 12 L24 27 L43 12" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><circle cx="24" cy="27" r="5" fill="#FF6F61"/></svg>`,
+  card: `<svg viewBox="0 0 48 48"><rect x="5" y="11" width="38" height="27" rx="3" fill="currentColor" opacity=".35" transform="rotate(-6 24 24)"/><rect x="28" y="15" width="10" height="12" fill="#FFC94D" transform="rotate(-6 24 24)"/><path d="M10 22 H24 M10 28 H22 M10 34 H20" stroke="currentColor" stroke-width="3" stroke-linecap="round" transform="rotate(-6 24 24)"/></svg>`,
+  book: `<svg viewBox="0 0 48 48"><path d="M24 12 Q14 6 4 9 V39 Q14 36 24 41Z" fill="currentColor" opacity=".45"/><path d="M24 12 Q34 6 44 9 V39 Q34 36 24 41Z" fill="currentColor"/><rect x="29" y="15" width="9" height="11" fill="#FFC94D"/></svg>`,
+};
+$$('[data-back]').forEach(e => e.innerHTML = BACK);
+$$('[data-star]').forEach(e => e.innerHTML = STAR + `<span>${e.textContent}</span>`);
+$$('[data-ic]').forEach(e => e.insertAdjacentHTML('afterbegin', IC[e.dataset.ic]));
+$$('[data-p]').forEach(e => e.innerHTML = STAR + e.dataset.p + (e.dataset.prog ? `<span class="bar"><i style="width:${e.dataset.prog}%"></i></span>` : ''));
+$$('[data-buy]').forEach(e => e.innerHTML = `Buy <span style="display:flex;align-items:center;gap:4px;font-size:24px">${STAR}${e.dataset.buy}</span>`);
+$$('[data-seal]').forEach(e => { e.setAttribute('viewBox', '0 0 40 40'); e.innerHTML = `<path d="M20 2 L24 6 L30 4 L31 10 L37 12 L35 18 L39 22 L34 26 L35 32 L29 32 L26 38 L20 35 L14 38 L11 32 L5 32 L6 26 L1 22 L5 18 L3 12 L9 10 L10 4 L16 6Z" fill="#FFC94D"/><path d="M20 2 L24 6 L30 4 L31 10 L37 12 L35 18 L39 22 L34 26 L35 32 L29 32 L26 38 L20 35Z" fill="#E0A93A"/><path d="M13 20 L18 25 L28 14" fill="none" stroke="#3A1E14" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>`; });
+$$('[data-lock]').forEach(e => { e.setAttribute('viewBox', '0 0 24 24'); e.innerHTML = `<path d="M7 10 V7 a5 5 0 0 1 10 0 V10" fill="none" stroke="#7FA8A2" stroke-width="2.6"/><rect x="4" y="10" width="16" height="12" rx="3" fill="#7FA8A2"/>`; });
+$$('[data-arrow]').forEach(e => e.innerHTML = `<svg viewBox="0 0 24 24"><path d="${e.dataset.arrow === 'l' ? 'M16 3 L6 12 L16 21' : 'M8 3 L18 12 L8 21'}" fill="none" stroke="#FFF4DC" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`);
+$$('[data-sky]').forEach(e => { const sky = document.createElement('div'); sky.className = 'sky'; let s = 7; const r = () => (s = s * 16807 % 2147483647) / 2147483647;
+  for (let i = 0; i < 26; i++) sky.insertAdjacentHTML('beforeend', `<i style="left:${r() * 100}%;top:${r() * 70}%;opacity:${.2 + r() * .5};transform:scale(${.5 + r()})"></i>`);
+  e.prepend(sky); e.insertAdjacentHTML('beforeend', `<svg class="moon" viewBox="0 0 40 40"><path d="M26 4 A16 16 0 1 0 36 30 A13 13 0 1 1 26 4Z" fill="#FFF4DC"/><path d="M26 4 A13 13 0 0 0 36 30 A16 16 0 0 1 22 36 A14 14 0 0 0 26 4Z" fill="#E9D6B0"/></svg>`); });
+// Folded paper stand under the showcased plane.
+$$('[data-stand]').forEach(e => { e.setAttribute('viewBox', '0 0 190 44'); e.innerHTML = `<ellipse cx="95" cy="38" rx="84" ry="6" fill="#0A1F24" opacity=".5"/><path d="M20 14 L170 14 L150 36 L40 36Z" fill="#E9D6B0"/><path d="M95 14 L170 14 L150 36 L95 36Z" fill="#C9B48C"/><path d="M20 14 L95 4 L170 14Z" fill="#FFF4DC"/><path d="M95 4 L170 14 L95 14Z" fill="#F3E6C8"/>`; });
+// Trail arc behind the showcased plane (Bloom palette: gold/coral alternating).
+$$('[data-trail]').forEach(e => { e.setAttribute('viewBox', '0 0 358 268'); let h = '';
+  for (let i = 0; i < 20; i++) { const t = i / 20, x = 30 + t * 150, y = 210 - Math.sin(t * 1.4) * 90, s = 2 + t * 6;
+    h += `<path transform="translate(${x} ${y}) rotate(${i * 35})" d="M0 ${-s} L${s * .72} 0 L0 ${s} L${-s * .72} 0Z" fill="${i % 2 ? '#ef6e67' : '#edca62'}" opacity="${.2 + t * .6}"/>`; }
+  e.innerHTML = h; });
+// "NEW" postmark (same family as the in-run PERFECT stamp).
+$$('[data-newstamp]').forEach(e => { e.setAttribute('viewBox', '0 0 100 100'); let dots = ''; for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2; dots += `<circle cx="${50 + Math.cos(a) * 46}" cy="${50 + Math.sin(a) * 46}" r="3.4" fill="#FFC94D"/>`; }
+  e.innerHTML = `${dots}<circle cx="50" cy="50" r="41" fill="#FFC94D"/><path d="M50 9 A41 41 0 0 1 50 91Z" fill="#E0A93A"/><circle cx="50" cy="50" r="33" fill="none" stroke="#3A1E14" stroke-width="2.2" stroke-dasharray="3 3"/><text x="50" y="58" text-anchor="middle" font-family="Lilita One" font-size="27" fill="#3A1E14" letter-spacing="1">NEW</text>`; });
+$$('[data-conf]').forEach(e => { let s = 3; const r = () => (s = s * 16807 % 2147483647) / 2147483647; const cols = ['#FFC94D', '#FF6F61', '#A8F0CF', '#FFF4DC', '#5ED6A6'];
+  for (let i = 0; i < 26; i++) e.insertAdjacentHTML('beforeend', `<i style="left:${20 + r() * 350}px;top:${90 + r() * 300}px;background:${cols[i % 5]};transform:rotate(${r() * 180}deg) scale(${.6 + r() * .8})"></i>`); });
+
+// Lantern string, same drawing as renderLanterns() in game.js, plus: a glowing day-7 parcel, and a Paper Moon in a missed slot.
+function lanterns(svg, lit, moonAt) {
+  const W = 390, y0 = 6, sag = 34; svg.setAttribute('viewBox', `0 0 ${W} 72`);
+  let h = `<path d="M-10 ${y0} Q ${W / 2} ${y0 + sag} ${W + 10} ${y0}" fill="none" stroke="#7FA8A2" stroke-opacity=".55" stroke-width="1.6"/>`;
+  for (let i = 0; i < 7; i++) {
+    const t = (i + 1) / 8, x = (1 - t) * (1 - t) * -10 + 2 * (1 - t) * t * (W / 2) + t * t * (W + 10), y = (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * (y0 + sag) + t * t * y0, on = i < lit;
+    h += `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + 8}" stroke="#7FA8A2" stroke-opacity=".6" stroke-width="1.2"/><g transform="translate(${x} ${y + 8})">`;
+    if (i === moonAt) h += `<g transform="scale(1.35) translate(0 -1)"><circle cx="0" cy="12" r="18" fill="#A8F0CF" opacity=".3"/><path d="M4 0 A12 12 0 1 0 12 18 A9.5 9.5 0 1 1 4 0Z" fill="#FFF4DC"/><path d="M4 0 A9.5 9.5 0 0 0 12 18 A12 12 0 0 1 0 22 A11 11 0 0 0 4 0Z" fill="#E9D6B0"/><circle cx="-1" cy="11" r="1.4" fill="#3A1E14"/><path d="M-4 15 Q-1 17 2 15" stroke="#3A1E14" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M-9 3 L-7 5 L-9 7 L-11 5Z" fill="#FFC94D"/></g>`;
+    else if (i === 6) h += `${on ? '<circle cx="0" cy="12" r="24" fill="#FFC94D" opacity=".32"/><circle cx="0" cy="12" r="15" fill="#FFC94D" opacity=".3"/>' : ''}<g transform="${on ? 'rotate(-10) translate(0 -3)' : ''}"><rect x="-10" y="2" width="20" height="18" rx="2" fill="${on ? '#FFF4DC' : '#1A4A50'}" stroke="${on ? 'none' : '#2c5f66'}"/><rect x="-10" y="11" width="20" height="9" rx="1" fill="${on ? '#E9D6B0' : '#163F46'}"/><rect x="-2" y="2" width="4" height="18" fill="${on ? '#FF6F61' : '#2c5f66'}"/><path d="M0 2 Q-7 -6 -8 0 Q-4 3 0 2 Q4 3 8 0 Q7 -6 0 2Z" fill="${on ? '#FF6F61' : '#2c5f66'}"/></g>${on ? '<path d="M15 -2 L17 1 L15 4 L13 1Z" fill="#FFC94D"/><path d="M-16 6 L-14.5 8 L-16 10 L-17.5 8Z" fill="#FFC94D"/>' : ''}`;
+    else h += `${on ? '<circle cx="0" cy="12" r="17" fill="#FFC94D" opacity=".22"/>' : ''}<rect x="-5" y="0" width="10" height="3.5" rx="1" fill="#12363D"/><path d="M-8 4 H8 Q11 12 8 21 H-8 Q-11 12 -8 4Z" fill="${on ? '#FFC94D' : '#1A4A50'}" stroke="${on ? 'none' : '#2c5f66'}" stroke-width="1.2"/><path d="M0 4 H8 Q11 12 8 21 H0Z" fill="${on ? '#E0A93A' : '#163F46'}"/><path d="M-4 4 Q-6 12 -4 21 M4 4 Q6 12 4 21" stroke="${on ? '#C98A22' : '#2c5f66'}" stroke-width="1" fill="none"/><rect x="-5" y="21" width="10" height="3" rx="1" fill="#12363D"/>`;
+    h += '</g>';
+  }
+  svg.innerHTML = h;
+}
+$$('[data-lanterns]').forEach(e => lanterns(e, +e.dataset.lanterns, e.dataset.moonat === undefined ? -1 : +e.dataset.moonat));
+const PARCEL = `<path d="M6 16 L24 8 L42 16 L42 38 L24 46 L6 38Z" fill="#E9D6B0"/><path d="M24 24 L42 16 L42 38 L24 46Z" fill="#C9B48C"/><path d="M6 16 L24 8 L42 16 L24 24Z" fill="#FFF4DC"/><path d="M15 12 L33 20 V30 L29 28 V22 L11 14Z" fill="#FF6F61"/><path d="M24 24 V46" stroke="#FF6F61" stroke-width="3.4"/><path d="M24 8 Q16 0 13 5 Q17 9 24 8 Q31 9 35 5 Q32 0 24 8Z" fill="#FF6F61"/>`;
+$$('[data-parcel]').forEach(e => { e.setAttribute('viewBox', '0 0 48 48'); e.innerHTML = PARCEL; });
+$$('[data-spark]').forEach(e => { e.setAttribute('viewBox', '0 0 12 12'); e.innerHTML = '<path d="M6 0 L7.5 4.5 L12 6 L7.5 7.5 L6 12 L4.5 7.5 L0 6 L4.5 4.5Z" fill="#FFC94D"/>'; });
+$$('[data-starbig]').forEach(e => e.outerHTML = STAR.replace('<svg', '<svg width="62" height="62"'));
+const MOON = `<circle cx="32" cy="32" r="28" fill="#A8F0CF" opacity=".18"/><path d="M36 8 A24 24 0 1 0 54 44 A19 19 0 1 1 36 8Z" fill="#FFF4DC"/><path d="M36 8 A19 19 0 0 0 54 44 A24 24 0 0 1 30 56 A22 22 0 0 0 36 8Z" fill="#E9D6B0"/><circle cx="26" cy="30" r="2.4" fill="#3A1E14"/><path d="M21 37 Q26 41 31 37" stroke="#3A1E14" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M14 18 Q20 4 34 6 L30 14 Q22 12 14 18Z" fill="#12363D"/><circle cx="36" cy="5" r="3" fill="#FFC94D"/>`;
+$$('[data-moon]').forEach(e => e.innerHTML = MOON);
+// The parcel, unwrapped: flaps folded open, string loose, light coming out.
+$$('[data-openbox]').forEach(e => e.innerHTML = `<ellipse cx="115" cy="176" rx="90" ry="10" fill="#C9B48C" opacity=".6"/>
+  <path d="M115 96 L40 70 L20 30 L115 60Z" fill="#FFC94D" opacity=".28"/><path d="M115 96 L190 70 L210 30 L115 60Z" fill="#FFC94D" opacity=".28"/><path d="M115 96 L95 10 L135 10Z" fill="#FFC94D" opacity=".35"/>
+  <path d="M45 90 L115 70 L185 90 L185 150 L115 172 L45 150Z" fill="#E9D6B0"/><path d="M115 110 L185 90 L185 150 L115 172Z" fill="#C9B48C"/><path d="M45 90 L115 110 L115 172 L45 150Z" fill="#E9D6B0"/>
+  <path d="M45 90 L115 110 L185 90 L115 70Z" fill="#12363D"/>
+  <path d="M45 90 L8 74 L60 62 L115 70Z" fill="#FFF4DC"/><path d="M185 90 L222 74 L170 62 L115 70Z" fill="#F3E6C8"/><path d="M45 90 L20 118 L70 120 L115 110Z" fill="#F3E6C8"/><path d="M185 90 L210 118 L160 120 L115 110Z" fill="#E9D6B0"/>
+  <path d="M115 110 V172" stroke="#FF6F61" stroke-width="5"/><path d="M80 100 L150 120" stroke="#FF6F61" stroke-width="5" opacity=".0"/>
+  <path d="M150 168 Q170 182 196 174 Q206 186 222 178" fill="none" stroke="#FF6F61" stroke-width="5" stroke-linecap="round"/><path d="M60 168 Q40 186 18 176" fill="none" stroke="#FF6F61" stroke-width="5" stroke-linecap="round"/>
+  <path d="M104 40 L108 48 L116 50 L108 52 L104 60 L100 52 L92 50 L100 48Z" fill="#FFC94D"/><path d="M140 26 L142 31 L147 32 L142 33 L140 38 L138 33 L133 32 L138 31Z" fill="#FFC94D"/><path d="M78 30 L79.5 33.5 L83 35 L79.5 36.5 L78 40 L76.5 36.5 L73 35 L76.5 33.5Z" fill="#FFF4DC"/>`);
+
+// Perforated stamp: paper with bite-holes on all edges, an inner picture, optional cancellation.
+function stamp(inner, o = {}) {
+  const w = 72, h = 86, r = 3.4, step = 9, id = 'm' + Math.random().toString(36).slice(2);
+  let holes = '';
+  for (let x = step / 2; x < w; x += step) holes += `<circle cx="${x}" cy="0" r="${r}"/><circle cx="${x}" cy="${h}" r="${r}"/>`;
+  for (let y = step / 2; y < h; y += step) holes += `<circle cx="0" cy="${y}" r="${r}"/><circle cx="${w}" cy="${y}" r="${r}"/>`;
+  if (o.empty) return `<rect x="4" y="4" width="${w - 8}" height="${h - 8}" rx="4" fill="none" stroke="#D3BC8E" stroke-width="2" stroke-dasharray="5 4"/><g opacity=".22">${inner}</g>`;
+  return `<defs><mask id="${id}"><rect width="${w}" height="${h}" fill="#fff"/><g fill="#000">${holes}</g></mask></defs>
+    <g mask="url(#${id})"><rect width="${w}" height="${h}" fill="${o.paper || '#FFFDF5'}"/></g>
+    <rect x="7" y="7" width="${w - 14}" height="${h - 14}" fill="${o.bg || '#12363D'}"/>${inner}
+    ${o.cancel ? `<g opacity=".55" stroke="#3A1E14" stroke-width="1.6" fill="none"><circle cx="54" cy="20" r="13"/><path d="M30 14 Q36 10 42 14 T54 14 M28 22 Q34 18 40 22"/></g>` : ''}`;
+}
+const glyph = {
+  planet: n => `<circle cx="36" cy="44" r="17" fill="#5ED6A6"/><path d="M36 27 A17 17 0 0 1 36 61Z" fill="#2E9C80"/><circle cx="36" cy="44" r="6" fill="#FFF4DC"/><circle cx="36" cy="44" r="2.5" fill="#FFC94D"/><text x="36" y="22" text-anchor="middle" font-family="Lilita One" font-size="12" fill="#FFF4DC">${n}</text>`,
+  gold: `<circle cx="36" cy="43" r="19" fill="#FFC94D"/><path d="M36 24 A19 19 0 0 1 36 62Z" fill="#E0A93A"/><path d="M36 31 L39.5 39.5 L48 43 L39.5 46.5 L36 55 L32.5 46.5 L24 43 L32.5 39.5Z" fill="#3A1E14"/>`,
+  letter: `<rect x="17" y="31" width="38" height="26" rx="2" fill="#FFF4DC"/><path d="M17 32 L36 46 L55 32" fill="none" stroke="#3A1E14" stroke-width="2"/><circle cx="36" cy="46" r="5" fill="#FF6F61"/>`,
+  parcel: `<g transform="translate(12 18) scale(1)">${PARCEL}</g>`,
+  moon: `<g transform="translate(4 12)">${MOON}</g>`,
+  guard: `<path d="M36 26 L52 34 V46 Q52 58 36 64 Q20 58 20 46 V34Z" fill="#FF6F61"/><path d="M36 26 L52 34 V46 Q52 58 36 64Z" fill="#E0574A"/><path d="M29 44 L34 49 L44 38" fill="none" stroke="#FFF4DC" stroke-width="3.4" stroke-linecap="round"/>`,
+};
+$$('[data-giftstamp]').forEach(e => e.innerHTML = stamp(glyph.parcel, { bg: '#1A4A50' }));
+$$('[data-pcstamp]').forEach(e => e.innerHTML = stamp(glyph.planet(2), { bg: '#2E9C80' }));
+$$('[data-pmark]').forEach(e => e.innerHTML = `<g stroke="#3A1E14" stroke-width="1.8" fill="none"><circle cx="30" cy="30" r="22"/><circle cx="30" cy="30" r="16" stroke-width="1"/><path d="M56 18 Q64 13 72 18 T88 18 M56 30 Q64 25 72 30 T88 30 M56 42 Q64 37 72 42 T88 42"/></g><text x="30" y="34" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="10" fill="#3A1E14">N.42</text>`);
+// Album page: level stamps, gold postmarks, specials. Earned ones are full colour; empty ones show a faint picture of what goes there.
+$$('[data-album]').forEach(e => {
+  const rows = [['Islands', [['planet', 1, 1, 'First Light'], ['planet', 2, 1, 'Pollen Path'], ['planet', 3, 0, 'Tangled Orbit'], ['guard', 0, 0, 'Crown of Petals']]],
+    ['Gold postmarks', [['gold', 0, 1, '3★ First Light'], ['gold', 0, 1, '3★ Pollen'], ['gold', 0, 0, '3★ Tangled'], ['gold', 0, 0, '3★ Crown']]],
+    ['Specials', [['letter', 0, 1, '10 lost letters'], ['parcel', 0, 1, 'Week 1 parcel'], ['moon', 0, 1, 'Night 7'], ['letter', 0, 0, '25 lost letters']]]];
+  let h = '';
+  for (const [label, items] of rows) {
+    h += `<div class="rowlbl">${label}</div>`;
+    for (const [k, n, got, cap] of items) {
+      const inner = typeof glyph[k] === 'function' ? glyph[k](n) : glyph[k];
+      h += `<div class="st"><svg viewBox="0 0 72 86">${stamp(inner, { empty: !got, bg: k === 'gold' ? '#12363D' : k === 'planet' ? '#2E9C80' : '#1A4A50', cancel: got && k === 'planet' })}</svg><small>${cap}</small></div>`;
+    }
+  }
+  e.innerHTML = h;
+});
+// Postcard front: Pollen Path at night, the islander waving by a mailbox with its flag up, letters drifting home.
+$$('[data-postcard]').forEach(e => e.innerHTML = `
+  <defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0E2A30"/><stop offset="1" stop-color="#1F5A5E"/></linearGradient></defs>
+  <rect width="318" height="212" fill="url(#sk)"/>
+  <g fill="#FFF4DC" opacity=".6"><circle cx="30" cy="30" r="1.4"/><circle cx="80" cy="18" r="1"/><circle cx="140" cy="40" r="1.3"/><circle cx="200" cy="22" r="1"/><circle cx="250" cy="50" r="1.2"/><circle cx="110" cy="70" r="1"/></g>
+  <path d="M268 22 A18 18 0 1 0 290 50 A14 14 0 1 1 268 22Z" fill="#FFF4DC"/>
+  <path d="M90 62 L100 57 L110 62 L100 67Z" fill="#FFF4DC" transform="rotate(-12 100 62)"/><path d="M90 62 L100 67 L110 62" fill="none" stroke="#3A1E14" stroke-width="1"/>
+  <path d="M150 40 L158 36 L166 40 L158 44Z" fill="#FFF4DC" opacity=".8"/><path d="M200 70 L206 67 L212 70 L206 73Z" fill="#FFC94D" opacity=".9"/>
+  <path d="M0 150 Q80 110 170 140 T318 128 V212 H0Z" fill="#2E9C80"/><path d="M0 170 Q100 140 200 165 T318 160 V212 H0Z" fill="#5ED6A6"/><path d="M0 190 Q120 172 318 186 V212 H0Z" fill="#A8F0CF"/>
+  <g transform="translate(220 112)"><rect x="8" y="22" width="5" height="34" fill="#E9D6B0"/><path d="M-6 24 V12 Q-6 2 6 2 H14 Q26 2 26 12 V24Z" fill="#FFF4DC"/><path d="M-6 16 H26 V24 H-6Z" fill="#E9D6B0"/><rect x="27" y="-8" width="2.4" height="18" fill="#FFF4DC"/><path d="M29.4 -8 H38 L35 -3.5 L38 1 H29.4Z" fill="#FF6F61"/></g>
+  <g transform="translate(130 120)">
+    <path d="M0 26 Q-2 50 2 70" stroke="#2E9C80" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M1 44 Q-16 34 -22 22" stroke="#2E9C80" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M-22 22 Q-30 16 -24 10 Q-18 16 -22 22Z" fill="#5ED6A6"/>
+    <path d="M2 50 Q14 46 20 54" stroke="#2E9C80" stroke-width="4" fill="none" stroke-linecap="round"/>
+    ${[0, 72, 144, 216, 288].map(a => `<ellipse cx="0" cy="-17" rx="9" ry="14" fill="${a % 144 ? '#FF6F61' : '#FFC94D'}" transform="rotate(${a}) translate(0 2)"/>`).join('')}
+    <circle cx="0" cy="0" r="14" fill="#FFF4DC"/><path d="M0 -14 A14 14 0 0 1 0 14Z" fill="#E9D6B0"/>
+    <ellipse cx="-4.5" cy="-1" rx="2" ry="2.6" fill="#3A1E14"/><ellipse cx="4.5" cy="-1" rx="2" ry="2.6" fill="#3A1E14"/><path d="M-4 5 Q0 8.5 4 5" stroke="#3A1E14" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <circle cx="-8" cy="4" r="2" fill="#FF6F61" opacity=".5"/><circle cx="8" cy="4" r="2" fill="#FF6F61" opacity=".5"/>
+  </g>
+  <g transform="translate(36 92) rotate(-14)"><path d="M0 12 L40 0 L28 28 L22 18Z" fill="#FFF4DC"/><path d="M22 18 L40 0 L28 28Z" fill="#E9D6B0"/></g>
+  <path d="M34 112 Q60 128 100 120" fill="none" stroke="#FFC94D" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round"/>
+  <rect x="8" y="8" width="302" height="196" fill="none" stroke="#FFF4DC" stroke-opacity=".5" stroke-width="2" rx="6"/>
+  <text x="18" y="198" font-family="Lilita One" font-size="15" fill="#0E2A30" letter-spacing="1">Greetings from Pollen Path</text>`);
+
+// Pip, posed with his own rig.
+$$('[data-pip]').forEach(e => { const rig = window.OrbitPip?.create(e, { random: () => .5, dozeAfter: 999 }); if (!rig) return; rig.setReady(true); rig.react(e.dataset.pip); for (let i = 0; i < 40; i++) rig.tick(1 / 60); });
+</script>
+</body></html>

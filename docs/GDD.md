@@ -214,7 +214,8 @@ Research and proposal in `docs/RETENTION-STRATEGY.md`. Proposed waves: Tonight's
 - Re-render: `node trailer/render.cjs measure`, then `node trailer/render.cjs render trailer/out`, `python3 trailer/soundtrack.py trailer/out/events.json trailer/out/soundtrack.wav`, then ffmpeg (command in `trailer/README.md`). Needs the preview server on port 3112.
 - Before store use, swap "Coming soon to Google Play" for the official Get it on Google Play badge once the listing is live.
 
-### Step 3 — Hangar  ← next
+### Step 3 — Hangar  ← proposed, awaiting owner decisions
+Research, two directions (A · Sorting Room recommended, B · Island Dock) and the retention round (weekly parcel, Paper Moon freeze with dim-and-relight, islander postcards, Stamp Album) in `docs/HANGAR-RETENTION-2.md`; boards `design/paper-night/previews/hangar-directions.png` and `retention-wave2.png`.
 - Showcase: selected old ship on a floating-island stand.
 - Tabs Planes / Paint / Trails, one grid at a time.
 - Clear card states: equipped, owned, affordable, locked.
@@ -268,6 +269,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 - An interim layout had Pip perched by the logo; it was replaced the same day. |
 | 2026-10-19 | The owner picked the 390×844 look, so the title is 60 px on all phones taller than 620 px (the 780 px step is removed). **The new animated Pip (`pip.js`) is wired into Home.** He is ticked from the game's frame loop only while Home shows, flies in each time Home opens, presents the letter when it's ready, watches the real glider, and hops on tap before the Mailbag opens (0.42 s). |
 | 2026-10-19 | Home felt packed on the owner's phone (the title covered the glider's orbit). The title is 60 px (54 px at ≤780 px tall, 42 px at ≤620 px); top buttons, lantern string and Pip are a little smaller. The planet is gameplay, so it stays as it is. |
+| 2026-10-19 | Owner asked to start Step 3 (Hangar) and the next retention round together (parcel, Paper Moon, postcards, Stamp Album). Proposal written; awaiting picks. |
 | 2026-10-19 | Trailer: owner chose concept **A · The Night Mail** (story-led, 30 s vertical, real gameplay, captions that move with the glider). |
 | 2026-10-19 | Tonight's Letter = **daily seeded run**: one Ascension-style delivery a day with the date as the random seed, so everyone flies the same sky. Gate formation rules are unchanged. One scored try, then a shareable postcard. |
 | 2026-10-19 | Home v1 feedback: too much and repeated text; keep the title big like before; Pip looks fine, add detail later. v2: no captions, the daily letter is held by Pip (tap Pip), lanterns read visually, Ascension pill shows only the trophy and best score. |
