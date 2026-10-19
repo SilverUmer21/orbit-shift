@@ -25,7 +25,10 @@ const ui = {
   rewardCount: document.querySelector("#rewardCount"), rewardBonus: document.querySelector("#rewardBonus"), rewardCard: document.querySelector("#rewardCard"), equipReward: document.querySelector("#equipReward"),
   resultStarChip: document.querySelector("#resultStarChip"), resultStarTotal: document.querySelector("#resultStarTotal"),
   mapNext: document.querySelector("#mapNext"), ascensionBest: document.querySelector("#ascensionBest"), chapterPlay: document.querySelector("#chapterPlay"), chapterPlayLevel: document.querySelector("#chapterPlayLevel"),
-  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), practiceGuardian: document.querySelector("#practiceGuardian"), resumeOverlay: document.querySelector("#resumeOverlay"), resumeButton: document.querySelector("#resumeButton"), nearMiss: document.querySelector("#nearMiss"),
+  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), openMail: document.querySelector("#openMail"), mailBadge: document.querySelector("#mailBadge"), lanterns: document.querySelector("#lanterns"),
+  pip: document.querySelector("#pip"), homeAscension: document.querySelector("#homeAscension"), mailbag: document.querySelector("#mailbag"), letterNight: document.querySelector("#letterNight"),
+  letterCard: document.querySelector("#letterCard"), letterTitle: document.querySelector("#letterTitle"), letterScore: document.querySelector("#letterScore"), flyLetter: document.querySelector("#flyLetter"),
+  shareLetter: document.querySelector("#shareLetter"), shareLetterMail: document.querySelector("#shareLetterMail"), practiceGuardian: document.querySelector("#practiceGuardian"), resumeOverlay: document.querySelector("#resumeOverlay"), resumeButton: document.querySelector("#resumeButton"), nearMiss: document.querySelector("#nearMiss"),
   nextPlane: document.querySelector("#nextPlane"), nextPlaneArt: document.querySelector("#nextPlaneArt"), nextPlaneName: document.querySelector("#nextPlaneName"), nextPlaneBar: document.querySelector("#nextPlaneBar"), nextPlaneCount: document.querySelector("#nextPlaneCount"),
   bloomLevels: document.querySelector("#bloomLevels"), bloomStory: document.querySelector("#bloomStory"), bloomChapterArt: document.querySelector("#bloomChapterArt"),
 };
@@ -123,7 +126,7 @@ const state = {
   goals: initialGoals, goalCycle, goalsCompleted: Number(saved.goalsCompleted) || 0,
   unlockedTrails: saved.unlockedTrails || ["paper"], selectedTrail: saved.selectedTrail || "paper", relics: saved.relics || [],
   stats: initialStats,
-  muted: Boolean(saved.muted), haptics: saved.haptics !== false, reducedEffects: Boolean(saved.reducedEffects), expressFold: saved.expressFold !== false,
+  daily: saved.daily || null, muted: Boolean(saved.muted), haptics: saved.haptics !== false, reducedEffects: Boolean(saved.reducedEffects), expressFold: saved.expressFold !== false,
   tutorialSeen: Boolean(saved.tutorialSeen), elapsed: 0, paused: false,
   runType: "endless", levelId: null, levelComplete: false, runFragments: 0, chapter: "bloom",
   campaign: initialCampaign,
@@ -198,7 +201,7 @@ function save() {
     goals: state.goals, goalCycle: state.goalCycle, goalsCompleted: state.goalsCompleted,
     unlockedTrails: state.unlockedTrails, selectedTrail: state.selectedTrail, relics: state.relics, stats: state.stats,
     muted: state.muted, haptics: state.haptics, reducedEffects: state.reducedEffects, expressFold: state.expressFold, tutorialSeen: state.tutorialSeen,
-    campaign: state.campaign,
+    campaign: state.campaign, daily: state.daily,
   })); } catch {}
 }
 
@@ -238,7 +241,7 @@ function startRun(runType = "endless", levelId = null) {
   state.runType = runType;
   state.levelId = levelId;
   state.levelComplete = false;
-  holding = false; state.practice = false; state.runLetters = 0; queuedReverse = false; graceCrash = null; realInput = false; ui.resumeOverlay.hidden = true;
+  holding = false; state.practice = false; state.runLetters = 0; queuedReverse = false; graceCrash = null; realInput = false; ui.resumeOverlay.hidden = true; state.dailyRun = null; dailyRandom = null;
   state.runFragments = 0;
   state.score = 0;
   state.multiplier = 1;
@@ -441,6 +444,7 @@ function finishRun() {
       if(!state.relics.includes("bloom-crown")) { state.relics.push("bloom-crown"); state.runRewards.push({ type: "relic", id: "bloom-crown", label: "Bloom Crown relic" }); }
     }
   }
+  if (state.dailyRun) finishDaily();
   state.stars += state.runStars;
   for (const cosmetic of cosmetics) {
     if (state.best >= cosmetic.score && !state.unlocked.includes(cosmetic.id)) { state.unlocked.push(cosmetic.id); state.runRewards.push({ type: "biome", id: cosmetic.id, label: `${cosmetic.name} palette` }); }
@@ -457,8 +461,9 @@ function finishRun() {
     ui.resultObjectives.innerHTML = level.objectives.map((objective,index)=>`<span class="${checks[index]?"done":""}" title="${objective}"><i aria-hidden="true">${resultStar}</i><small>${captions[index]}</small></span>`).join("");
     ui.resultStats.textContent = (state.levelComplete ? `Best flow x${Math.max(1,state.runBestStreak)}` : `Reached ${Math.floor(state.elapsed)} seconds`) + ` · ${state.runFragments} fragments`;
   }
-  setArcTitle(ui.resultTitle, state.runType === "campaign" ? (state.levelComplete ? "Level clear!" : "So close!") : state.best > oldBest ? "New record!" : "Orbit broken");
-  ui.resultEyebrow.textContent = state.runType === "campaign" ? currentCampaignLevel().name : "Ascension";
+  setArcTitle(ui.resultTitle, state.dailyRun ? (state.dailyRun.scored ? "Letter delivered!" : "Practice") : state.runType === "campaign" ? (state.levelComplete ? "Level clear!" : "So close!") : state.best > oldBest ? "New record!" : "Orbit broken");
+  ui.resultEyebrow.textContent = state.dailyRun ? `Night ${state.dailyRun.night}` : state.runType === "campaign" ? currentCampaignLevel().name : "Ascension";
+  ui.shareLetter.hidden = !state.dailyRun?.scored;
   const guardianPhase = state.runType === "campaign" ? currentCampaignLevel().phases.find(phase => phase.guardian) : null;
   ui.practiceGuardian.hidden = !(guardianPhase && !state.levelComplete && state.elapsed >= guardianPhase.start);
   const nearMiss = nearMissText(campaignRating);
@@ -923,14 +928,14 @@ function spawnGate() {
   const heat=Boolean(level?.heatGates?.includes(number));
   const forceEasy = (recoveryGate || level?.recoveryGates?.includes(number) || kindling&&number>=4&&number%2===0) && !phase.guardian;
   const campaignPair=level?.id==="crown-of-petals"&&!phase.guardian&&gateCount+1>5&&(gateCount+1)%5===0;
-  const paired=(phase.id==="forge"||phase.id==="solar-forge-guardian"||campaignPair||!level&&state.elapsed>103&&Math.random()<.24)&&gates.filter(g=>!g.resolved).length<2;
+  const paired=(phase.id==="forge"||phase.id==="solar-forge-guardian"||campaignPair||!level&&state.elapsed>103&&gameRandom()<.24)&&gates.filter(g=>!g.resolved).length<2;
   const settings=level ? (phase.guardian?(level.guardianMotion||[72,1.18,.24]):kindling&&number<=2?[62,1.75,0]:kindling&&forceEasy?[62,1.75,.08]:ember&&forceEasy?[Math.min(72,level.motion[0]),1.62,.08]:level.motion) : null;
   const plan = buildGatePlan({
     ...planningSnapshot(),settings,heat,pairSpacing:paired?58:0,
     index: gateCount, elapsed: state.elapsed, angle: player.angle, direction: player.direction,
     angularSpeed: playerSpeed(), orbitRadius, shortSide: Math.min(width, height), phase, forceEasy,
     orientationBias:level?.orientationBias ?? endlessOrientationBias(state.elapsed),
-  });
+  }, gameRandom);
   if(!plan)return false;
   plannedTurns=plan.turns.map(t=>t+state.elapsed);
   const gate = {
@@ -961,7 +966,7 @@ function spawnFragment() {
   const speed = 64;
   const snapshot=planningSnapshot(),flight=crossingTime((radius-orbitRadius)/speed,state.fever);
   const horizon=Math.max(flight,...snapshot.constraints.map(g=>g.time));
-  const route=findRoute(snapshot,horizon,flight,undefined);
+  const route=findRoute(snapshot,horizon,flight,undefined,gameRandom);
   if(!route)return false;
   plannedTurns=route.turns.map(t=>t+state.elapsed);
   fragments.push({ radius, previousRadius: radius, speed, angle:route.target, collected:false,spin:Math.random()*TAU });
@@ -975,9 +980,9 @@ function spawnComet() {
   if (gates.some((gate) => !gate.resolved && (gate.radius - orbitRadius) / gate.speed < 2.6)) return false;
   const arrive = COMET_WARN + COMET_TRAVEL;
   const predicted = normalize(player.angle + player.direction * orbitalTravel(state.elapsed, arrive) * foldSpeed());
-  const cross = normalize(predicted + (Math.random() - .5) * .35);
+  const cross = normalize(predicted + (gameRandom() - .5) * .35);
   // Headed at the planet (a small slant), so the comet crosses the orbit exactly once and then bursts on the planet.
-  const heading = cross + Math.PI + (Math.random() < .5 ? -1 : 1) * (.1 + Math.random() * .25);
+  const heading = cross + Math.PI + (gameRandom() < .5 ? -1 : 1) * (.1 + gameRandom() * .25);
   comets.push({ cross, dx: Math.cos(heading), dy: Math.sin(heading), clock: 0, brushed: false, spin: Math.random() * TAU });
   return true;
 }
@@ -988,7 +993,7 @@ function cometPoint(comet) {
 function updateComets(delta, worldScale, phase) {
   if (cometsActive(phase)) {
     nextComet -= delta;
-    if (nextComet <= 0) nextComet = spawnComet() ? (["void", "eclipse", "ascension"].includes(phase.id) ? 5.5 : 8.5) + Math.random() * 2.5 : .5;
+    if (nextComet <= 0) nextComet = spawnComet() ? (["void", "eclipse", "ascension"].includes(phase.id) ? 5.5 : 8.5) + gameRandom() * 2.5 : .5;
   }
   const ship = playerPoint();
   for (const comet of comets) {
@@ -1016,7 +1021,7 @@ function spawnHazard() {
   for(let sector=0;sector<6&&!route;sector++){
     hazard.angle=normalize(player.angle+Math.PI+sector*TAU/6);
     snapshot.hazards[snapshot.hazards.length-1].angle=hazard.angle;
-    route=findRoute(snapshot,horizon,horizon,undefined);
+    route=findRoute(snapshot,horizon,horizon,undefined,gameRandom);
   }
   if(!route)return false;
   plannedTurns=route.turns.map(t=>t+state.elapsed);
@@ -1146,7 +1151,7 @@ function updateSpawns(delta,phase) {
   if (hazardDue && nextHazard <= 0) {
     const spawned=spawnHazard();
     if(spawned&&state.runType==="campaign")campaignHazardIndex+=1;
-    nextHazard = spawned ? 10 + Math.random() * 3 : .5;
+    nextHazard = spawned ? 10 + gameRandom() * 3 : .5;
   }
 }
 
@@ -1923,6 +1928,7 @@ function showScreen(name) {
     updateHome();
   }
   if (name === "garage") renderGarage();
+  if (name === "mailbag") renderMailbag();
   if (name === "campaign") {
     renderCampaignMap();
     ui.campaign.classList.remove("arriving");
@@ -1933,7 +1939,7 @@ function showScreen(name) {
   window.OrbitArchipelago?.setActive(name === "campaign");
 }
 
-function hideScreens() { for (const screen of [ui.home, ui.campaign, ui.bloomChapter, ui.garage, ui.settings, ui.results]) screen.hidden = true; }
+function hideScreens() { for (const screen of [ui.home, ui.campaign, ui.bloomChapter, ui.garage, ui.settings, ui.results, ui.mailbag]) screen.hidden = true; }
 
 // Results star: folded paper star (face + shaded half) with a small glint that twinkles once it is earned.
 const resultStar = '<svg viewBox="0 0 48 48"><polygon class="star-face" points="24,3 29.6,17 44.5,17.8 32.9,27.2 36.8,41.6 24,33.4 11.2,41.6 15.1,27.2 3.5,17.8 18.4,17"/><polygon class="star-fold" points="24,3 29.6,17 44.5,17.8 32.9,27.2 36.8,41.6 24,33.4"/><path class="star-glint" d="M40 2 L41.6 6.4 46 8 41.6 9.6 40 14 38.4 9.6 34 8 38.4 6.4 Z"/></svg>';
@@ -2046,7 +2052,7 @@ function playFromHome() {
 function setArcTitle(element, text) {
   element.setAttribute?.("aria-label", text);
   if (!element.insertAdjacentHTML) { element.textContent = text; return; }
-  element.innerHTML = `<svg class="arc-title" viewBox="0 0 320 122" aria-hidden="true"><defs><path id="resultArc" d="M16 116 A190 190 0 0 1 304 116"/><text id="resultArcText" text-anchor="middle"><textPath href="#resultArc" startOffset="50%">${text.toUpperCase()}</textPath></text></defs><use href="#resultArcText" class="arc-deep" y="8"/><use href="#resultArcText" class="arc-lip" y="4"/><use href="#resultArcText" class="arc-face"/></svg>`;
+  element.innerHTML = `<svg class="arc-title" viewBox="0 0 320 122" aria-hidden="true"><defs><path id="resultArc" d="M16 116 A190 190 0 0 1 304 116"/><text id="resultArcText" text-anchor="middle" style="font-size:${Math.min(46, Math.round(46 * 12 / Math.max(12, text.length)))}px"><textPath href="#resultArc" startOffset="50%">${text.toUpperCase()}</textPath></text></defs><use href="#resultArcText" class="arc-deep" y="8"/><use href="#resultArcText" class="arc-lip" y="4"/><use href="#resultArcText" class="arc-face"/></svg>`;
 }
 
 function nextPlane() { return riders.find(rider => !state.ownedRiders.includes(rider.id)); }
@@ -2094,12 +2100,86 @@ function updateHome() {
   const affordable = riders.filter(rider => !state.ownedRiders.includes(rider.id) && state.stars >= rider.price).length;
   ui.hangarBadge.textContent = affordable; ui.hangarBadge.hidden = affordable === 0;
   renderHangarShip();
-  ui.playLevel.textContent = state.tutorialSeen ? nextCampaignLevel().name : "Practice";
+  ui.playLevel.textContent = state.tutorialSeen ? `Level ${campaignLevels.indexOf(nextCampaignLevel()) + 1}` : "";
+  // First launch shows only the title, the world, Pip and PLAY; the rest appears after the first delivery.
+  const returning = state.campaign.completed.length > 0 || state.best > 0;
+  ui.homeAscension.hidden = !returning; ui.openMail.hidden = !returning; ui.lanterns.hidden = !returning;
+  const letterReady = returning && !dailyDone();
+  ui.mailBadge.hidden = !letterReady; ui.pip.classList.toggle("ready", letterReady);
+  if (returning) renderLanterns(playStreak());
+  placePip();
   ui.sound.checked = !state.muted;
   ui.haptics.checked = state.haptics;
   ui.effects.checked = state.reducedEffects;
   ui.fold.checked = state.expressFold;
   renderGoals();
+}
+
+// Night lanterns: consecutive days played (from stats.dates), one lantern per night, a parcel on the 7th.
+function playStreak() {
+  const days = new Set(state.stats.dates); let streak = 0;
+  for (const day = new Date(); days.has(day.toISOString().slice(0, 10)); day.setDate(day.getDate() - 1)) streak += 1;
+  return streak;
+}
+function renderLanterns(streak) {
+  const lit = streak ? (streak - 1) % 7 + 1 : 0, W = 400, y0 = 6, sag = 34;
+  let svg = `<svg viewBox="0 0 ${W} 60" preserveAspectRatio="xMidYMin meet"><path d="M-10 ${y0} Q ${W / 2} ${y0 + sag} ${W + 10} ${y0}" fill="none" stroke="#7FA8A2" stroke-opacity=".55" stroke-width="1.6"/>`;
+  for (let i = 0; i < 7; i += 1) {
+    const t = (i + 1) / 8, x = (1 - t) * (1 - t) * -10 + 2 * (1 - t) * t * (W / 2) + t * t * (W + 10), y = (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * (y0 + sag) + t * t * y0, on = i < lit;
+    svg += `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + 8}" stroke="#7FA8A2" stroke-opacity=".6" stroke-width="1.2"/><g transform="translate(${x} ${y + 8})" class="${on ? "lit" : ""}">`;
+    svg += i === 6
+      ? `${on ? '<circle cx="0" cy="12" r="18" fill="#FFC94D" opacity=".2"/>' : ""}<rect x="-10" y="2" width="20" height="18" rx="2" fill="${on ? "#FFF4DC" : "#1A4A50"}" stroke="${on ? "none" : "#2c5f66"}"/><rect x="-10" y="11" width="20" height="9" rx="1" fill="${on ? "#E9D6B0" : "#163F46"}"/><rect x="-2" y="2" width="4" height="18" fill="${on ? "#FF6F61" : "#2c5f66"}"/><path d="M0 2 Q-7 -6 -8 0 Q-4 3 0 2 Q4 3 8 0 Q7 -6 0 2Z" fill="${on ? "#FF6F61" : "#2c5f66"}"/>`
+      : `${on ? '<circle cx="0" cy="12" r="17" fill="#FFC94D" opacity=".22"/>' : ""}<rect x="-5" y="0" width="10" height="3.5" rx="1" fill="#12363D"/><path d="M-8 4 H8 Q11 12 8 21 H-8 Q-11 12 -8 4Z" fill="${on ? "#FFC94D" : "#1A4A50"}" stroke="${on ? "none" : "#2c5f66"}" stroke-width="1.2"/><path d="M0 4 H8 Q11 12 8 21 H0Z" fill="${on ? "#E0A93A" : "#163F46"}"/><path d="M-4 4 Q-6 12 -4 21 M4 4 Q6 12 4 21" stroke="${on ? "#C98A22" : "#2c5f66"}" stroke-width="1" fill="none"/><rect x="-5" y="21" width="10" height="3" rx="1" fill="#12363D"/>`;
+    svg += "</g>";
+  }
+  ui.lanterns.innerHTML = svg + "</svg>";
+  ui.lanterns.setAttribute?.("aria-label", `${streak} night streak`);
+}
+// Pip sits just outside the orbit, lower left of the planet drawn on the game canvas.
+function placePip() {
+  const size = Math.round(Math.max(80, Math.min(128, width * .3)));
+  ui.pip.style?.setProperty("--size", `${size}px`);
+  ui.pip.style?.setProperty("left", `${Math.max(6, cx - orbitRadius * .74 - size / 2)}px`);
+  ui.pip.style?.setProperty("top", `${cy + orbitRadius * .62 - size / 2}px`);
+}
+
+// Tonight's Letter: one daily Ascension delivery, the same sky for everyone that night. Only gameplay randomness
+// (gate plans, routes, pairs, comets, hazard timing) is seeded by the night number; particles stay random so frame
+// rate can never change the sky. One scored delivery per night; later flights are practice.
+const DAILY_EPOCH = Date.UTC(2026, 9, 1);
+let dailyRandom = null;
+function nightNumber(date = new Date()) { return Math.floor((Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) - DAILY_EPOCH) / 864e5) + 1; }
+function seededRandom(seed) {
+  return () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function gameRandom() { return dailyRandom ? dailyRandom() : Math.random(); }
+function dailyDone() { return state.daily?.night === nightNumber(); }
+function startDaily() {
+  if (startRun("endless") === false) return;
+  dailyRandom = seededRandom(Math.imul(nightNumber(), 2654435761));
+  state.dailyRun = { night: nightNumber(), scored: !dailyDone() };
+}
+function finishDaily() {
+  const run = state.dailyRun; dailyRandom = null; if (!run) return;
+  if (run.scored) { state.runStars += 10; state.daily = { night: run.night, score: Math.floor(state.score), perfects: state.perfects, letters: state.runLetters, seconds: Math.floor(state.elapsed) }; }
+}
+function postcardText() {
+  const d = state.daily; if (!d) return "";
+  return `Orbit Shift · Night ${d.night} ✉\n${"◆".repeat(Math.min(10, d.perfects))}${d.perfects > 10 ? "+" : ""} ${d.perfects} perfects\n${"✉".repeat(Math.min(5, d.letters))} ${d.letters} lost letters · ${d.seconds}s\n${d.score} points`;
+}
+async function sharePostcard(button) {
+  const text = postcardText(); if (!text) return;
+  try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); button.textContent = "Copied"; setTimeout(() => { button.textContent = "Share postcard"; }, 1400); } }
+  catch {}
+}
+function renderMailbag() {
+  const done = dailyDone();
+  ui.letterNight.textContent = nightNumber();
+  ui.letterCard.classList.toggle("done", done);
+  ui.letterTitle.textContent = done ? "Delivered" : "Tonight's Letter";
+  ui.letterScore.hidden = !done; ui.letterScore.textContent = done ? `${state.daily.score}` : "";
+  ui.shareLetterMail.hidden = !done;
+  ui.flyLetter.classList.toggle("secondary", done);
 }
 
 function renderGoals() {
@@ -2279,7 +2359,7 @@ function runSelfChecks() {
 }
 
 // Screens that fully cover the game canvas (the Hangar and settings are 96% opaque): the scene keeps updating but is not repainted.
-const coveredModes = new Set(["campaign", "bloomChapter", "garage", "settings"]);
+const coveredModes = new Set(["campaign", "bloomChapter", "garage", "settings", "mailbag"]);
 function frame(time) {
   const delta = Math.max(0, Math.min(0.1, (time - lastTime) / 1000 || 0));
   lastTime = time;
@@ -2292,7 +2372,7 @@ function frame(time) {
   requestAnimationFrame(frame);
 }
 
-window.addEventListener("resize", resize);
+window.addEventListener("resize", () => { resize(); if (!ui.home.hidden) placePip(); });
 canvas.addEventListener("pointerdown", () => { if (awakening?.skippable) finishAwakening(); else { tapInput(); pressHold(); } });
 for (const type of ["pointerup", "pointercancel", "blur"]) window.addEventListener(type, releaseHold);
 document.querySelector("#play").addEventListener("click", playFromHome);
@@ -2301,7 +2381,7 @@ document.querySelector("#openIslands").addEventListener("click", () => showScree
 document.querySelector("#resultHangar").addEventListener("click", () => showScreen("garage"));
 document.querySelector("#ascension").addEventListener("click", () => startRun("endless"));
 for(const button of document.querySelectorAll("[data-chapter]"))button.addEventListener("click",()=>{if(!button.disabled){window.OrbitArchipelago?.pulse();openChapter(button.dataset.chapter);}});
-document.querySelector("#retry").addEventListener("click", () => startRun(state.runType, state.levelId));
+document.querySelector("#retry").addEventListener("click", () => state.dailyRun ? startDaily() : startRun(state.runType, state.levelId));
 document.querySelector("#openGarage").addEventListener("click", () => showScreen("garage"));
 document.querySelector("#openSettings").addEventListener("click", () => showScreen("settings"));
 ui.resultHome.addEventListener("click", () => state.runType === "campaign" ? openChapter(currentCampaignLevel().biome) : showScreen("home"));
@@ -2346,6 +2426,12 @@ document.addEventListener("visibilitychange", () => {
 });
 ui.resumeButton.addEventListener("click", resumeRun);
 ui.practiceGuardian.addEventListener("click", () => startPractice(state.levelId));
+ui.openMail.addEventListener("click", () => showScreen("mailbag"));
+ui.pip.addEventListener("click", () => { ui.pip.classList.remove("wave"); void ui.pip.offsetWidth; ui.pip.classList.add("wave"); showScreen("mailbag"); });
+ui.flyLetter.addEventListener("click", startDaily);
+ui.homeAscension.addEventListener("click", () => startRun("endless"));
+ui.shareLetter.addEventListener("click", () => sharePostcard(ui.shareLetter));
+ui.shareLetterMail.addEventListener("click", () => sharePostcard(ui.shareLetterMail));
 // Block page drag and pull-to-refresh, but let the Hangar plane grid and reward dots scroll.
 document.addEventListener("touchmove", (event) => { if (!event.target.closest?.(".rider-grid,.reward-choices")) event.preventDefault(); }, { passive: false });
 

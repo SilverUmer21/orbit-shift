@@ -611,3 +611,60 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .practice-button[hidden]{display:none}
 .practice-button:active{transform:translateY(2px)}
 @media (prefers-reduced-motion:reduce){.resume-overlay button,.resume-overlay span{animation:none}}
+
+/* Home v4 (The Night Post): title, lantern streak, mailbox, Pip beside the orbit, PLAY, Ascension pill. Minimal text. */
+.home .voyage-goals{display:none}
+.home .action-row{margin-top:auto}
+.mail-button{position:relative;margin-left:10px}
+.mail-button[hidden]{display:none}
+.mail-button svg{width:30px;height:30px}
+.mail-button .badge{position:absolute;right:-6px;top:-6px}
+.home-top .star-chip{margin-left:auto}
+.lanterns{width:calc(100% + 40px);margin:2px -20px -6px;height:56px;pointer-events:none}
+.lanterns[hidden]{display:block;visibility:hidden}
+.lanterns svg{display:block;width:100%;height:100%;overflow:visible}
+.lanterns .lit{animation:lanternSway 3.2s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 0}
+.lanterns .lit:nth-of-type(2n){animation-delay:-1.4s}
+@keyframes lanternSway{0%,100%{rotate:-4deg}50%{rotate:4deg}}
+.pip{position:absolute;z-index:2;width:var(--size,120px);height:calc(var(--size,120px) * 1.03);min-height:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;cursor:pointer}
+.pip svg{display:block;width:100%;height:100%;overflow:visible}
+.pip .pip-body{animation:pipBob 2.8s ease-in-out infinite}
+.pip .pip-wing{transform-box:fill-box;animation:pipFlap 2.8s ease-in-out infinite}
+.pip .pip-wing-l{transform-origin:100% 50%}.pip .pip-wing-r{transform-origin:0 50%}
+.pip .pip-halo{opacity:0}
+.pip.ready .pip-halo{animation:sealGlow 1.8s ease-in-out infinite}
+.pip.wave .pip-body{animation:pipHop .45s cubic-bezier(.3,1.6,.5,1)}
+.pip:active{transform:scale(.96)}
+@keyframes pipBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes pipFlap{0%,80%,100%{scale:1 1}88%{scale:.82 1}94%{scale:1 1}}
+@keyframes sealGlow{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes pipHop{0%{transform:translateY(0)}40%{transform:translateY(-12px) rotate(-6deg)}100%{transform:translateY(0)}}
+.ascension-pill{display:flex;align-items:center;gap:8px;height:34px;min-height:0;margin-top:12px;padding:0 14px 0 9px;border:0;border-radius:17px;background:rgba(18,54,61,.9);box-shadow:0 3px 0 var(--night-900);color:var(--paper);font:400 15px/1 var(--display);letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.ascension-pill[hidden]{display:none}
+.ascension-pill>svg{width:24px;height:24px}
+.ascension-pill i{display:flex;align-items:center;gap:3px;font-style:normal;color:var(--gold)}
+.ascension-pill i svg{width:16px;height:16px}
+.ascension-pill b{font:inherit}
+.ascension-pill:active{transform:translateY(2px);box-shadow:0 1px 0 var(--night-900)}
+@media (max-height:620px){
+  .lanterns{height:40px;margin-bottom:-4px}
+  .ascension-pill{height:28px;margin-top:8px;font-size:13px}
+  .ascension-pill>svg{width:20px;height:20px}
+}
+@media (prefers-reduced-motion:reduce){.lanterns .lit,.pip .pip-body,.pip .pip-wing,.pip.ready .pip-halo{animation:none}.pip.ready .pip-halo{opacity:.8}}
+
+/* Mailbag: tonight's letter as one big sealed envelope, one action. */
+.mailbag{display:flex;flex-direction:column}
+.letter-card{display:grid;justify-items:center;gap:14px;margin:auto 0;padding:28px 20px 30px;border-radius:26px;background:linear-gradient(100deg,#FFF6E2 0 56%,#F6EACB 56% 100%);box-shadow:inset 0 2px 0 rgba(255,255,255,.7),0 6px 0 #C9B48C,0 16px 30px rgba(0,0,0,.3);color:var(--night-800)}
+.letter-card .letter-art{width:150px;height:127px;filter:drop-shadow(0 6px 0 rgba(10,31,36,.18));animation:letterFloat 3s ease-in-out infinite}
+.letter-card .letter-check{display:none}
+.letter-card.done .letter-seal{display:none}.letter-card.done .letter-check{display:inline}
+.letter-card b{font:400 28px/1 var(--display);letter-spacing:.5px}
+.letter-card #letterScore{font:400 40px/1 var(--display);color:var(--gold-shade)}
+.letter-card #letterScore[hidden]{display:none}
+.letter-card .play-button{width:min(220px,100%)}
+.letter-card .play-button.secondary{height:58px;background:transparent;color:var(--night-800);box-shadow:inset 0 0 0 3px var(--night-800)}
+.letter-card .link-button{color:var(--mint-700);font-weight:900}
+@keyframes letterFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)}}
+.share-button[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.letter-card .letter-art{animation:none}}
