@@ -209,6 +209,11 @@ Fixed B1, B2, B3, B7, B8 (section 9). No redesign.
 ### Retention & ASO strategy  ← proposed, merged into Direction 2
 Research and proposal in `docs/RETENTION-STRATEGY.md`. Proposed waves: Tonight's Sky (daily seeded orbit and share card), Night Lanterns (streak with Paper Moon freeze), daily three goals, install/offline; then Constellation Atlas and Home sky decorations (stars sink, designed with the Hangar); then ghost, one notification, seasonal skies; ASO plan for Google Play and the web portals.
 
+### Trailer A — "The Night Mail"  ✅ rendered (2026-10-19)
+30 s, 1080×1920, `trailer/release/orbit-shift-night-mail-1080x1920.mp4`. Beats: hook "Tap… or not?" (slow motion into a razor gap, cut to black) → Pip and the sleeping planet ("The night mail stopped. / Pip needs a pilot.") → "One tap shifts everything" (captions drift with the glider and squash on each reverse) → "Hold to fly faster" (the video speed-ramps with the fold) → page-turn build: Thread / Feel the heat / Dodge → payoff: freeze on the 4th perfect, gold PERFECT ×4 postmark, the planet blooms, "Delivered." → islands and Tonight's Letter → end card (Pip, logo, "One tap. Deliver the night.", "No ads · Plays offline"). All footage is the real game on a virtual clock; staged gates are real gates whose gap is shifted so the game's own rules score the perfects. Soundtrack is synthesised from the render's event log (paper percussion at 100 BPM, music box, bells on gates and postmarks).
+- Re-render: `node trailer/render.cjs measure`, then `node trailer/render.cjs render trailer/out`, `python3 trailer/soundtrack.py trailer/out/events.json trailer/out/soundtrack.wav`, then ffmpeg (command in `trailer/README.md`). Needs the preview server on port 3112.
+- Before store use, swap "Coming soon to Google Play" for the official Get it on Google Play badge once the listing is live.
+
 ### Step 3 — Hangar  ← next
 - Showcase: selected old ship on a floating-island stand.
 - Tabs Planes / Paint / Trails, one grid at a time.
@@ -263,6 +268,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 - An interim layout had Pip perched by the logo; it was replaced the same day. |
 | 2026-10-19 | The owner picked the 390×844 look, so the title is 60 px on all phones taller than 620 px (the 780 px step is removed). **The new animated Pip (`pip.js`) is wired into Home.** He is ticked from the game's frame loop only while Home shows, flies in each time Home opens, presents the letter when it's ready, watches the real glider, and hops on tap before the Mailbag opens (0.42 s). |
 | 2026-10-19 | Home felt packed on the owner's phone (the title covered the glider's orbit). The title is 60 px (54 px at ≤780 px tall, 42 px at ≤620 px); top buttons, lantern string and Pip are a little smaller. The planet is gameplay, so it stays as it is. |
+| 2026-10-19 | Trailer: owner chose concept **A · The Night Mail** (story-led, 30 s vertical, real gameplay, captions that move with the glider). |
 | 2026-10-19 | Tonight's Letter = **daily seeded run**: one Ascension-style delivery a day with the date as the random seed, so everyone flies the same sky. Gate formation rules are unchanged. One scored try, then a shareable postcard. |
 | 2026-10-19 | Home v1 feedback: too much and repeated text; keep the title big like before; Pip looks fine, add detail later. v2: no captions, the daily letter is held by Pip (tap Pip), lanterns read visually, Ascension pill shows only the trophy and best score. |
 | 2026-10-18 | Direction 2 approved: story **The Night Post**; prototype Express fold (hold for speed, the owner's top pick), the small five and Paper comets; Home redesign to be mocked (Ascension one tap from Home). Launch target Google Play via Capacitor (APK for testing, AAB for the store). |
@@ -295,6 +301,8 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 - Pip and the lanterns are DOM/SVG over the canvas. The Mailbag is in `coveredModes`, so the canvas isn't repainted behind it.
 
 **Constraints learned:**
+- `window.orbitMaxPixelRatio` (unset in the game) raises the 2× canvas DPR cap; the trailer renderer sets it to 3 for 1080×1920 frames.
+- The trailer snaps `state.elapsed` to 1e-6 during staged takes: float drift in frame deltas otherwise lets a scheduled spawn slip a frame after earlier scenes and reshuffles the seeded gate plan.
 - `tests/ascension-timing.cjs` asserts `ui.resultHome.textContent === 'Ember Chapter'`. The results back button therefore keeps its label as text and draws its icon in CSS.
 - The test DOM stub accepts new elements created via `document.querySelector`.
 - `state` and other top-level `const`s are not on `window`. In the harness use `contentWindow.eval(...)`.

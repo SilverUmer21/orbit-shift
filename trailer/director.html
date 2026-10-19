@@ -1,0 +1,79 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Orbit Shift · The Night Mail · director</title>
+<style>
+@font-face{font-family:"Lilita One";src:url("../fonts/lilita-one-latin.woff2") format("woff2")}
+@font-face{font-family:"Nunito";src:url("../fonts/nunito-latin-variable.woff2") format("woff2");font-weight:200 1000}
+html,body{margin:0;width:432px;height:768px;overflow:hidden;background:#0A1F24}
+#stage{position:absolute;inset:0;overflow:hidden}
+#cam{position:absolute;inset:0;transform-origin:0 0}
+#game{position:absolute;inset:0;width:432px;height:768px;border:0}
+.layer{position:absolute;inset:0;pointer-events:none}
+#black{background:#06141A;opacity:0}
+#vignette{background:radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 55%,rgba(4,14,18,.55) 100%)}
+.cap{position:absolute;left:0;right:0;text-align:center;font:400 44px/1 "Lilita One";letter-spacing:2px;color:#FFF4DC;text-shadow:0 4px 0 #2E9C80,0 9px 0 #0A1F24;white-space:nowrap;opacity:0;text-transform:uppercase}
+.cap.gold{color:#FFC94D;text-shadow:0 4px 0 #E0703C,0 9px 0 #0A1F24}
+.cap.small{font-size:30px;text-shadow:0 3px 0 #2E9C80,0 6px 0 #0A1F24}
+#stamp{position:absolute;left:50%;top:40%;width:250px;height:250px;margin:-125px 0 0 -125px;opacity:0}
+#ripple{position:absolute;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;border:3px solid #FFF4DC;opacity:0}
+.panel{position:absolute;top:0;bottom:0;width:50%;background:linear-gradient(100deg,#163F46 0 56%,#12363D 56% 100%)}
+#panelL{left:0;box-shadow:inset -6px 0 0 #0E2A30}#panelR{right:0;box-shadow:inset 6px 0 0 #0E2A30}
+#turn{position:absolute;inset:0;transform-origin:100% 50%;background:linear-gradient(100deg,#FFF4DC 0 56%,#E9D6B0 56% 100%);opacity:0}
+#streaks{opacity:0}
+#streaks i{position:absolute;height:3px;border-radius:2px;background:#FFF4DC}
+#end{background:radial-gradient(circle at 50% 42%,#1d4a50,#0d2a30 60%,#0a2126);opacity:0}
+#logo{position:absolute;left:0;right:0;top:250px;text-align:center;font:400 86px/.88 "Lilita One";letter-spacing:3px;text-transform:uppercase}
+#logo span{display:block;color:#FFF4DC;text-shadow:0 6px 0 #2E9C80,0 12px 0 #0A1F24;transform:translateX(-18px)}
+#logo em{display:block;font-style:normal;color:#FFC94D;text-shadow:0 6px 0 #E0703C,0 12px 0 #0A1F24;transform:translateX(26px)}
+#tag{position:absolute;left:0;right:0;top:470px;text-align:center;font:900 20px "Nunito";color:#A8F0CF;letter-spacing:1px}
+#store{position:absolute;left:50%;top:560px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:12px 20px;border-radius:16px;background:#0A1F24;box-shadow:0 0 0 2px #FFC94D;font:900 15px "Nunito";color:#FFF4DC;letter-spacing:1px;white-space:nowrap}
+#store b{color:#FFC94D}
+#noads{position:absolute;left:0;right:0;top:640px;text-align:center;font:900 13px "Nunito";color:#7FA8A2;letter-spacing:3px;text-transform:uppercase}
+#endpip{position:absolute;left:150px;top:112px;width:132px;height:142px}
+#endpip svg{width:100%;height:100%;overflow:visible}
+</style></head><body><div id="stage">
+<div id="cam"><iframe id="game" src="../index.html"></iframe></div>
+<div class="layer" id="vignette"></div>
+<div class="layer" id="streaks"></div>
+<div class="layer" id="ripples"></div>
+<div class="layer" id="curtain"><div class="panel" id="panelL"></div><div class="panel" id="panelR"></div></div>
+<div class="layer" id="caps"></div>
+<svg id="stamp" viewBox="0 0 250 250"><g id="stampG"><circle cx="125" cy="125" r="104" fill="none" stroke="#FFC94D" stroke-width="10" stroke-dasharray="4 10" stroke-linecap="round"/><circle cx="125" cy="125" r="86" fill="#FFC94D"/><circle cx="125" cy="125" r="86" fill="none" stroke="#E0A93A" stroke-width="5"/><path d="M125 125 L211 125 A86 86 0 0 1 125 211 Z" fill="#E0A93A" opacity=".55"/><text x="125" y="118" text-anchor="middle" font-family="Lilita One" font-size="44" fill="#3A1E14" letter-spacing="2">PERFECT</text><text id="stampN" x="125" y="166" text-anchor="middle" font-family="Lilita One" font-size="40" fill="#3A1E14">×5</text><path d="M60 140 Q125 152 190 140" fill="none" stroke="#3A1E14" stroke-width="3" opacity=".35"/></g></svg>
+<div class="layer" id="turnLayer"><div id="turn"></div></div>
+<div class="layer" id="end"><div id="endpip"></div><div id="logo"><span>Orbit</span><em>Shift</em></div><div id="tag">One tap. Deliver the night.</div><div id="store">COMING SOON TO <b>GOOGLE PLAY</b></div><div id="noads">No ads · Plays offline</div></div>
+<div class="layer" id="black"></div>
+</div>
+<script src="../pip.js"></script>
+<script>
+// Overlay renderer: render(state) applies one frame's edit state (camera, captions, stamp, transitions, end card).
+const $ = id => document.getElementById(id);
+const endPip = window.OrbitPip.create($("endpip"), { random: () => .5, dozeAfter: 1e9 });
+function cap(id, text, cls) { let el = $(id); if (!el) { el = document.createElement("div"); el.id = id; el.className = "cap " + (cls || ""); $("caps").append(el); } if (text !== undefined && el.textContent !== text) el.textContent = text; return el; }
+window.render = s => {
+  const c = s.cam || { z: 1, x: 216, y: 384 };
+  $("cam").style.transform = `translate(${216 - c.x * c.z}px, ${384 - c.y * c.z}px) scale(${c.z})`;
+  $("black").style.opacity = s.black || 0;
+  $("vignette").style.opacity = s.vignette ?? .6;
+  for (const el of $("caps").children) el.style.opacity = 0;
+  for (const k of s.caps || []) {
+    const el = cap(k.id, k.text, k.cls); el.style.opacity = k.o ?? 1; el.style.top = `${k.y}px`;
+    el.style.transform = `translateX(${k.x || 0}px) scale(${k.sx ?? k.s ?? 1}, ${k.sy ?? k.s ?? 1}) rotate(${k.r || 0}deg)`; el.style.letterSpacing = `${k.ls ?? 2}px`;
+  }
+  const st = s.stamp; $("stamp").style.opacity = st ? st.o : 0;
+  if (st) { $("stamp").style.transform = `scale(${st.s}) rotate(${st.r}deg)`; $("stampN").textContent = st.n; }
+  const cu = s.curtain; $("curtain").style.display = cu === undefined ? "none" : "block";
+  if (cu !== undefined) { $("panelL").style.transform = `translateX(${-cu * 100}%)`; $("panelR").style.transform = `translateX(${cu * 100}%)`; }
+  const tu = s.turn; $("turn").style.opacity = tu === undefined ? 0 : 1;
+  if (tu !== undefined) $("turn").style.transform = `perspective(900px) rotateY(${-tu * 180}deg)`;
+  const rp = $("ripples"); rp.innerHTML = "";
+  for (const r of s.ripples || []) { const d = document.createElement("div"); d.style.cssText = `position:absolute;left:${r.x}px;top:${r.y}px;width:${r.r * 2}px;height:${r.r * 2}px;margin:${-r.r}px 0 0 ${-r.r}px;border-radius:50%;border:3px solid #FFF4DC;opacity:${r.o}`; rp.append(d); }
+  const sk = $("streaks"); sk.style.opacity = s.streaks || 0;
+  if (s.streaks && !sk.children.length) for (let i = 0; i < 14; i++) { const e = document.createElement("i"); sk.append(e); }
+  [...sk.children].forEach((e, i) => { const y = (i * 53) % 768, ph = ((s.t * 1.8 + i * .37) % 1); e.style.top = `${y}px`; e.style.width = `${60 + (i % 3) * 40}px`; e.style.left = `${i % 2 ? 432 - ph * 520 : -120 + ph * 520}px`; e.style.opacity = .25 + (i % 4) * .1; });
+  const en = s.end; $("end").style.opacity = en ? en.o : 0;
+  if (en) {
+    $("logo").style.transform = `perspective(700px) rotateX(${(1 - en.fold) * 85}deg)`; $("logo").style.opacity = en.fold;
+    $("tag").style.opacity = en.tag; $("store").style.opacity = en.store; $("noads").style.opacity = en.store;
+    if (en.pipTick) endPip.tick(en.pipTick);
+  }
+};
+window.endPipReact = name => endPip.react(name);
+</script></body></html>
