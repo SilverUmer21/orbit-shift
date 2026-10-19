@@ -2148,13 +2148,20 @@ function tickPip(delta) {
   pipRig.tick(delta);
 }
 function placePip() {
-  // Pip perches in the gap the staggered title leaves left of "SHIFT", keeping the planet and orbit clear.
-  const size = Math.round(Math.max(72, Math.min(112, width * .28 - (width < 360 ? 8 : 0))));
+  // Pip rests at the lower left, just above the Hangar button and clear of the orbit.
+  const size = Math.round(Math.max(72, Math.min(108, width * .27)));
   ui.pip.style?.setProperty("--size", `${size}px`);
-  const shift = ui.home.querySelector?.("h1 span:last-child")?.getBoundingClientRect?.(), home = ui.home.getBoundingClientRect?.();
-  if (!shift?.width || !home) { ui.pip.style?.setProperty("left", `${Math.max(6, cx - orbitRadius * .74 - size / 2)}px`); ui.pip.style?.setProperty("top", `${cy + orbitRadius * .62 - size / 2}px`); return; }
-  ui.pip.style?.setProperty("left", `${Math.max(4, shift.left - home.left - size * .98)}px`);
-  ui.pip.style?.setProperty("top", `${shift.top - home.top - size * (width < 360 ? .06 : .22)}px`);
+  const rowTop = ui.home.querySelector?.(".action-row")?.offsetTop;
+  const top = rowTop > 0 ? rowTop - size * 1.075 - 2 : cy + orbitRadius * .62 - size / 2;
+  ui.pip.style?.setProperty("left", `${Math.max(4, cx - orbitRadius - size * .2)}px`);
+  ui.pip.style?.setProperty("top", `${top}px`);
+  // The Ascension tab sits on the right edge between the title and the orbit, never over the glider's path.
+  const tab = ui.homeAscension, title = ui.home.querySelector?.("h1")?.getBoundingClientRect?.(), home = ui.home.getBoundingClientRect?.();
+  if (!tab?.style || !title?.height || !home) return;
+  const tabHeight = tab.offsetHeight || 78, tabLeft = width - (tab.offsetWidth || 60);
+  const orbitAtTab = Math.sqrt(Math.max(0, orbitRadius * orbitRadius - (tabLeft - cx) ** 2));
+  const clearTop = title.bottom - home.top + 10, clearBottom = orbitAtTab ? cy - orbitAtTab - 8 : cy;
+  tab.style.top = `${Math.max(clearTop, Math.min(clearBottom - tabHeight, (clearTop + clearBottom - tabHeight) / 2))}px`;
 }
 
 // Tonight's Letter: one daily Ascension delivery, the same sky for everyone that night. Only gameplay randomness
