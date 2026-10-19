@@ -2137,7 +2137,7 @@ function renderLanterns(streak) {
 }
 // Pip sits just outside the orbit, lower left of the planet drawn on the game canvas.
 function placePip() {
-  const size = Math.round(Math.max(80, Math.min(128, width * .3)));
+  const size = Math.round(Math.max(74, Math.min(112, width * .27)));
   ui.pip.style?.setProperty("--size", `${size}px`);
   ui.pip.style?.setProperty("left", `${Math.max(6, cx - orbitRadius * .74 - size / 2)}px`);
   ui.pip.style?.setProperty("top", `${cy + orbitRadius * .62 - size / 2}px`);
