@@ -32,7 +32,7 @@ function lanterns(lit,W,H,scale=1){
   }
   return svg+'</svg>';
 }
-let html=fs.readFileSync(d+'/mock.html','utf8');
+let html=fs.readFileSync(d+'/'+(process.argv[2]||'mock.html'),'utf8');
 const map={lilita:b64(root+'/fonts/lilita-one-latin.woff2','font/woff2'),nunito:b64(root+'/fonts/nunito-latin-variable.woff2','font/woff2'),
  bloom:b64(d+'/../planets/planet-bloom.png','image/png'),ember:b64(d+'/../planets/planet-ember.png','image/png'),
  gliderBloom:b64(d+'/glider-bloom.png','image/png'),gliderEmber:b64(d+'/glider-ember.png','image/png'),
@@ -41,9 +41,10 @@ const map={lilita:b64(root+'/fonts/lilita-one-latin.woff2','font/woff2'),nunito:
  island:fs.readFileSync(root+'/design/paper-night/svg/icons/islands-detailed.svg','utf8'),
  lanterns3:lanterns(3,390,96),lanterns6:lanterns(6,390,96),lanterns3s:lanterns(3,320,70,.78),
  pipBig:pip.replace('class="pip"','width="120" height="120"'),mailboxBig:mailbox.replace('<svg ','<svg width="90" height="90" '),envelopeBig:env(false).replace('<svg ','<svg width="110" height="94" '),
+ held:env(false).replace('<svg ','<svg class="held" '),heldDone:env(true).replace('<svg ','<svg class="held" '),trophy:'<svg viewBox="0 0 48 48"><path d="M14 6 H34 V18 Q34 30 24 30 Q14 30 14 18 Z" fill="#FFC94D"/><path d="M24 6 H34 V18 Q34 30 24 30 Z" fill="#E0A93A"/><rect x="21" y="30" width="6" height="7" fill="#E0A93A"/><rect x="15" y="37" width="18" height="5" rx="2" fill="#FFC94D"/></svg>',
  lanternStates:lanterns(4,150,70,1).replace('class="lanterns"','width="150" height="70"')};
 html=html.replace(/{{shipicon}}/g,`<img src="{{gliderBloom}}" style="width:56px;height:56px;transform:rotate(14deg);margin:-6px">`);
 for(const [k,v] of Object.entries(map))html=html.split(`{{${k}}}`).join(v);
 const left=html.match(/{{\w+}}/g);if(left)console.log('unreplaced',[...new Set(left)]);
 (async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:1780,height:1000}});
-await p.setContent(html,{waitUntil:'networkidle'});await p.waitForTimeout(400);await p.screenshot({path:d+'/home-mockups.png',fullPage:true});await b.close();})();
+await p.setContent(html,{waitUntil:'networkidle'});await p.waitForTimeout(400);await p.screenshot({path:d+'/'+(process.argv[3]||'home-mockups.png'),fullPage:true});await b.close();})();
