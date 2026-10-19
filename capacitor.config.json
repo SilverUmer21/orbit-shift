@@ -1,0 +1,7 @@
+{
+  "appId": "com.silverumer.orbitshift",
+  "appName": "Orbit Shift",
+  "webDir": "www",
+  "backgroundColor": "#0A1F24",
+  "android": { "allowMixedContent": false }
+}
