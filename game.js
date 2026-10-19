@@ -2148,14 +2148,13 @@ function tickPip(delta) {
   pipRig.tick(delta);
 }
 function placePip() {
-  const size = Math.round(Math.max(88, Math.min(128, width * .32)));
+  // Pip perches in the gap the staggered title leaves left of "SHIFT", keeping the planet and orbit clear.
+  const size = Math.round(Math.max(72, Math.min(112, width * .28 - (width < 360 ? 8 : 0))));
   ui.pip.style?.setProperty("--size", `${size}px`);
-  ui.pip.style?.setProperty("left", `${Math.max(6, cx - orbitRadius * .74 - size / 2)}px`);
-  // Never lower than the button row (short phones).
-  const rowTop = ui.home.querySelector?.(".action-row")?.offsetTop;
-  let top = cy + orbitRadius * .62 - size / 2;
-  if (rowTop > 0) top = Math.min(top, rowTop - size * 1.075 - 2);
-  ui.pip.style?.setProperty("top", `${top}px`);
+  const shift = ui.home.querySelector?.("h1 span:last-child")?.getBoundingClientRect?.(), home = ui.home.getBoundingClientRect?.();
+  if (!shift?.width || !home) { ui.pip.style?.setProperty("left", `${Math.max(6, cx - orbitRadius * .74 - size / 2)}px`); ui.pip.style?.setProperty("top", `${cy + orbitRadius * .62 - size / 2}px`); return; }
+  ui.pip.style?.setProperty("left", `${Math.max(4, shift.left - home.left - size * .98)}px`);
+  ui.pip.style?.setProperty("top", `${shift.top - home.top - size * (width < 360 ? .06 : .22)}px`);
 }
 
 // Tonight's Letter: one daily Ascension delivery, the same sky for everyone that night. Only gameplay randomness

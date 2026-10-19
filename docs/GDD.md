@@ -255,6 +255,10 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | 2026-10-17 | Reward card approved: ribbons NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!, keep "Equip now" on trails and paints. |
 | 2026-10-17 | Step 2 approved: chapter levels labelled "Level N · Name" (option A); the big chapter planet removed from the levels screen (owner). |
 | 2026-10-19 | Home v4 approved. The owner's "redundant mail" note meant the extra envelope floating next to Pip, not the top-right mailbox. The mailbox and its badge stay; the floating envelope is removed (Pip already wears an envelope satchel). When tonight's letter is ready, the satchel's wax seal glows softly. |
+| 2026-10-19 | Home refinement (owner):
+- A smaller PLAY (≈210×64) on its own row; beneath it one row with Hangar · Ascension pill · Islands.
+- Pip perches in the gap the staggered title leaves left of "SHIFT", as a mascot-and-logo lockup, so the planet and orbit have open space.
+- His position is computed from the title's live layout. |
 | 2026-10-19 | The owner picked the 390×844 look, so the title is 60 px on all phones taller than 620 px (the 780 px step is removed). **The new animated Pip (`pip.js`) is wired into Home.** He is ticked from the game's frame loop only while Home shows, flies in each time Home opens, presents the letter when it's ready, watches the real glider, and hops on tap before the Mailbag opens (0.42 s). |
 | 2026-10-19 | Home felt packed on the owner's phone (the title covered the glider's orbit). The title is 60 px (54 px at ≤780 px tall, 42 px at ≤620 px); top buttons, lantern string and Pip are a little smaller. The planet is gameplay, so it stays as it is. |
 | 2026-10-19 | Tonight's Letter = **daily seeded run**: one Ascension-style delivery a day with the date as the random seed, so everyone flies the same sky. Gate formation rules are unchanged. One scored try, then a shareable postcard. |
