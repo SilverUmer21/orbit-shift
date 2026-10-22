@@ -17,7 +17,11 @@ node film/render.cjs stills film/stills 22.1 47.8        # single frames for rev
 node film/render.cjs render film/out                     # 3600 frames + events.json (~40 min on 4 cores)
 python3 film/score.py film/out/events.json film/out/score.wav
 ffmpeg -framerate 60 -i film/out/f%05d.jpg -i film/out/score.wav -c:v libx264 -preset slow -profile:v high -pix_fmt yuv420p \
-  -crf 18 -g 120 -movflags +faststart -c:a aac -b:a 256k -shortest film/release/orbit-shift-fly-them-home-1920x1080.mp4
+  -crf 23 -g 120 -movflags +faststart -c:a aac -b:a 192k -shortest film/release/orbit-shift-fly-them-home-1920x1080.mp4
 ```
+
+The repo keeps the CRF 23 copy (22 MB). For YouTube or the Play Store, encode an upload master the same way at `-crf 19 -b:a 256k` (about 80 MB); it is not committed.
+
+`render` also takes a time range (`render out 26.5 42`), so the film can be rendered in parallel. Start ranges where no caption, stamp or Pip is mid-move (0, 12.5, 26.5, 42) and merge their logs with `python3 film/merge-events.py out/events.json out/*/events.json` before running the score.
 
 Notes: the renderer launches Chromium with `--disable-accelerated-2d-canvas` (software WebGL makes accelerated 2D canvas very slow) and overrides `devicePixelRatio` in the game frame. The game's floating labels are switched off in the film (captions and postmarks carry the words); nothing in the game itself is changed.
