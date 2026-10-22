@@ -1,0 +1,14 @@
+{
+ "note": "Narration script for Fly Them Home, timed to the edit (film seconds). Not rendered yet: see docs/FILM-FLY-THEM-HOME.md. Read warm and unhurried, like a bedtime story; leave the gameplay (20-43 s) to the music.",
+ "voice": "warm storyteller, close and quiet; British or neutral English",
+ "lines": [
+  { "t": 5.6, "text": "Every star is a letter that never arrived." },
+  { "t": 9.9, "text": "Old Moon fell asleep, and the night mail stopped." },
+  { "t": 13.4, "text": "So Pip folded one more letter." },
+  { "t": 17.0, "text": "Ready, pilot?" },
+  { "t": 43.4, "text": "Steady…", "style": "whisper" },
+  { "t": 46.7, "text": "Wake up, Moon." },
+  { "t": 48.4, "text": "Fly them home." },
+  { "t": 56.0, "text": "Orbit Shift. A game by blitzedo." }
+ ]
+}

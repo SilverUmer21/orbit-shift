@@ -2,3 +2,5 @@ trailer/out/
 trailer/events.json
 node_modules/
 www/
+film/out/
+film/stills/

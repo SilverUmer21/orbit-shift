@@ -2,7 +2,7 @@
 
 Living document for the **Complete Remake** (`complete-remake-orbit-shift` branch). Read this before every work session and update it whenever something is built, decided or found.
 
-Last updated: 2026-10-18
+Last updated: 2026-10-22
 
 > ## ★ How we design (owner's rule, read first, every session)
 >
@@ -215,6 +215,13 @@ Research and proposal in `docs/RETENTION-STRATEGY.md`. Proposed waves: Tonight's
 - Re-render: `node trailer/render.cjs measure`, then `node trailer/render.cjs render trailer/out`, `python3 trailer/soundtrack.py trailer/out/events.json trailer/out/soundtrack.wav`, then ffmpeg (command in `trailer/README.md`). Needs the preview server on port 3112.
 - Before store use, swap "Coming soon to Google Play" for the official Get it on Google Play badge once the listing is live.
 
+### Film B — "Fly Them Home"  ✅ rendered (2026-10-22, `intro` branch)
+60 s presentation film, 16:9, 1920×1080, 60 fps, `film/release/orbit-shift-fly-them-home-1920x1080.mp4`. Plan, beat sheet and rules: `docs/FILM-FLY-THEM-HOME.md`; tooling: `film/README.md`.
+- Story: one letter addressed *To Moon* goes from the studio's hands to the Moon. Bookends: *"Every star is a letter that never arrived."* … *"Fly them home."* The film gets brighter as the mail moves; Moonrise is the first full exposure.
+- Beats: the Blitzedo wordmark sting (the website's own animation) → a spark becomes the red wax seal with the pixel b → *To Moon* → the studio black folds away into the Paper Night sky → Old Moon asleep behind the curtain → Pip folds the letter into the glider on four beats → real gameplay: Bloom (TAP TO SHIFT, THREAD THE GAP, perfects, the planet blooms), Ember (HOLD TO FOLD, heat gates, Express Post), Void (comets, a tail-spark near miss, lost letters), the fleet swap, the silent last gate → Moonrise → the logo drawn by the orbit → end card with the studio seal.
+- Gameplay is the real game on the virtual clock; every tap is on the 120 BPM grid; staged gates are copies of a gate the game planned, placed and aimed by `node film/render.cjs measure` so the game's own rules score them.
+- Score: synthesised post-office kit and the one theme (`film/score.py`), −14 LUFS. Narration script is timed (`film/narration.json`) but not rendered (the good offline voice downloads from huggingface.co, blocked in the build environment).
+
 ### Step 3 — Hangar  ✅ built (2026-10-19): A · Sorting Room
 Pip's sorting loft:
 - A showcase (the previewed plane in the previewed paint, on a folded paper stand, flying the previewed trail, with a hanging name tag).
@@ -270,6 +277,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | 2026-10-17 | No ads. Work order: Step 0 bugs → 1 reward card → 2 map → 3 Hangar. |
 | 2026-10-17 | Reward card approved: ribbons NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!, keep "Equip now" on trails and paints. |
 | 2026-10-17 | Step 2 approved: chapter levels labelled "Level N · Name" (option A); the big chapter planet removed from the levels screen (owner). |
+| 2026-10-22 | Film B "Fly Them Home" approved and built (owner: "everything's good and approved"): concept A with fold transitions and beat-synced taps, 16:9 60 fps master, the Blitzedo wordmark animation as the studio open, Moonrise and a hero Old Moon as film-only art, narration only if it makes the film better. Work goes on the new `intro` branch. |
 | 2026-10-19 | Home v4 approved. The owner's "redundant mail" note meant the extra envelope floating next to Pip, not the top-right mailbox. The mailbox and its badge stay; the floating envelope is removed (Pip already wears an envelope satchel). When tonight's letter is ready, the satchel's wax seal glows softly. |
 | 2026-10-19 | Home refinement (owner):
 - PLAY was "way too high" on its own row, so it's back at the bottom between Hangar and Islands, smaller (≈186×66).

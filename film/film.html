@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Orbit Shift · Fly Them Home · film</title>
+<style>
+@font-face{font-family:"Lilita One";src:url("../fonts/lilita-one-latin.woff2") format("woff2")}
+@font-face{font-family:"Nunito";src:url("../fonts/nunito-latin-variable.woff2") format("woff2");font-weight:200 1000}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#000}
+#game{position:absolute;left:0;top:0;width:768px;height:432px;border:0;z-index:0}
+#out{position:absolute;left:0;top:0;width:1920px;height:1080px;z-index:1}
+#pipHost{position:absolute;left:-2000px;top:0;width:160px;height:172px}
+</style></head><body>
+<iframe id="game" src="../index.html"></iframe>
+<div id="pipHost"></div>
+<canvas id="out" width="1920" height="1080"></canvas>
+<script src="../pip.js"></script>
+<script src="js/util.js"></script><script src="js/fold.js"></script><script src="js/post.js"></script>
+<script src="js/art.js"></script><script src="js/sky.js"></script><script src="js/type.js"></script>
+<script src="js/gameplay.js"></script><script src="js/timeline.js"></script>
+<script>window.filmReady = Film.init().then(() => true, e => { console.error(e); return String(e && e.stack || e); });</script>
+</body></html>
