@@ -13,7 +13,7 @@
   const LETTER = { W: A.LW, H: A.LH };
   const shots = {
     bloom: {
-      id: "bloom", seed: 11, t0: 19.6, t1: 27.0, preroll: 3.5,
+      id: "bloom", seed: 11, t0: 19.45, t1: 27.0, preroll: 3.35,
       setup: `state.campaign.completed=['first-light'];state.campaign.unlockedLevel=2;state.selectedRider='manta';state.selectedTrail='paper';
         startRun('campaign','pollen-path');campaignGateIndex=1e9;campaignFragmentIndex=1e9;campaignHazardIndex=1e9;nextGate=1e9;`,
       taps: [20.0, 21.5, 22.5, 24.0, 25.0],
@@ -88,14 +88,15 @@
   function foldAway(page, p, crease) {
     const a1 = Math.PI * easeInOut(seg(p, 0, .38)), a2 = Math.PI * easeInOut(seg(p, .34, .72)), fly = easeIn(seg(p, .7, 1));
     if (fly >= 1) return;
-    g.save(); g.translate(W / 2 - fly * 900, H / 2 - fly * 700); g.rotate(-fly * .5); g.scale(1 - fly * .5, 1 - fly * .5);
-    page.draw(g, [a1, a2], { shadow: .5, crease, edge: "rgba(168,240,207,.35)" });
-    g.restore();
+    // The glow layer follows the page too (the crease glint is drawn in page coordinates).
+    for (const c of [g, G]) { c.save(); c.translate(W / 2 - fly * 900, H / 2 - fly * 700); c.rotate(-fly * .5); c.scale(1 - fly * .5, 1 - fly * .5); }
+    page.draw(g, [a1, a2], { shadow: .5, crease, edge: "rgba(168,240,207,.4)", showThrough: .16, persp: { f: 2600, c: [0, 0], strips: 22 } });
+    g.restore(); G.restore();
   }
   function creaseGlint(color = "#ffe3a0") {
     return (a, u, th) => {
       const k = Math.sin(th); if (k < .05) return;
-      for (const c of [g, G]) { c.save(); c.globalAlpha = k * (c === G ? .9 : .7); c.strokeStyle = color; c.lineWidth = c === G ? 10 : 3; c.beginPath(); c.moveTo(a[0] - u[0] * 1400, a[1] - u[1] * 1400); c.lineTo(a[0] + u[0] * 1400, a[1] + u[1] * 1400); c.stroke(); c.restore(); }
+      for (const c of [g, G]) { c.save(); c.beginPath(); c.rect(-W / 2, -H / 2, W, H); c.clip(); c.globalAlpha = k * (c === G ? .9 : .7); c.strokeStyle = color; c.lineWidth = c === G ? 10 : 3; c.beginPath(); c.moveTo(a[0] - u[0] * 1400, a[1] - u[1] * 1400); c.lineTo(a[0] + u[0] * 1400, a[1] + u[1] * 1400); c.stroke(); c.restore(); }
     };
   }
 
@@ -106,9 +107,9 @@
     cue("flip", 3.55); cue("write", 3.95); cue("pageFold", 4.4); cue("pageFold", 4.74); cue("pageFly", 5.0);
     cue("line1", 5.7); cue("starGlint", 7.25); cue("tilt", 8.8); cue("snore", 10.6); cue("snore", 12.2);
     cue("pipEnter", 12.75); cue("catch", 14.3); [15, 15.5, 16, 16.5].forEach(t => cue("crease", t)); cue("pop", 16.95); cue("ready", 17.0);
-    cue("launch", 18.0); cue("whip", 19.45); cue("drop", 20.0);
+    cue("launch", 18.0); cue("whip", 19.45); cue("iris", 19.45); cue("drop", 20.0);
     cue("pageFold", 27.0); cue("pageFold", 27.2); cue("pageFold", 34.0); cue("pageFold", 34.2);
-    cue("hush", 43.0); cue("flash", 44.85); cue("unpop", 45.35); [45.55, 45.75, 45.95].forEach(t => cue("uncrease", t));
+    cue("hush", 43.0); cue("flash", 44.85); cue("iris", 44.7); cue("unpop", 45.35); [45.55, 45.75, 45.95].forEach(t => cue("uncrease", t));
     cue("slip", 46.1); cue("wake", 46.6); cue("curtain", 47.0); cue("moonrise", 47.5); cue("threads", 47.9); cue("islands", 48.4); cue("line2", 48.4);
     cue("orbitDraw", 50.0); [51.0, 51.25, 51.5, 51.75].forEach((t, i) => cue("letterPop", t, { i })); cue("shift", 52.0); cue("glint", 52.3); cue("pipLand", 52.9);
     cue("tagline", 55.6); cue("store", 56.05); cue("noads", 56.4); cue("endSeal", 57.0); cue("fadeOut", 59.3);
@@ -125,8 +126,9 @@
     if (t >= 4.4 && t < 19.8) skyStory(t, look);
     if (t >= 4.4 && t < 5.3) foldAway(blackPage(), seg(t, 4.4, 5.25), creaseGlint("#ff6a4a"));
     if (t >= 2.4 && t < 6.8) letterScene(t, look);
-    if (t >= 19.55 && t < 45.0) gameplay(t, look, opt);
-    if (t >= 44.85 && t < 50.6) moonrise(t, look);
+    // Into the game and out of it through an orbit iris: a gold ring opens from the island / the glider.
+    if (t >= 19.45 && t < 45.2) { const k = seg(t, 19.45, 19.85); if (k < 1) iris(() => gameplay(t, look, opt), k, 430, 930); else gameplay(t, look, opt); }
+    if (t >= 44.7 && t < 50.6) { const k = seg(t, 44.7, 45.15); if (k < 1) iris(() => moonrise(t, look), k, fx.glider[0], fx.glider[1]); else moonrise(t, look); }
     if (t >= 50.0) titleEnd(t, look);
     // Camera shake on impacts, applied to the finished comp.
     if (look.shake > 0) { const p = prev.getContext("2d"), r = rng(f); p.drawImage(comp, 0, 0); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(prev, (r() - .5) * 22 * look.shake, (r() - .5) * 18 * look.shake); }
@@ -251,7 +253,7 @@
     if (t > 9.4 && t < 14.4) zzz(t, cam);
     if (t > 12.6 && t < 19.8) pipAndFold(t, look);
     look.exposure = lerp(.94, 1, seg(t, 12, 17)); look.vig = .42; look.bloom = .9;
-    if (t > 19.0) { const k = seg(t, 19.0, 19.7); look.flash = Math.max(look.flash || 0, ease(seg(t, 19.42, 19.62)) * .8); look.vig = .42 + k * .3; streaks(k, 430, 930); }
+    if (t > 19.0) { const k = seg(t, 19.0, 19.7); look.vig = .42 + k * .3; streaks(k, 430, 930); }
   }
   function closeStar(t) {
     const k = seg(t, 5.8, 8.8), x = lerp(1180, 2150, easeIn(k)), y = lerp(330, 170, k), s = lerp(30, 360, easeIn(k)), blur = Math.max(0, (s - 160) / 18);
@@ -332,7 +334,7 @@
     if (t < 16.62) {
       g.save(); g.translate(lx, ly); g.rotate(lr); g.scale(ls * (1 - easeIn(seg(pop, 0, .3)) * .9), ls * (1 - easeIn(seg(pop, 0, .3)) * .9));
       if (t < 14.95) g.drawImage(A.frontDone, -LETTER.W / 2, -LETTER.H / 2, LETTER.W, LETTER.H);
-      else sheet.draw(g, angles, { shadow: .45, crease: (a, u, th) => { const k = Math.sin(th); g.save(); g.beginPath(); g.rect(-LETTER.W / 2, -LETTER.H / 2, LETTER.W, LETTER.H); g.clip(); g.strokeStyle = rgba("#fff0c0", k * .9); g.lineWidth = 3; g.beginPath(); g.moveTo(a[0] - u[0] * 600, a[1] - u[1] * 600); g.lineTo(a[0] + u[0] * 600, a[1] + u[1] * 600); g.stroke(); g.restore(); } });
+      else sheet.draw(g, angles, { shadow: .45, showThrough: .12, persp: { f: 1500, c: [0, 0], strips: 14 }, crease: (a, u, th) => { const k = Math.sin(th); g.save(); g.beginPath(); g.rect(-LETTER.W / 2, -LETTER.H / 2, LETTER.W, LETTER.H); g.clip(); g.strokeStyle = rgba("#fff0c0", k * .9); g.lineWidth = 3; g.beginPath(); g.moveTo(a[0] - u[0] * 600, a[1] - u[1] * 600); g.lineTo(a[0] + u[0] * 600, a[1] + u[1] * 600); g.stroke(); g.restore(); } });
       g.restore();
     }
     // The pop: a gold burst and the glider unfolds out of it.
@@ -359,6 +361,20 @@
       G.fillStyle = rgba("#ffd36a", .6 * (1 - k)); G.beginPath(); G.arc(px, py, s * 2, 0, TAU); G.fill();
     }
   }
+  let irisC, irisG;
+  function iris(draw, k, cx, cy) {
+    if (!irisC) { irisC = canvas(W, H); irisG = canvas(W / 2, H / 2); }
+    const g0 = g, G0 = G, ic = irisC.getContext("2d"), iG = irisG.getContext("2d");
+    ic.setTransform(1, 0, 0, 1, 0, 0); ic.globalAlpha = 1; ic.globalCompositeOperation = "source-over"; ic.filter = "none"; ic.clearRect(0, 0, W, H);
+    iG.setTransform(.5, 0, 0, .5, 0, 0); iG.globalAlpha = 1; iG.globalCompositeOperation = "source-over"; iG.filter = "none"; iG.clearRect(0, 0, W, H);
+    g = ic; G = iG; draw(); g = g0; G = G0;
+    const r = 6 + easeIn(k) * 2300, spin = k * 4;
+    for (const [c, src, sw] of [[g, irisC, 1], [G, irisG, 2]]) { c.save(); c.beginPath(); c.arc(cx, cy, r, 0, TAU); c.clip(); c.drawImage(src, 0, 0, W, H); c.restore(); void sw; }
+    // The ring: a lit paper edge and the game's dashed gold orbit, turning as it opens.
+    g.save(); g.lineWidth = 5; g.strokeStyle = rgba(C.paper, .85); g.beginPath(); g.arc(cx, cy, r, 0, TAU); g.stroke();
+    g.setLineDash([4, 18]); g.lineDashOffset = -spin * 60; g.lineCap = "round"; g.lineWidth = 12; g.strokeStyle = C.gold; g.beginPath(); g.arc(cx, cy, r + 14, 0, TAU); g.stroke(); g.restore();
+    G.save(); G.lineWidth = 34; G.strokeStyle = rgba("#ffd36a", .55 * (1 - k * .5)); G.beginPath(); G.arc(cx, cy, r + 8, 0, TAU); G.stroke(); G.restore();
+  }
   function ring(x, y, k, r) {
     if (k <= 0 || k >= 1) return;
     g.save(); g.strokeStyle = rgba(C.gold, 1 - k); g.lineWidth = 6 * (1 - k) + 1; g.setLineDash([4, 14]); g.beginPath(); g.arc(x, y, 40 + r * easeOut(k), 0, TAU); g.stroke(); g.restore();
@@ -372,9 +388,33 @@
   }
 
   // ---------------------------------------------------------------- 6-10 · gameplay
-  let current = null, fx = { shiftT: -9, shiftDir: 1, capDir: 1, capX: 0, stamps: [], tags: [], glints: [], feverT: -9 };
+  let current = null, fx = { shiftT: -9, shiftDir: 1, capDir: 1, capX: 0, stamps: [], tags: [], glints: [], feverT: -9, glider: [W / 2, H / 2] };
   function shotFor(t) { if (t < 27.0) return shots.bloom; if (t < 34.0) return shots.ember; return shots.void; }
-  F.seekShot = t => { const s = shotFor(t); current = s; GB.enter(s, s.t0); GB.step(t); GB.takeEvents(); };
+  // Overlay state from game events, keyed by each event's own time (so a seek rebuilds what a straight render had).
+  function applyEvents(evs, inf) {
+    for (const e of evs) {
+      const t = e.t;
+      if (e.type === "tap") { fx.shiftT = t; const vx = -e.dir * Math.sin(e.angle); fx.shiftDir = vx >= 0 ? 1 : -1; fx.capDir *= -1; }
+      // The last gate stays silent: no stamp, just a glint where it threads.
+      if (e.type === "perfect") (t < 43 ? fx.stamps : fx.glints).push({ t, x: e.x, y: e.y, n: e.n });
+      if (e.type === "fever") fx.feverT = t;
+      if (e.type === "tailSpark") fx.tags.push({ t, text: "TAIL SPARK", x: e.x, y: e.y });
+      if (e.type === "letter") fx.tags.push({ t: t + .25, text: "LOST LETTER +2", x: e.x, y: e.y });
+      if (e.type === "swap") fx.tags.push({ t, text: { dart: "DART", crescent: "CRESCENT", splitwing: "SPLITWING", shuttle: "SHUTTLE", ringsail: "RING SAIL", manta: "MANTA" }[e.rider], x: inf.x, y: inf.y, swap: true });
+    }
+  }
+  F.seekShot = t => {
+    // Replay every shot up to t so caption and shift state carry across shots, then keep the overlays they left.
+    fx.stamps = []; fx.tags = []; fx.glints = [];
+    GB.eval(`window.__draw0=window.__draw0||draw;draw=()=>{};`);
+    for (const s of [shots.bloom, shots.ember, shots.void]) {
+      if (s.t0 > t) break;
+      current = s; GB.enter(s, s.t0); GB.step(Math.min(t, s.t1)); applyEvents(GB.takeEvents(), GB.info());
+      if (t < s.t1) break;
+    }
+    fx.capX = fx.capDir * 30;
+    GB.eval(`draw=window.__draw0;draw();`);
+  };
   F.measure = () => { for (const s of Object.values(shots)) GB.measure(s, s.t0, s.t1); return GB.corr; };
   function gameCam(t, sh) {
     // Focus in game CSS px (the canvas is 768 x 432; the planet sits at 384, 237.6).
@@ -394,19 +434,10 @@
   const toScreen = (cam, x, y) => [W / 2 + (x - cam.fx) * 2.5 * cam.z, H / 2 + (y - cam.fy) * 2.5 * cam.z];
   function gameplay(t, look, opt) {
     const sh = shotFor(t);
-    if (current !== sh) { current = sh; GB.enter(sh, Math.max(sh.t0, Math.min(t, sh.t0))); if (t > sh.t0 + 1e-6) GB.step(t); fx.stamps = []; fx.tags = []; }
+    if (current !== sh) { current = sh; GB.enter(sh, sh.t0); if (t > sh.t0 + 1e-6) GB.step(t); fx.stamps = []; fx.tags = []; fx.glints = []; }
     else GB.step(t);
-    const evs = GB.takeEvents();
     const cam = gameCam(t, sh), inf = GB.info();
-    for (const e of evs) {
-      if (e.type === "tap") { fx.shiftT = t; const vx = -e.dir * Math.sin(e.angle); fx.shiftDir = vx >= 0 ? 1 : -1; fx.capDir *= -1; }
-      // The last gate stays silent: no stamp, just a glint where it threads.
-      if (e.type === "perfect") (t < 43 ? fx.stamps : fx.glints).push({ t, x: e.x, y: e.y, n: e.n, fever: inf.fever > 0 });
-      if (e.type === "fever") fx.feverT = t;
-      if (e.type === "tailSpark") fx.tags.push({ t, text: "TAIL SPARK", x: e.x, y: e.y });
-      if (e.type === "letter") fx.tags.push({ t: t + .25, text: "LOST LETTER +2", x: e.x, y: e.y });
-      if (e.type === "swap") fx.tags.push({ t, text: { dart: "DART", crescent: "CRESCENT", splitwing: "SPLITWING", shuttle: "SHUTTLE", ringsail: "RING SAIL", manta: "MANTA" }[e.rider], x: inf.x, y: inf.y, swap: true });
-    }
+    applyEvents(GB.takeEvents(), inf);
     // The Shift: on every reverse the frame jolts toward the glider's new heading, then settles.
     const sp = pulse(t - fx.shiftT, 0, .3), sdx = fx.shiftDir * 26 * sp, skew = fx.shiftDir * .03 * sp;
     fx.capX += (fx.capDir * 30 - fx.capX) * (1 - Math.exp(-12 / FPS));
@@ -419,9 +450,7 @@
       if (snapAt !== at) { snap = canvas(W, H); snap.getContext("2d").drawImage(prev, 0, 0); snapAt = at; F.page = pageSheet(snap, C.night700); }
       foldAway(F.page, seg(t, at, at + .62), creaseGlint());
     }
-    // Into the Moonrise: a gold-white flash over the last crossing.
-    if (t > 44.55) look.flash = Math.max(look.flash || 0, ease(seg(t, 44.6, 44.98)) * .95), look.flashColor = [1, .95, .8];
-    if (sh.id === "bloom" && t < 19.8) look.flash = Math.max(look.flash || 0, .8 * (1 - seg(t, 19.6, 19.8)));
+    fx.glider = toScreen(cam, inf.x, inf.y);
     look.bloom = .8; look.goldGain = .4; look.streak = .55; look.vig = .3; look.exposure = 1.02;
     if (t > 43 && t < 45) { look.vig = .3 + .35 * ease(seg(t, 43, 43.5)); look.sat = 1.04 - .25 * ease(seg(t, 43, 43.5)); }
     void opt;
@@ -531,14 +560,13 @@
       if (t < 45.5) gliderAt(x, y, 5.2 * (1 - easeIn(seg(t, 45.35, 45.5))), lerp(-.5, -.05, k), "manta", "bloom", 1);
       else {
         const a = [45.95, 45.75, 45.55].map(s => Math.PI * (1 - easeInOut(seg(t, s, s + .2))));
-        g.save(); g.translate(x, y); const s = .62 * back(seg(t, 45.45, 45.62), 2); g.scale(s, s); sheet.draw(g, a, { shadow: .4 }); g.restore();
+        g.save(); g.translate(x, y); const s = .62 * back(seg(t, 45.45, 45.62), 2); g.scale(s, s); sheet.draw(g, a, { shadow: .4, showThrough: .12, persp: { f: 1500, c: [0, 0], strips: 14 } }); g.restore();
       }
       G.save(); G.globalAlpha = .4 * pulse(t, 45.3, 45.8); G.fillStyle = "#ffd36a"; G.beginPath(); G.arc(x, y, 120, 0, TAU); G.fill(); G.restore();
     }
     if (t > 48.4 && t < 50.6) T.caption(g, null, "Fly them home.", W / 2, 250, 150, { style: "paper", alpha: clamp((t - 48.4) * 3) * clamp((50.55 - t) * 4), scale: .9 + .1 * easeOut(seg(t, 48.4, 49.4)) });
     look.exposure = lerp(.95, 1.06, ease(seg(t, 47.0, 48.0))) - .04 * ease(seg(t, 48.4, 50));
     look.bloom = lerp(.8, .95, ease(seg(t, 47.0, 48.0))); look.goldGain = .4; look.streak = .6; look.vig = lerp(.45, .32, open); look.warmth = .3 * open;
-    look.flash = Math.max(look.flash || 0, .95 * (1 - seg(t, 44.9, 45.3)));
     if (t >= 50.0) look.fadeToTitle = seg(t, 50.0, 50.6);
     void unfold;
   }

@@ -282,6 +282,10 @@ place(sfx, riser(3.0, .55), 17.0, 1, 0, .2)
 snare_roll(18.0, 20.0, .7)
 place(sfx, whoosh(1.2, 250, 6000, .9, .3), cue('launch'), 1, .3, .2)
 place(sfx, cymbal(.6, True, 1.4), 19.4, 1, 0, .2)
+# The orbit iris: a ring of chimes opening into the game, and later out of it into Moonrise.
+for c in cues('iris'):
+    for k, m in enumerate([74, 78, 81, 86, 90]): place(sfx, glock(m, 1.0), c['t'] + k * .07, .16, -.6 + k * .3, .5)
+    place(sfx, whoosh(.5, 900, 5000, .35, .7), c['t'], 1, 0, .3)
 
 # 6-9 · gameplay. Bars: Bloom 20-27, Ember 27-34 (groove from 28), Void 34-40, the fleet build 40-43.
 def groove(t0, bars, chords, heavy=False, sparse=False, until=43.0):

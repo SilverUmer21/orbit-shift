@@ -27,6 +27,11 @@ Approved by the owner on 2026-10-22 (concept A with C's fold transitions and B's
 | 0:50–0:55 | **Title.** The glider's trail draws the O; ORBIT unfolds; on the last tap SHIFT shifts in, gold glint; Pip lands. | Paper pops, tap, thwack. |
 | 0:55–1:00 | **End card.** *One tap. Deliver the night.* · Coming soon to Google Play · No ads · Plays offline. A red wax seal: *a game by blitzedo*. | The last note with the seal. |
 
+## Transitions (polish pass, 2026-10-23)
+
+- **Page folds** (the studio black page at 0:04.4, Bloom → Ember at 0:27, Ember → Void at 0:34): the old frame folds in half twice and flies off. The lifting half is drawn in perspective (it comes toward the camera as it turns), its back is paper with the old world showing faintly through, and it has a lit edge and a soft shadow that widens as it lifts. Pip's letter fold at 0:15 uses the same 3D lift.
+- **Orbit iris** (into the game at 0:19.5, out of it into Moonrise at 0:44.7): no white flashes. A gold ring, the game's dashed orbit with a lit paper edge, opens from the island and later from the glider, revealing the next scene inside it, with a ring of chimes.
+
 ## Rules for this film
 
 - Blitzedo red appears only in the opening and the closing seal, so the game keeps its own palette (Blitzedo DESIGN.md: each game keeps its own visual personality; the wordmark gets no added sparkle beyond its own animation).

@@ -46,42 +46,78 @@
       stages.push([...keep, ...flap.map(f => ({ ...f, M: mul(R, f.M) }))]);
       return folds.length - 1;
     }
-    function face(g, f, M, shade, tex) {
-      const d = det(M), img = d >= 0 ? front : back;
+    // Paint one face: clip to `poly` (folded-plane coords) seen through the screen transform T (affine, optional), and map
+    // the texture with T∘M. The back face is the back texture with the front showing faintly through the paper.
+    function paint(g, poly, M, T, shade, opts, screen) {
+      // Which side shows comes from the full transform (a flap past 90 degrees shows its back).
+      const TM = T ? mul(T, M) : M, d = det(TM), img = d >= 0 ? front : back;
       g.save();
-      g.beginPath(); f.poly.forEach((p, i) => { const q = apply(M, p); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }); g.closePath();
+      g.beginPath(); (screen || poly.map(p => T ? apply(T, p) : p)).forEach((q, i) => { i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }); g.closePath();
       g.clip();
-      g.save();
-      // Paper coords -> texture pixels; mirror for the back face.
-      const sx = img.width / W, sy = img.height / H;
-      g.transform(M[0], M[1], M[2], M[3], M[4], M[5]);
+      g.save(); g.transform(TM[0], TM[1], TM[2], TM[3], TM[4], TM[5]);
       if (d >= 0) g.drawImage(img, -W / 2, -H / 2, W, H);
-      else { g.scale(-1, 1); g.drawImage(img, -W / 2, -H / 2, W, H); }
+      else {
+        g.save(); g.scale(-1, 1); g.drawImage(img, -W / 2, -H / 2, W, H); g.restore();
+        if (opts.showThrough) { g.globalAlpha = opts.showThrough; g.drawImage(front, -W / 2, -H / 2, W, H); g.globalAlpha = 1; }
+      }
       g.restore();
       const dark = (d < 0 ? .1 : 0) + shade;
       if (dark > 0) { g.fillStyle = `rgba(20,30,34,${Math.min(.8, dark)})`; g.fill(); }
       else if (dark < 0) { g.fillStyle = `rgba(255,250,235,${Math.min(.6, -dark)})`; g.fill(); }
       g.restore();
-      void sx; void sy; void tex;
     }
+    function face(g, f, M, shade, opts = {}) { paint(g, f.poly.map(p => apply(M, p)), M, null, shade, opts); }
     // angles: array of fold angles 0..PI (one per fold). Draws centred at the origin of g's current transform.
+    // opts: shadow, edge (lit edge colour), crease(a, u, th), showThrough (alpha), persp { f, c, strips } for a 3D lift.
     function draw(g, angles = [], opts = {}) {
       let k = 0; while (k < folds.length && (angles[k] ?? 0) >= Math.PI - 1e-4) k++;
       const th = angles[k] ?? 0;
-      if (k >= folds.length || th <= 1e-4) { const list = [...stages[k]].sort((a, b) => a.layer - b.layer); shadow(g, list, opts); for (const f of list) { face(g, f, f.M, 0); if (opts.edge && f.layer > 0) edgeLine(g, f, f.M, opts.edge); } return; }
+      if (k >= folds.length || th <= 1e-4) { const list = [...stages[k]].sort((a, b) => a.layer - b.layer); shadow(g, list, opts); for (const f of list) { face(g, f, f.M, 0, opts); if (opts.edge && f.layer > 0) edgeLine(g, f, f.M, opts.edge); } return; }
       const F = folds[k], R = rot(F.a, F.u, th), lift = Math.sin(th);
       const keep = [...F.keep].sort((a, b) => a.layer - b.layer), flap = [...F.flap].sort((a, b) => th < Math.PI / 2 ? b.layer - a.layer : a.layer - b.layer);
       shadow(g, keep, opts);
-      for (const f of keep) face(g, f, f.M, 0);
-      // The flap's shadow falls onto the sheet while it is up.
-      g.save(); g.globalAlpha = .28 * lift; g.fillStyle = "#06141a";
-      for (const f of flap) { const M = mul(rot(F.a, F.u, th * .55), f.M); g.beginPath(); f.poly.forEach((p, i) => { const q = apply(M, p); i ? g.lineTo(q[0] + 10 * lift, q[1] + 14 * lift) : g.moveTo(q[0] + 10 * lift, q[1] + 14 * lift); }); g.closePath(); g.fill(); }
+      for (const f of keep) face(g, f, f.M, 0, opts);
+      // The flap's shadow falls onto the sheet while it is up (softer and wider the higher it lifts).
+      g.save(); g.globalAlpha = .3 * lift; g.fillStyle = "#06141a"; if (opts.persp) g.filter = `blur(${4 + 14 * lift}px)`;
+      for (const f of flap) { const M = mul(rot(F.a, F.u, th * .55), f.M); g.beginPath(); f.poly.forEach((p, i) => { const q = apply(M, p); i ? g.lineTo(q[0] + 14 * lift, q[1] + 20 * lift) : g.moveTo(q[0] + 14 * lift, q[1] + 20 * lift); }); g.closePath(); g.fill(); }
       g.restore();
-      // Light falls off as the flap turns away, then the far side comes up lit (two-tone shading flips at 90 degrees).
-      const c = Math.cos(th), shade = c > 0 ? (1 - c) * .32 : -(-c) * .06 + (1 + c) * .22;
-      for (const f of flap) face(g, f, mul(R, f.M), shade);
-      if (opts.edge) for (const f of flap) edgeLine(g, f, mul(R, f.M), opts.edge);
+      if (opts.persp) flapPersp(g, F, th, opts);
+      else {
+        // Light falls off as the flap turns away, then the far side comes up lit (two-tone shading flips at 90 degrees).
+        const c = Math.cos(th), shade = c > 0 ? (1 - c) * .32 : -(-c) * .06 + (1 + c) * .22;
+        for (const f of flap) face(g, f, mul(R, f.M), shade, opts);
+        if (opts.edge) for (const f of flap) edgeLine(g, f, mul(R, f.M), opts.edge);
+      }
       if (opts.crease) opts.crease(F.a, F.u, th);
+    }
+    // The turning flap with perspective: sliced into strips parallel to the crease; each strip lifts toward the camera
+    // by its own distance from the crease (scale about the vanishing point c with focal length f).
+    function flapPersp(g, F, th, opts) {
+      const { f: focal = 2400, c = [0, 0], strips = 18 } = opts.persp, n = [-F.u[1], F.u[0]], R = rot(F.a, F.u, th), S = Math.sin(th);
+      const dist = p => n[0] * (p[0] - F.a[0]) + n[1] * (p[1] - F.a[1]);
+      const scaleAt = dd => focal / Math.max(focal * .3, focal - dd * S);
+      let dmax = 0; for (const f of F.flap) for (const p of f.poly) dmax = Math.max(dmax, dist(apply(f.M, p)));
+      const c0 = Math.cos(th), shade = c0 > 0 ? (1 - c0) * .32 : -(-c0) * .06 + (1 + c0) * .22;
+      const order = [...F.flap].sort((a, b) => th < Math.PI / 2 ? b.layer - a.layer : a.layer - b.layer);
+      for (const f of order) {
+        const P = f.poly.map(p => apply(f.M, p));
+        for (let i = 0; i < strips; i++) {
+          const d0 = dmax * i / strips, d1 = dmax * (i + 1) / strips, dm = (d0 + d1) / 2, e = i ? 1.5 : 0;
+          const hi = split(P, [F.a[0] + n[0] * (d0 - e), F.a[1] + n[1] * (d0 - e)], F.u)[1];
+          const band = hi && split(hi, [F.a[0] + n[0] * (d1 + e), F.a[1] + n[1] * (d1 + e)], F.u)[0];
+          if (!band) continue;
+          // Texture with the strip's mid-depth scale; clip with every corner projected exactly, so strips tile.
+          const sc = scaleAt(dm), T = mul([sc, 0, 0, sc, c[0] * (1 - sc), c[1] * (1 - sc)], R);
+          const screen = band.map(p => { const q = apply(R, p), s2 = scaleAt(dist(p)); return [c[0] + (q[0] - c[0]) * s2, c[1] + (q[1] - c[1]) * s2]; });
+          // A touch of falloff toward the crease while the page stands up, so it reads as a lifted sheet.
+          paint(g, band, f.M, T, shade + .06 * S * (1 - dm / Math.max(1, dmax)), opts, screen);
+        }
+        if (opts.edge) {
+          g.save(); g.strokeStyle = opts.edge; g.lineWidth = 3; g.beginPath();
+          P.forEach((p, i) => { const q = apply(R, p), s2 = scaleAt(dist(p)), x = c[0] + (q[0] - c[0]) * s2, y = c[1] + (q[1] - c[1]) * s2; i ? g.lineTo(x, y) : g.moveTo(x, y); });
+          g.closePath(); g.stroke(); g.restore();
+        }
+      }
     }
     // A lit paper edge around a facet.
     function edgeLine(g, f, M, color) {

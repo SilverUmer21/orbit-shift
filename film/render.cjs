@@ -25,13 +25,13 @@ async function open() {
   } else if (MODE === 'layers') {
     const out = process.argv[3]; fs.mkdirSync(out, { recursive: true });
     for (const s of process.argv.slice(4).map(Number)) {
-      const urls = await page.evaluate(async t => { Film.seekPip(t); if (t >= 19.55 && t < 45) Film.seekShot(t); await Film.frame(t); return [Film._layers.comp.toDataURL('image/jpeg', .9), Film._layers.glow.toDataURL('image/png')]; }, s);
+      const urls = await page.evaluate(async t => { Film.seekPip(t); if (t >= 19.45 && t < 45.2) Film.seekShot(t); await Film.frame(t); return [Film._layers.comp.toDataURL('image/jpeg', .9), Film._layers.glow.toDataURL('image/png')]; }, s);
       urls.forEach((u, i) => fs.writeFileSync(path.join(out, `t${s.toFixed(2)}-${i ? 'glow.png' : 'comp.jpg'}`), Buffer.from(u.split(',')[1], 'base64')));
     }
   } else if (MODE === 'stills') {
     const out = process.argv[3] || path.join(__dirname, 'stills'); fs.mkdirSync(out, { recursive: true });
     for (const s of process.argv.slice(4).map(Number)) {
-      await page.evaluate(t => { Film.seekPip(t); if (t >= 19.55 && t < 45) Film.seekShot(t); return Film.frame(t, { noPrev: false }); }, s);
+      await page.evaluate(t => { Film.seekPip(t); if (t >= 19.45 && t < 45.2) Film.seekShot(t); return Film.frame(t, { noPrev: false }); }, s);
       await page.screenshot({ path: path.join(out, `t${s.toFixed(2).padStart(5, '0')}.jpg`), type: 'jpeg', quality: 90 });
       console.log('still', s);
     }
@@ -39,7 +39,7 @@ async function open() {
     const out = process.argv[3] || path.join(__dirname, 'out'); fs.mkdirSync(out, { recursive: true });
     const from = Number(process.argv[4] || 0), to = Number(process.argv[5] || DUR), step = Number(process.argv[6] || 1);
     const f0 = Math.round(from * FPS), f1 = Math.round(to * FPS);
-    if (from > 0) await page.evaluate(t => { Film.seekPip(t); if (t >= 19.55 && t < 45) Film.seekShot(t); }, from);
+    if (from > 0) await page.evaluate(t => { Film.seekPip(t); if (t >= 19.45 && t < 45.2) Film.seekShot(t); }, from);
     const t0 = Date.now();
     for (let f = f0; f < f1; f++) {
       await page.evaluate(t => Film.frame(t), f / FPS);
