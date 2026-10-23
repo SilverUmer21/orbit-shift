@@ -8,7 +8,7 @@ const FPS = 60, DUR = 60, MODE = process.argv[2] || 'render';
 async function open() {
   const browser = await chromium.launch({ args: ['--disable-gpu-vsync', '--use-angle=swiftshader', '--disable-accelerated-2d-canvas', '--disable-gpu-compositing'] });
   const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  await context.addInitScript({ content: `Object.defineProperty(window,'devicePixelRatio',{get:()=>window.__dpr||2.5,configurable:true});window.orbitMaxPixelRatio=8;\n` + fs.readFileSync(path.join(__dirname, '..', 'trailer', 'vclock.js'), 'utf8') });
+  await context.addInitScript({ content: `Object.defineProperty(window,'devicePixelRatio',{get:()=>window.__dpr||2.5,configurable:true});window.orbitMaxPixelRatio=8;\n` + fs.readFileSync(path.join(__dirname, 'vclock.js'), 'utf8') });
   const page = await context.newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message)); page.on('console', m => { if (m.type() === 'error' || m.text().startsWith('measure')) console.log('[page]', m.text()); });
   await page.goto('http://127.0.0.1:3112/film/film.html');

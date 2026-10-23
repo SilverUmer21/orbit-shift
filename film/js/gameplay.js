@@ -36,6 +36,8 @@
   GB.enter = (def, filmT0, measure = false) => {
     const pre = def.preroll ?? 3;
     shot = { def, t0: filmT0, ft: filmT0 - pre, fired: new Set(), measure, log: [], map: [], frameEvents: [], spawned: {} };
+    // A fixed clock per shot (from its film start), so what the planets draw never depends on what ran before.
+    W.__setNow(1e7 + Math.round((filmT0 - pre) * 1000));
     run(`if(window.__dpr&&window.__dpr!==2.5){window.__dpr=2.5;dispatchEvent(new Event('resize'));}`);
     run(`{const s0=JSON.parse(__state0);for(const k of Object.keys(state))if(!(k in s0))delete state[k];Object.assign(state,s0);}
       __seed(${def.seed || 1});window.__cross={};
