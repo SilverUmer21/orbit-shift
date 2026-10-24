@@ -232,6 +232,25 @@ Research, two directions (A · Sorting Room recommended, B · Island Dock) and t
 - Every trail and paint gets a name and a tappable unlock hint.
 - Buying a plane plays a short unlock celebration, then Equip.
 
+### Direction 3 — feel, first minute, flow, challenge twists  ← proposed, awaiting owner decisions (2026-10-24)
+
+The owner flagged six problems:
+- no Next level after a win, and a Hangar button on the results screen;
+- a weak Ascension button;
+- unexplained lanterns;
+- a poor tutorial;
+- flat plane and boost animation;
+- hold also turning the plane.
+
+The owner also asked about challenge modes. The research, audit, proposal and decisions are in `docs/DIRECTION-3.md`, with boards in `design/paper-night/previews/d3-*.png`. In short:
+- **Input:** turn on lift, hold 0.18 s to boost with no turn, same-frame press feedback, "Classic: turn on touch" in Settings.
+- **Feel:** a juicier turn and boost recipe.
+- **Tutorial:** First Light teaches itself (guided first three gates, no text, no failing them).
+- **Results:** NEXT LEVEL / RETRY / NEXT CHAPTER, Hangar hidden.
+- **Ascension:** a portal button.
+- **Lanterns:** a first-night moment, a starter Paper Moon, a count, and a lantern sheet.
+- **Challenge modes:** optional "Special Delivery" remixes. The first three are Turn the world (the owner's idea, with Pip pinned at the top), Postage and Lantern night.
+
 ### Later (not scheduled)
 Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not adopted), Void chapter, Android wrapper, V3 Constellation Weaving and Best-Run Ghost (see README).
 
@@ -279,6 +298,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 - An interim layout had Pip perched by the logo; it was replaced the same day. |
 | 2026-10-19 | The owner picked the 390×844 look, so the title is 60 px on all phones taller than 620 px (the 780 px step is removed). **The new animated Pip (`pip.js`) is wired into Home.** He is ticked from the game's frame loop only while Home shows, flies in each time Home opens, presents the letter when it's ready, watches the real glider, and hops on tap before the Mailbag opens (0.42 s). |
 | 2026-10-19 | Home felt packed on the owner's phone (the title covered the glider's orbit). The title is 60 px (54 px at ≤780 px tall, 42 px at ≤620 px); top buttons, lantern string and Pip are a little smaller. The planet is gameplay, so it stays as it is. |
+| 2026-10-24 | Owner review: results need NEXT LEVEL and no Hangar; Ascension button needs better visuals; lanterns must be explained; tutorial is poor; plane and boost need better animation; tap should turn and hold should only speed up. Owner proposed challenge modes (e.g. controlling the gates). Research and proposal: `docs/DIRECTION-3.md`, awaiting picks. |
 | 2026-10-19 | Postcard lines approved. Retention round 2 built behind the Night Post extras switch. A lantern now lights when a flight ends, not when the app is opened. `SAVE_VERSION` stays 5 and `trailStyles` stays 7 (the game's self-checks); the new save fields are additive, and Pressed petal lives in `bonusTrails`. |
 | 2026-10-19 | Hangar **A · Sorting Room** approved and built. Lanterns: dim-and-relight with at most 1 Paper Moon (owner left it to me). Parcel: few stars (5 → 10 → 15★ cap) plus a stamp plus a Moon; no trail every 4th parcel. Album page reward: a new Pressed-petal trail (owner left the design to me). Postcard lines drafted for approval. |
 | 2026-10-19 | Owner asked to start Step 3 (Hangar) and the next retention round together (parcel, Paper Moon, postcards, Stamp Album). Proposal written; awaiting picks. |
