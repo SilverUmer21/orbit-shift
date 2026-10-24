@@ -25,7 +25,7 @@ const ui = {
   rewardCount: document.querySelector("#rewardCount"), rewardBonus: document.querySelector("#rewardBonus"), rewardCard: document.querySelector("#rewardCard"), equipReward: document.querySelector("#equipReward"),
   resultStarChip: document.querySelector("#resultStarChip"), resultStarTotal: document.querySelector("#resultStarTotal"),
   mapNext: document.querySelector("#mapNext"), ascensionBest: document.querySelector("#ascensionBest"), chapterPlay: document.querySelector("#chapterPlay"), chapterPlayLevel: document.querySelector("#chapterPlayLevel"),
-  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), lanternIntro: document.querySelector("#lanternIntro"), lanternIntroRow: document.querySelector("#lanternIntroRow"), lanternIntroTitle: document.querySelector("#lanternIntroTitle"), lanternIntroOk: document.querySelector("#lanternIntroOk"), lanternSheet: document.querySelector("#lanternSheet"), lanternSheetRow: document.querySelector("#lanternSheetRow"), lanternSheetStatus: document.querySelector("#lanternSheetStatus"), lanternSheetMoon: document.querySelector("#lanternSheetMoon"), lanternSheetOk: document.querySelector("#lanternSheetOk"), homeToast: document.querySelector("#homeToast"), homeToastTitle: document.querySelector("#homeToastTitle"), homeToastText: document.querySelector("#homeToastText"), classic: document.querySelector("#classicToggle"), retry: document.querySelector("#retry"), retryLabel: document.querySelector("#retryLabel"), nextLevel: document.querySelector("#nextLevel"), nextLevelTitle: document.querySelector("#nextLevelTitle"), nextLevelName: document.querySelector("#nextLevelName"), extras: document.querySelector("#extrasToggle"), mailTabs: document.querySelector("#mailTabs"), cardBadge: document.querySelector("#cardBadge"), postcard: document.querySelector("#postcard"), cardStrip: document.querySelector("#cardStrip"), albumIsles: document.querySelector("#albumIsles"), albumPage: document.querySelector("#albumPage"), parcelOverlay: document.querySelector("#parcelOverlay"), parcelBox: document.querySelector("#parcelBox"), parcelGifts: document.querySelector("#parcelGifts"), parcelCollect: document.querySelector("#parcelCollect"), openMail: document.querySelector("#openMail"), mailBadge: document.querySelector("#mailBadge"), lanterns: document.querySelector("#lanterns"),
+  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), lanternIntro: document.querySelector("#lanternIntro"), lanternIntroRow: document.querySelector("#lanternIntroRow"), lanternIntroTitle: document.querySelector("#lanternIntroTitle"), lanternIntroOk: document.querySelector("#lanternIntroOk"), lanternSheet: document.querySelector("#lanternSheet"), lanternSheetRow: document.querySelector("#lanternSheetRow"), lanternSheetStatus: document.querySelector("#lanternSheetStatus"), lanternSheetMoon: document.querySelector("#lanternSheetMoon"), lanternSheetOk: document.querySelector("#lanternSheetOk"), homeToast: document.querySelector("#homeToast"), homeToastTitle: document.querySelector("#homeToastTitle"), homeToastText: document.querySelector("#homeToastText"), classic: document.querySelector("#classicToggle"), retry: document.querySelector("#retry"), retryLabel: document.querySelector("#retryLabel"), nextLevel: document.querySelector("#nextLevel"), nextLevelTitle: document.querySelector("#nextLevelTitle"), nextLevelName: document.querySelector("#nextLevelName"), extras: document.querySelector("#extrasToggle"), mailTabs: document.querySelector("#mailTabs"), cardBadge: document.querySelector("#cardBadge"), postcard: document.querySelector("#postcard"), cardStrip: document.querySelector("#cardStrip"), albumIsles: document.querySelector("#albumIsles"), albumPage: document.querySelector("#albumPage"), parcelOverlay: document.querySelector("#parcelOverlay"), parcelBox: document.querySelector("#parcelBox"), parcelGifts: document.querySelector("#parcelGifts"), parcelCollect: document.querySelector("#parcelCollect"), openMail: document.querySelector("#openMail"), mailBadge: document.querySelector("#mailBadge"), lanterns: document.querySelector("#lanterns"), guideIntro: document.querySelector("#guideIntro"), guidePip: document.querySelector("#guidePip"), coach: document.querySelector("#coach"), coachCap: document.querySelector("#coachCap"), coachSub: document.querySelector("#coachSub"), coachRing: document.querySelector(".coach-ring-fill"),
   pip: document.querySelector("#pip"), homeAscension: document.querySelector("#homeAscension"), mailbag: document.querySelector("#mailbag"), letterNight: document.querySelector("#letterNight"),
   letterCard: document.querySelector("#letterCard"), letterTitle: document.querySelector("#letterTitle"), letterScore: document.querySelector("#letterScore"), flyLetter: document.querySelector("#flyLetter"),
   shareLetter: document.querySelector("#shareLetter"), shareLetterMail: document.querySelector("#shareLetterMail"), practiceGuardian: document.querySelector("#practiceGuardian"), resumeOverlay: document.querySelector("#resumeOverlay"), resumeButton: document.querySelector("#resumeButton"), nearMiss: document.querySelector("#nearMiss"),
@@ -243,7 +243,7 @@ function startRun(runType = "endless", levelId = null) {
   state.runType = runType;
   state.levelId = levelId;
   state.levelComplete = false;
-  holding = false; press = null; pressAnim = 0; springAnim = 0; hitStop = 0; stopWhoosh(); state.practice = false; state.runLetters = 0; queuedReverse = false; graceCrash = null; realInput = false; ui.resumeOverlay.hidden = true; state.dailyRun = null; dailyRandom = null;
+  holding = false; press = null; pressAnim = 0; springAnim = 0; hitStop = 0; stopWhoosh(); resetGuide(); state.practice = false; state.runLetters = 0; queuedReverse = false; graceCrash = null; realInput = false; ui.resumeOverlay.hidden = true; state.dailyRun = null; dailyRandom = null;
   state.runFragments = 0;
   state.score = 0;
   state.multiplier = 1;
@@ -348,6 +348,110 @@ function resetTutorialStep() {
 
 function skipTutorial() {
   state.tutorialSeen = true; save(); tutorialSession = null; ui.tutorialPanel.hidden = true; ui.shell.classList.remove("playing"); stopMusic(); showScreen("campaign");
+}
+
+// Guided First Light: a new player's PLAY starts Level 1 itself. The first two gates wait in slow motion for a tap
+// (gate 1 waits completely, gate 2 only slows), a miss in the first three bounces the gate back out instead of
+// crashing, and the HUD stays hidden until they're done. First-time tips (hold, gold postmark, fragment) follow.
+// All of it needs a real (trusted) touch and only changes the frame loop's time scale, so the tests never see it.
+// The old four-step practice stays for Settings > Replay tutorial.
+const GUIDE_GATES = 3;
+let liveTouch = false, guide = null, timeScale = 1, coachMode = "", tipTime = 0, tipFreeze = 0, holdTip = 0;
+const guidePip = window.OrbitPip?.create(ui.guidePip) || null;
+function tips() { return state.post.tips ||= {}; }
+function resetGuide() {
+  guide = null; timeScale = 1; tipTime = 0; tipFreeze = 0; holdTip = 0; setCoach("");
+  ui.shell.classList.remove("guided"); ui.guideIntro.hidden = true;
+}
+function startGuided() {
+  if (startRun("campaign", "first-light") === false) return;
+  guide = { stage: "intro", passed: 0, shaped: 0, lastGap: Infinity };
+  ui.shell.classList.add("guided"); ui.guideIntro.hidden = false;
+  guidePip?.setReady(true); guidePip?.react("present");
+}
+function beginGuided() {
+  if (guide?.stage !== "intro") return;
+  guide.stage = "fly"; liveTouch = true; ui.guideIntro.hidden = true;
+  beep(520, .08, "triangle"); beep(780, .12, "triangle"); vibrate(10);
+}
+function endGuide() {
+  guide = null; state.tutorialSeen = true; save();
+  ui.shell.classList.remove("guided");
+  labels.push({ text: "YOU'VE GOT IT", life: 1.2, max: 1.2, y: cy - orbitRadius - 52 });
+}
+function guidePass(nice) {
+  guide.passed += 1; guide.lastGap = Infinity;
+  if (nice) labels.push({ text: "NICE!", life: .8, max: .8, y: cy - orbitRadius - 28 });
+  beep(660 + guide.passed * 110, .1, "triangle");
+  if (guide.passed >= GUIDE_GATES) endGuide();
+}
+// A guided miss: the gate springs back out and comes round again, so nothing can end the run yet.
+function bounceGate(gate) {
+  gate.resolved = false; gate.age = 0;
+  gate.radius = gate.previousRadius = orbitRadius + Math.min(130, Math.min(width, height) * .3);
+  plannedTurns = []; guide.lastGap = Infinity;
+  labels.push({ text: "AGAIN!", life: .9, max: .9, y: cy - orbitRadius - 28 });
+  rings.push({ radius: orbitRadius, life: .5, max: .5, color: currentCosmetic().light, speed: 90 });
+  burst(playerPoint(), currentCosmetic().light, 8, 90, "paper");
+  shake = state.reducedEffects ? 1 : 4; beep(240, .12, "sine"); vibrate(20);
+}
+// Guided gates 1 and 2 always need one tap at a teachable moment: the gap moves to where a turn about 1.1 s before
+// the crossing would land (flying straight on would hit the wall).
+function shapeGuidedGate(gate) {
+  if (!guide || guide.shaped >= 2) return;
+  guide.shaped += 1;
+  if (gates.some(other => !other.resolved)) return;
+  const turn = Math.max(.4, gate.flight - 1.1);
+  const target = routeAngle({ elapsed: state.elapsed, angle: player.angle, direction: player.direction }, gate.flight, [turn]);
+  Object.assign(gate, { target, gap: normalize(target - gate.rotation * gate.travel), turns: [turn], wantsTurn: true, sideOpening: isSideOpening(target) });
+  plannedTurns = [state.elapsed + turn];
+}
+// The coached gate's time scale while a tap is needed: gate 1 slows, then stops completely once a turn would land
+// near the middle of the gap (or would start drifting away from it); gate 2 only slows.
+function guideWait() {
+  if (!guide || guide.stage !== "fly" || guide.passed >= 2) return null;
+  const gate = gates.filter(item => !item.resolved && item.radius > orbitRadius).sort((a, b) => a.radius - b.radius)[0];
+  if (!gate) { guide.lastGap = Infinity; return null; }
+  const t = gateTravelTime(gate, gate.radius - orbitRadius), gap = normalize(gate.gap + gate.rotation * t), half = gate.opening / 2 - .125;
+  const travel = orbitalTravel(state.elapsed, t) * foldSpeed();
+  const straight = angleDistance(normalize(player.angle + player.direction * travel), gap), turned = angleDistance(normalize(player.angle - player.direction * travel), gap);
+  if (straight <= half || turned > half || t > 1.8) { guide.lastGap = Infinity; return null; }
+  if (guide.passed === 1) return .32;
+  const closing = turned < guide.lastGap - 1e-6; guide.lastGap = turned;
+  return closing && turned > half * .3 ? .07 : 0;
+}
+function showTip(text) {
+  setCoach("tip", text); tipTime = 2.6; tipFreeze = .9;
+  beep(988, .1, "sine"); beep(1319, .16, "sine");
+}
+function tipReady(name) { return liveTouch && state.runType === "campaign" && !state.practice && !tips()[name]; }
+function setCoach(mode, sub = "") {
+  if (mode === coachMode && (mode !== "tip" || !sub)) return;
+  coachMode = mode; ui.coach.hidden = !mode;
+  if (!mode) return;
+  ui.coach.dataset.mode = mode; ui.coachRing?.setAttribute?.("stroke-dasharray", "0 100");
+  ui.coachCap.textContent = mode === "hold" ? "HOLD" : "TAP!";
+  ui.coachSub.textContent = mode === "hold" ? "to fly faster" : sub;
+  ui.coach.style.setProperty("--cy", `${cy}px`); ui.coach.style.setProperty("--orbit", `${orbitRadius}px`); ui.coach.style.setProperty("--planet", `${planetRadius}px`);
+}
+// Runs once per drawn frame with real seconds, before the simulation step it scales.
+function updateCoach(delta) {
+  if (!ui.guideIntro.hidden) guidePip?.tick(delta);
+  if (state.mode !== "run" || state.paused) { timeScale = 1; if (coachMode) setCoach(""); return; }
+  let target = 1, mode = "";
+  if (guide?.stage === "intro") target = 0;
+  const wait = guideWait();
+  if (wait !== null) { target = wait; mode = guide.passed === 0 ? "tap" : "tap-lite"; }
+  if (!mode && holdTip === 0 && state.levelId === "pollen-path" && state.expressFold && state.elapsed > 1 && tipReady("hold")) holdTip = 8;
+  if (!mode && holdTip > 0) {
+    holdTip -= delta; target = .25; mode = "hold";
+    ui.coachRing?.setAttribute?.("stroke-dasharray", `${(player.fold * 100).toFixed(1)} 100`);
+    if (player.fold >= .99 || holdTip <= 0) { holdTip = -1; tips().hold = true; save(); mode = ""; target = 1; if (player.fold >= .99) labels.push({ text: "FASTER!", life: .8, max: .8, y: cy - orbitRadius - 28 }); }
+  }
+  if (tipTime > 0) { tipTime -= delta; if (!mode) mode = "tip"; if (tipFreeze > 0) { tipFreeze -= delta; target = Math.min(target, .06); } }
+  if (mode !== "tip" || coachMode !== "tip") setCoach(mode);
+  timeScale = target < timeScale ? timeScale + (target - timeScale) * Math.min(1, delta * 14) : Math.min(target, timeScale + delta * 3);
+  if (timeScale < .002) timeScale = 0;
 }
 
 // Forgiveness (real input only, so the test autopilot is unchanged): a tap inside the 75 ms debounce is queued instead
@@ -866,6 +970,7 @@ let press = null, pressAnim = 0, springAnim = 0, hitStop = 0;
 function liftTurn() { return state.expressFold && !state.classicTurn && state.runType !== "tutorial"; }
 function pressDown() {
   if (state.mode !== "run" || state.paused) return;
+  if (guide?.stage === "intro") { beginGuided(); return; }
   if (!liftTurn()) { tapInput(); pressHold(); return; }
   realInput = true; press = { start: performance.now(), hold: false };
   vibrate(10); beep(1320, .018, "square");
@@ -993,6 +1098,7 @@ function spawnGate() {
     sideOpening:isSideOpening(plan.target),warningStrength:level?.warningStrength || 0,recovery:forceEasy,
   };
   if (!gate.guardian && !paired && gateCount % 4 === 2) gate.letter = gateCount % 8 === 2 ? 1 : -1;
+  shapeGuidedGate(gate);
   gates.push(gate);
   recoveryGate = !gate.guardian && gate.sideOpening && !forceEasy;
   gateCount += 1;
@@ -1229,6 +1335,7 @@ function updateFragments(delta,worldScale,previousPlayer) {
         labels.push({ text: state.runFragments>3 ? "BONUS FRAGMENT +3" : `FRAGMENT ${state.runFragments}/3`, life: 1, max: 1, y: cy - orbitRadius - 28 });
         burst(playerPoint(), currentCosmetic().gold, 14, 130, "paper");
         beep(720 + Math.min(6,state.runFragments) * 80, .1, "triangle");
+        if (tipReady("fragment")) { tips().fragment = true; save(); showTip("Catch 3 fragments\nto earn a star"); }
     }
   }
   fragments = fragments.filter((fragment) => fragment.collected ? fragment.snapLife>0 : fragment.radius > orbitRadius-pickupRadius-10);
@@ -1242,6 +1349,7 @@ function resolveGate(gate,crossingAngle=player.angle,crossingGap=gate.gap) {
   const distance = angleDistance(crossingAngle, crossingGap);
   const clearance = gate.opening / 2 - 0.105 - distance;
   if (clearance < 0) {
+    if (guide?.stage === "fly") { bounceGate(gate); return; }
     const movingAway = angleDistance(normalize(crossingAngle + player.direction * .01), crossingGap) > distance;
     if (realInput && clearance > -.05 && movingAway && state.runType !== "tutorial" && !graceCrash) graceCrash = { deadline: performance.now() + 70 };
     else beginCrash("gate");
@@ -1253,6 +1361,7 @@ function resolveGate(gate,crossingAngle=player.angle,crossingGap=gate.gap) {
     if (gate.tutorialKind === "perfect" && clearance >= perfectWindow(gate)) { resetTutorialStep(); return; }
     advanceTutorial(); return;
   }
+  if (guide?.stage === "fly") guidePass(clearance >= perfectWindow(gate));
   state.gatesPassed += 1;
   state.runStars += 1;
   updateGoals("gate", 1);
@@ -1272,6 +1381,7 @@ function resolveGate(gate,crossingAngle=player.angle,crossingGap=gate.gap) {
     burst(playerPoint(), currentCosmetic().gold, 18, 175, "paper");
     beep([523, 587, 659, 784, 880, 1047, 1175, 1319][Math.min(7, state.streak - 1)], 0.09, "triangle");
     if (realInput && state.streak >= 4) hitStop = .05;
+    if (tipReady("perfect")) { tips().perfect = true; save(); showTip("Thread close to the edge\nfor a gold postmark"); }
     if (state.feverCharge >= 5 && state.fever <= 0) {
       state.fever = 6;
       state.feverCharge = 0;
@@ -1319,6 +1429,23 @@ function updateAwakening(delta) {
   if(awakening.life<=0)finishAwakening();
 }
 
+// While the coach asks for a tap: a red dashed path runs on into the wall, a pulsing gold one turns back to the gap.
+function drawCoachPath(time) {
+  if (coachMode !== "tap" && coachMode !== "tap-lite") return;
+  const a = player.angle, d = player.direction, r = orbitRadius + 20;
+  const path = (from, to, color, lineWidth) => {
+    ctx.strokeStyle = color; ctx.lineWidth = lineWidth; ctx.setLineDash([3, 8]);
+    ctx.beginPath(); ctx.arc(cx, cy, r, Math.min(from, to), Math.max(from, to)); ctx.stroke(); ctx.setLineDash([]);
+    const tip = to, sign = Math.sign(to - from), x = cx + Math.cos(tip) * r, y = cy + Math.sin(tip) * r;
+    const tx = -Math.sin(tip) * sign, ty = Math.cos(tip) * sign, nx = Math.cos(tip), ny = Math.sin(tip);
+    ctx.beginPath(); ctx.moveTo(x - tx * 11 + nx * 7, y - ty * 11 + ny * 7); ctx.lineTo(x, y); ctx.lineTo(x - tx * 11 - nx * 7, y - ty * 11 - ny * 7); ctx.stroke();
+  };
+  ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.globalAlpha = .8; path(a + d * .16, a + d * .7, "#FF6F61", 3);
+  ctx.globalAlpha = .65 + .35 * Math.sin(time * 7); path(a - d * .16, a - d * .9, "#FFC94D", 4);
+  ctx.restore();
+}
+
 function draw() {
   const time = performance.now() / 1000;
   const palette = currentCosmetic();
@@ -1340,6 +1467,7 @@ function draw() {
   drawHazards(time, palette);
   drawComets(time, palette);
   drawTrail(palette);
+  drawCoachPath(time);
   if (state.mode !== "crash" && state.mode !== "results") drawPlayer(time, palette);
   drawParticles();
   drawRings();
@@ -2103,7 +2231,7 @@ function nextCampaignLevel() {
 }
 
 function playFromHome() {
-  if (!state.tutorialSeen) { startTutorial(); return; }
+  if (!state.tutorialSeen) { startGuided(); return; }
   startRun("campaign", nextCampaignLevel().id);
 }
 
@@ -2826,8 +2954,9 @@ function frame(time) {
   lastTime = time;
   // Catch up slower frames in small collision-safe steps, without a long resume jump.
   const steps = Math.max(1, Math.ceil(delta * 60));
+  updateCoach(delta);
   if (hitStop > 0) hitStop = Math.max(0, hitStop - delta);
-  else for (let step = 0; step < steps; step += 1) update(delta / steps);
+  else for (let step = 0; step < steps; step += 1) update(delta * timeScale / steps);
   if (state.mode !== "run" && whoosh) stopWhoosh();
   if (!coveredModes.has(state.mode)) draw();
   drawHomePreview(time / 1000);
@@ -2838,7 +2967,8 @@ function frame(time) {
 }
 
 window.addEventListener("resize", () => { resize(); if (!ui.home.hidden) placePip(); });
-canvas.addEventListener("pointerdown", () => { if (awakening?.skippable) finishAwakening(); else pressDown(); });
+canvas.addEventListener("pointerdown", event => { if (event?.isTrusted) liveTouch = true; if (awakening?.skippable) finishAwakening(); else pressDown(); });
+ui.guideIntro.addEventListener("pointerdown", beginGuided);
 window.addEventListener("pointerup", pressUp);
 for (const type of ["pointercancel", "blur"]) window.addEventListener(type, pressCancel);
 document.querySelector("#play").addEventListener("click", playFromHome);
@@ -2881,7 +3011,7 @@ ui.copyReport.addEventListener("click", async () => {
 });
 window.addEventListener("keydown", (event) => {
   if (event.repeat) return;
-  if (state.mode === "run" && ui.resumeOverlay.hidden && ["Space", "ArrowLeft", "ArrowRight"].includes(event.code)) { event.preventDefault(); pressDown(); window.addEventListener("keyup", pressUp, { once: true }); return; }
+  if (state.mode === "run" && ui.resumeOverlay.hidden && ["Space", "ArrowLeft", "ArrowRight"].includes(event.code)) { event.preventDefault(); if (event.isTrusted) liveTouch = true; pressDown(); window.addEventListener("keyup", pressUp, { once: true }); return; }
   if(state.mode!=="run"&&event.target?.closest?.("button,input,select"))return;
   if (["Space", "ArrowLeft", "ArrowRight"].includes(event.code)) {
     event.preventDefault();
