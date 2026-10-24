@@ -25,7 +25,7 @@ const ui = {
   rewardCount: document.querySelector("#rewardCount"), rewardBonus: document.querySelector("#rewardBonus"), rewardCard: document.querySelector("#rewardCard"), equipReward: document.querySelector("#equipReward"),
   resultStarChip: document.querySelector("#resultStarChip"), resultStarTotal: document.querySelector("#resultStarTotal"),
   mapNext: document.querySelector("#mapNext"), ascensionBest: document.querySelector("#ascensionBest"), chapterPlay: document.querySelector("#chapterPlay"), chapterPlayLevel: document.querySelector("#chapterPlayLevel"),
-  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), retry: document.querySelector("#retry"), retryLabel: document.querySelector("#retryLabel"), nextLevel: document.querySelector("#nextLevel"), nextLevelTitle: document.querySelector("#nextLevelTitle"), nextLevelName: document.querySelector("#nextLevelName"), extras: document.querySelector("#extrasToggle"), mailTabs: document.querySelector("#mailTabs"), cardBadge: document.querySelector("#cardBadge"), postcard: document.querySelector("#postcard"), cardStrip: document.querySelector("#cardStrip"), albumIsles: document.querySelector("#albumIsles"), albumPage: document.querySelector("#albumPage"), parcelOverlay: document.querySelector("#parcelOverlay"), parcelBox: document.querySelector("#parcelBox"), parcelGifts: document.querySelector("#parcelGifts"), parcelCollect: document.querySelector("#parcelCollect"), openMail: document.querySelector("#openMail"), mailBadge: document.querySelector("#mailBadge"), lanterns: document.querySelector("#lanterns"),
+  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), classic: document.querySelector("#classicToggle"), retry: document.querySelector("#retry"), retryLabel: document.querySelector("#retryLabel"), nextLevel: document.querySelector("#nextLevel"), nextLevelTitle: document.querySelector("#nextLevelTitle"), nextLevelName: document.querySelector("#nextLevelName"), extras: document.querySelector("#extrasToggle"), mailTabs: document.querySelector("#mailTabs"), cardBadge: document.querySelector("#cardBadge"), postcard: document.querySelector("#postcard"), cardStrip: document.querySelector("#cardStrip"), albumIsles: document.querySelector("#albumIsles"), albumPage: document.querySelector("#albumPage"), parcelOverlay: document.querySelector("#parcelOverlay"), parcelBox: document.querySelector("#parcelBox"), parcelGifts: document.querySelector("#parcelGifts"), parcelCollect: document.querySelector("#parcelCollect"), openMail: document.querySelector("#openMail"), mailBadge: document.querySelector("#mailBadge"), lanterns: document.querySelector("#lanterns"),
   pip: document.querySelector("#pip"), homeAscension: document.querySelector("#homeAscension"), mailbag: document.querySelector("#mailbag"), letterNight: document.querySelector("#letterNight"),
   letterCard: document.querySelector("#letterCard"), letterTitle: document.querySelector("#letterTitle"), letterScore: document.querySelector("#letterScore"), flyLetter: document.querySelector("#flyLetter"),
   shareLetter: document.querySelector("#shareLetter"), shareLetterMail: document.querySelector("#shareLetterMail"), practiceGuardian: document.querySelector("#practiceGuardian"), resumeOverlay: document.querySelector("#resumeOverlay"), resumeButton: document.querySelector("#resumeButton"), nearMiss: document.querySelector("#nearMiss"),
@@ -127,7 +127,7 @@ const state = {
   goals: initialGoals, goalCycle, goalsCompleted: Number(saved.goalsCompleted) || 0,
   unlockedTrails: saved.unlockedTrails || ["paper"], selectedTrail: saved.selectedTrail || "paper", relics: saved.relics || [],
   stats: initialStats,
-  daily: saved.daily || null, muted: Boolean(saved.muted), haptics: saved.haptics !== false, reducedEffects: Boolean(saved.reducedEffects), expressFold: saved.expressFold !== false, nightPostExtras: saved.nightPostExtras !== false,
+  daily: saved.daily || null, muted: Boolean(saved.muted), haptics: saved.haptics !== false, reducedEffects: Boolean(saved.reducedEffects), expressFold: saved.expressFold !== false, classicTurn: saved.classicTurn === true, nightPostExtras: saved.nightPostExtras !== false,
   tutorialSeen: Boolean(saved.tutorialSeen), elapsed: 0, paused: false,
   runType: "endless", levelId: null, levelComplete: false, runFragments: 0, chapter: "bloom",
   campaign: initialCampaign,
@@ -201,7 +201,7 @@ function save() {
     selected: state.selected, stars: state.stars, ownedRiders: state.ownedRiders, selectedRider: state.selectedRider,
     goals: state.goals, goalCycle: state.goalCycle, goalsCompleted: state.goalsCompleted,
     unlockedTrails: state.unlockedTrails, selectedTrail: state.selectedTrail, relics: state.relics, stats: state.stats,
-    muted: state.muted, haptics: state.haptics, reducedEffects: state.reducedEffects, expressFold: state.expressFold, tutorialSeen: state.tutorialSeen,
+    muted: state.muted, haptics: state.haptics, reducedEffects: state.reducedEffects, expressFold: state.expressFold, classicTurn: state.classicTurn, tutorialSeen: state.tutorialSeen,
     campaign: state.campaign, daily: state.daily, nightPostExtras: state.nightPostExtras, post: state.post,
   })); } catch {}
 }
@@ -243,7 +243,7 @@ function startRun(runType = "endless", levelId = null) {
   state.runType = runType;
   state.levelId = levelId;
   state.levelComplete = false;
-  holding = false; state.practice = false; state.runLetters = 0; queuedReverse = false; graceCrash = null; realInput = false; ui.resumeOverlay.hidden = true; state.dailyRun = null; dailyRandom = null;
+  holding = false; press = null; pressAnim = 0; springAnim = 0; hitStop = 0; stopWhoosh(); state.practice = false; state.runLetters = 0; queuedReverse = false; graceCrash = null; realInput = false; ui.resumeOverlay.hidden = true; state.dailyRun = null; dailyRandom = null;
   state.runFragments = 0;
   state.score = 0;
   state.multiplier = 1;
@@ -361,7 +361,7 @@ function reverse() {
   if (graceCrash) { graceCrash = null; labels.push({ text: "CLOSE CALL", life: .8, max: .8, y: cy - orbitRadius - 28 }); }
   player.direction *= -1;
   player.flip = 1;
-  burst(playerPoint(), currentCosmetic().accent, 7, 90, "dot");
+  burst(playerPoint(), currentCosmetic().accent, 7, 90, "dot"); burst(playerPoint(), currentCosmetic().light, 4, 70, "paper");
   if (tutorialSession?.step === 0) advanceTutorial();
   beep(300 + (player.direction > 0 ? 65 : 0), 0.045, "triangle");
   vibrate(8);
@@ -370,7 +370,8 @@ function reverse() {
 function tapInput() { realInput = true; if (!reverse() && state.mode === "run" && !state.paused) queuedReverse = true; }
 function updateForgiveness() {
   if (queuedReverse && performance.now() - lastReverse >= 75) { queuedReverse = false; reverse(); }
-  if (graceCrash && performance.now() > graceCrash.deadline) { graceCrash = null; beginCrash("gate"); }
+  const pending = press && !press.hold && press.start <= graceCrash?.deadline;
+  if (graceCrash && performance.now() > graceCrash.deadline && !pending) { graceCrash = null; beginCrash("gate"); }
 }
 
 function beginCrash(cause = "gate") {
@@ -843,14 +844,38 @@ function brushSpark(hazard) {
 }
 
 function updateFold(delta) {
+  if (press && !press.hold && performance.now() - press.start >= HOLD_DECIDE * 1000) { press.hold = true; holding = true; holdStart = press.start; }
+  pressAnim = press && !press.hold ? Math.min(1, pressAnim + delta * 14) : Math.max(0, pressAnim - delta * 12);
+  springAnim = Math.max(0, springAnim - delta * 7);
   const tucked = state.expressFold && holding && state.mode === "run" && performance.now() - holdStart >= FOLD_HOLD * 1000;
   const before = player.fold;
   player.fold = tucked ? Math.min(1, player.fold + delta * 7) : Math.max(0, player.fold - delta * 9);
-  if (before === 0 && player.fold > 0) { beep(170, .09, "sine"); vibrate(4); }
+  if (before === 0 && player.fold > 0) { startWhoosh(); vibrate(8); }
+  if (!tucked && before > .45 && springAnim === 0 && player.fold < before) { springAnim = 1; burst(playerPoint(), currentCosmetic().light, 8, 110, "paper"); stopWhoosh(); }
+  if (!tucked && player.fold === 0) stopWhoosh();
   if (player.fold > 0) state.score += delta * 6 * player.fold;
 }
 function pressHold() { if (state.mode === "run") { holdStart = performance.now(); holding = true; } }
 function releaseHold() { holding = false; }
+// Tap = turn, hold = fly faster. A press can't tell a tap from a hold, so with Express fold on (and "Classic: turn on
+// touch" off) the turn happens when the finger lifts within HOLD_DECIDE, and a press still down at HOLD_DECIDE tucks
+// for speed and never turns. The press is answered in the same frame (crouch, tick, ring timer) so the wait isn't felt.
+// The practice tutorial keeps turn-on-touch: it has no boost to teach.
+const HOLD_DECIDE = .18;
+let press = null, pressAnim = 0, springAnim = 0, hitStop = 0;
+function liftTurn() { return state.expressFold && !state.classicTurn && state.runType !== "tutorial"; }
+function pressDown() {
+  if (state.mode !== "run" || state.paused) return;
+  if (!liftTurn()) { tapInput(); pressHold(); return; }
+  realInput = true; press = { start: performance.now(), hold: false };
+  vibrate(10); beep(1320, .018, "square");
+}
+function pressUp() {
+  const tap = press && !press.hold && state.mode === "run";
+  press = null; releaseHold();
+  if (tap) tapInput();
+}
+function pressCancel() { press = null; releaseHold(); }
 
 function orbitalTravel(elapsed,duration) {
   const primitive=t=>{const capped=Math.min(t,(2.45-1.66)/.009);return 1.66*capped+.0045*capped*capped+2.45*(t-capped);};
@@ -1095,8 +1120,8 @@ function update(delta) {
   player.flip = Math.max(0, player.flip - delta * 7);
   player.glow = Math.max(0, player.glow - delta * 2.8);
   trail.unshift({ ...playerPoint(), life: 1 });
-  trail = trail.slice(0, state.fever > 0 ? 26 : player.fold > .3 ? 22 : 14);
-  for (const point of trail) point.life -= delta * 1.9;
+  trail = trail.slice(0, state.fever > 0 ? 26 : player.fold > .3 ? 24 : 14);
+  for (const point of trail) point.life -= delta * 1.9 * (1 - .45 * player.fold);
 
   for (const gate of gates) {
     gate.previousRadius = gate.radius;
@@ -1245,7 +1270,8 @@ function resolveGate(gate,crossingAngle=player.angle,crossingGap=gate.gap) {
     rings.push({ radius: orbitRadius, life: 0.65, max: 0.65, color: currentCosmetic().gold, speed: 72 });
     labels.push({ text: state.feverCharge===5 ? "FEVER" : "PERFECT", life: 0.8, max: 0.8, y: cy - orbitRadius - 28 });
     burst(playerPoint(), currentCosmetic().gold, 18, 175, "paper");
-    beep(570 + Math.min(5, state.streak) * 62, 0.07, "triangle");
+    beep([523, 587, 659, 784, 880, 1047, 1175, 1319][Math.min(7, state.streak - 1)], 0.09, "triangle");
+    if (realInput && state.streak >= 4) hitStop = .05;
     if (state.feverCharge >= 5 && state.fever <= 0) {
       state.fever = 6;
       state.feverCharge = 0;
@@ -1302,6 +1328,8 @@ function draw() {
   if (state.runType === "campaign") drawBloomScenery(time, palette);
   drawJourneyTransition(time, palette);
   drawPaperWaves(time, palette);
+  const pull = 1 - .035 * player.fold;
+  ctx.save(); if (pull < 1) { ctx.translate(cx, cy); ctx.scale(pull, pull); ctx.translate(-cx, -cy); }
   drawGates(time, palette);
   drawFragments(time, palette);
   drawGuardianAura(time, palette);
@@ -1315,6 +1343,7 @@ function draw() {
   if (state.mode !== "crash" && state.mode !== "results") drawPlayer(time, palette);
   drawParticles();
   drawRings();
+  ctx.restore();
   drawLabels(palette);
   if (state.mode === "crash") drawCrashCurtain(palette);
   if (tutorialSession && state.mode === "run") drawTutorial(time, palette);
@@ -1679,8 +1708,8 @@ function drawTrail(palette) {
   for (let i = trail.length - 1; i >= 0; i -= 1) {
     const point = trail[i];
     const size = Math.max(1, (1 - i / trail.length) * (state.fever > 0 ? 9 : 5));
-    ctx.globalAlpha = Math.max(0, point.life) * 0.52;
-    ctx.fillStyle = i % 2 ? palette.accent : palette.gold;
+    ctx.globalAlpha = Math.max(0, point.life) * (0.52 + .3 * player.fold);
+    ctx.fillStyle = i % 2 ? (player.fold > .3 ? palette.light : palette.accent) : palette.gold;
     drawTrailPiece(ctx,state.selectedTrail,point.x,point.y,size,player.angle,i);
   }
   ctx.restore();
@@ -1702,12 +1731,16 @@ function drawTrailPiece(target,id,x,y,size,angle,index) {
 
 function drawPlayer(time, palette) {
   const point = playerPoint();
-  const scale = width < 350 ? 0.88 : width > 420 ? 1.08 : 1;
+  const scale = width < 350 ? 0.88 : width > 420 ? 1.08 : 1, fold = player.fold;
+  if (fold > .05) drawBoostAura(point, palette, fold);
+  if (press && !press.hold) drawPressRing(point, Math.min(1, (performance.now() - press.start) / (HOLD_DECIDE * 1000)));
+  // Small, short shape changes only: the glider art itself is unchanged.
+  const flip = Math.min(1, player.flip * 1.6), crouch = pressAnim * .08, spring = springAnim * Math.sin(springAnim * Math.PI);
   ctx.save();
   ctx.translate(point.x, point.y);
   ctx.rotate(player.angle + player.direction * Math.PI / 2 + player.flip * player.direction * 0.18);
-  ctx.scale(scale * (1 + player.fold * .08), scale * (1 - player.fold * .3));
-  if (player.fold > .05) drawFoldStreaks(palette);
+  ctx.scale(scale * (1 + fold * .12 + flip * .08 + crouch * .4 - spring * .04), scale * (1 - fold * .3 - flip * .07 - crouch + spring * .08));
+  if (fold > .05) drawFoldStreaks(palette);
   drawGlider(ctx, currentRider(), palette, 1, time, player.flip, state.fever > 0, player.glow);
   ctx.restore();
 }
@@ -1813,6 +1846,26 @@ function drawLetter(angle, radius, palette, time) {
 }
 
 // Paper streaks peel off the tucked glider's wings (glider space: nose points +x).
+// Boost: a gold glow under the glider and wind lines trailing along the orbit; gold streaks after 1 s and 2 s held.
+function drawBoostAura(point, palette, fold) {
+  ctx.save();
+  const glow = ctx.createRadialGradient(point.x, point.y, 2, point.x, point.y, 40);
+  glow.addColorStop(0, colorAlpha(palette.gold, .32 * fold)); glow.addColorStop(1, colorAlpha(palette.gold, 0));
+  ctx.fillStyle = glow; ctx.fillRect(point.x - 42, point.y - 42, 84, 84);
+  const held = holding ? (performance.now() - holdStart) / 1000 : 0, gold = held > 1;
+  ctx.lineCap = "round";
+  for (let i = 0; i < 6; i += 1) {
+    const off = (i - 2.5) * 6, start = player.angle - player.direction * (.1 + (i % 2) * .04), length = .14 + ((i * 37) % 5) * .04 * fold;
+    ctx.strokeStyle = colorAlpha(gold && i % 2 ? palette.gold : palette.light, (.26 + .18 * (2.5 - Math.abs(i - 2.5)) / 2.5) * fold * (held > 2 ? 1.3 : 1));
+    ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, orbitRadius + off, start, start - player.direction * length, player.direction > 0); ctx.stroke();
+  }
+  ctx.restore();
+}
+// The press timer: a mint ring sweeps round the glider until the press becomes a hold.
+function drawPressRing(point, progress) {
+  ctx.save(); ctx.strokeStyle = "rgba(168,240,207,.75)"; ctx.lineWidth = 2.4; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.arc(point.x, point.y, 25, -Math.PI / 2, -Math.PI / 2 + progress * TAU); ctx.stroke(); ctx.restore();
+}
 function drawFoldStreaks(palette) {
   ctx.save(); ctx.globalAlpha = .55 * player.fold; ctx.fillStyle = palette.light;
   const t = performance.now() / 90;
@@ -2121,6 +2174,7 @@ function updateHome() {
   ui.haptics.checked = state.haptics;
   ui.effects.checked = state.reducedEffects;
   ui.fold.checked = state.expressFold;
+  ui.classic.checked = state.classicTurn;
   ui.extras.checked = state.nightPostExtras;
   renderGoals();
 }
@@ -2637,6 +2691,27 @@ function tone(frequency, duration, type = "sine", volume = .012) {
   oscillator.connect(gain).connect(audio.destination); oscillator.start(); oscillator.stop(audio.currentTime + duration);
 }
 
+// Boost whoosh: looping noise through a band-pass that climbs about four semitones while held.
+let whoosh = null, noiseBuffer = null;
+function startWhoosh() {
+  if (state.muted || whoosh) return;
+  try {
+    ensureAudio();
+    if (!noiseBuffer) { noiseBuffer = audio.createBuffer(1, audio.sampleRate, audio.sampleRate); const data = noiseBuffer.getChannelData(0); for (let i = 0; i < data.length; i += 1) data[i] = Math.random() * 2 - 1; }
+    const source = audio.createBufferSource(), filter = audio.createBiquadFilter(), gain = audio.createGain(), now = audio.currentTime;
+    source.buffer = noiseBuffer; source.loop = true; filter.type = "bandpass"; filter.Q.value = 1.2;
+    filter.frequency.setValueAtTime(520, now); filter.frequency.exponentialRampToValueAtTime(660, now + 2);
+    gain.gain.setValueAtTime(.0001, now); gain.gain.exponentialRampToValueAtTime(.05, now + .12);
+    source.connect(filter).connect(gain).connect(audio.destination); source.start();
+    whoosh = { source, gain };
+  } catch { whoosh = null; }
+}
+function stopWhoosh() {
+  if (!whoosh) return;
+  const { source, gain } = whoosh; whoosh = null;
+  try { const now = audio.currentTime; gain.gain.cancelScheduledValues(now); gain.gain.setValueAtTime(Math.max(.0001, gain.gain.value), now); gain.gain.exponentialRampToValueAtTime(.0001, now + .22); source.stop(now + .25); } catch {}
+}
+
 function startMusic() {
   if (state.muted) return;
   try { ensureAudio(); } catch { return; }
@@ -2700,7 +2775,9 @@ function frame(time) {
   lastTime = time;
   // Catch up slower frames in small collision-safe steps, without a long resume jump.
   const steps = Math.max(1, Math.ceil(delta * 60));
-  for (let step = 0; step < steps; step += 1) update(delta / steps);
+  if (hitStop > 0) hitStop = Math.max(0, hitStop - delta);
+  else for (let step = 0; step < steps; step += 1) update(delta / steps);
+  if (state.mode !== "run" && whoosh) stopWhoosh();
   if (!coveredModes.has(state.mode)) draw();
   drawHomePreview(time / 1000);
   drawHangarShowcase(time / 1000);
@@ -2710,8 +2787,9 @@ function frame(time) {
 }
 
 window.addEventListener("resize", () => { resize(); if (!ui.home.hidden) placePip(); });
-canvas.addEventListener("pointerdown", () => { if (awakening?.skippable) finishAwakening(); else { tapInput(); pressHold(); } });
-for (const type of ["pointerup", "pointercancel", "blur"]) window.addEventListener(type, releaseHold);
+canvas.addEventListener("pointerdown", () => { if (awakening?.skippable) finishAwakening(); else pressDown(); });
+window.addEventListener("pointerup", pressUp);
+for (const type of ["pointercancel", "blur"]) window.addEventListener(type, pressCancel);
 document.querySelector("#play").addEventListener("click", playFromHome);
 ui.chapterPlay.addEventListener("click", () => launchCampaignLevel(ui.chapterPlay.dataset.level, ui.chapterPlay));
 document.querySelector("#openIslands").addEventListener("click", () => showScreen("campaign"));
@@ -2731,6 +2809,7 @@ ui.sound.addEventListener("change", () => { state.muted = !ui.sound.checked; sav
 ui.haptics.addEventListener("change", () => { state.haptics = ui.haptics.checked; save(); vibrate(15); });
 ui.effects.addEventListener("change", () => { state.reducedEffects = ui.effects.checked; save(); });
 ui.fold.addEventListener("change", () => { state.expressFold = ui.fold.checked; save(); });
+ui.classic.addEventListener("change", () => { state.classicTurn = ui.classic.checked; save(); });
 ui.extras.addEventListener("change", () => { state.nightPostExtras = ui.extras.checked; if (state.nightPostExtras) keepLanterns(); save(); });
 ui.mailTabs.addEventListener("click", event => { const tab = event.target.closest?.("[data-mail]")?.dataset.mail; if (!tab || tab === mailTab) return; mailTab = tab; beep(360, .03, "triangle"); renderMailbag(); });
 ui.postcard.addEventListener("click", () => { if (ui.postcard.classList.contains?.("empty")) return; ui.postcard.classList.toggle("flipped"); beep(300, .05, "triangle"); });
@@ -2747,7 +2826,7 @@ ui.copyReport.addEventListener("click", async () => {
 });
 window.addEventListener("keydown", (event) => {
   if (event.repeat) return;
-  if (state.mode === "run" && ["Space", "ArrowLeft", "ArrowRight"].includes(event.code)) { pressHold(); window.addEventListener("keyup", releaseHold, { once: true }); }
+  if (state.mode === "run" && ui.resumeOverlay.hidden && ["Space", "ArrowLeft", "ArrowRight"].includes(event.code)) { event.preventDefault(); pressDown(); window.addEventListener("keyup", pressUp, { once: true }); return; }
   if(state.mode!=="run"&&event.target?.closest?.("button,input,select"))return;
   if (["Space", "ArrowLeft", "ArrowRight"].includes(event.code)) {
     event.preventDefault();
