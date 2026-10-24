@@ -25,7 +25,7 @@ const ui = {
   rewardCount: document.querySelector("#rewardCount"), rewardBonus: document.querySelector("#rewardBonus"), rewardCard: document.querySelector("#rewardCard"), equipReward: document.querySelector("#equipReward"),
   resultStarChip: document.querySelector("#resultStarChip"), resultStarTotal: document.querySelector("#resultStarTotal"),
   mapNext: document.querySelector("#mapNext"), ascensionBest: document.querySelector("#ascensionBest"), chapterPlay: document.querySelector("#chapterPlay"), chapterPlayLevel: document.querySelector("#chapterPlayLevel"),
-  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), extras: document.querySelector("#extrasToggle"), mailTabs: document.querySelector("#mailTabs"), cardBadge: document.querySelector("#cardBadge"), postcard: document.querySelector("#postcard"), cardStrip: document.querySelector("#cardStrip"), albumIsles: document.querySelector("#albumIsles"), albumPage: document.querySelector("#albumPage"), parcelOverlay: document.querySelector("#parcelOverlay"), parcelBox: document.querySelector("#parcelBox"), parcelGifts: document.querySelector("#parcelGifts"), parcelCollect: document.querySelector("#parcelCollect"), openMail: document.querySelector("#openMail"), mailBadge: document.querySelector("#mailBadge"), lanterns: document.querySelector("#lanterns"),
+  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), retry: document.querySelector("#retry"), retryLabel: document.querySelector("#retryLabel"), nextLevel: document.querySelector("#nextLevel"), nextLevelTitle: document.querySelector("#nextLevelTitle"), nextLevelName: document.querySelector("#nextLevelName"), extras: document.querySelector("#extrasToggle"), mailTabs: document.querySelector("#mailTabs"), cardBadge: document.querySelector("#cardBadge"), postcard: document.querySelector("#postcard"), cardStrip: document.querySelector("#cardStrip"), albumIsles: document.querySelector("#albumIsles"), albumPage: document.querySelector("#albumPage"), parcelOverlay: document.querySelector("#parcelOverlay"), parcelBox: document.querySelector("#parcelBox"), parcelGifts: document.querySelector("#parcelGifts"), parcelCollect: document.querySelector("#parcelCollect"), openMail: document.querySelector("#openMail"), mailBadge: document.querySelector("#mailBadge"), lanterns: document.querySelector("#lanterns"),
   pip: document.querySelector("#pip"), homeAscension: document.querySelector("#homeAscension"), mailbag: document.querySelector("#mailbag"), letterNight: document.querySelector("#letterNight"),
   letterCard: document.querySelector("#letterCard"), letterTitle: document.querySelector("#letterTitle"), letterScore: document.querySelector("#letterScore"), flyLetter: document.querySelector("#flyLetter"),
   shareLetter: document.querySelector("#shareLetter"), shareLetterMail: document.querySelector("#shareLetterMail"), practiceGuardian: document.querySelector("#practiceGuardian"), resumeOverlay: document.querySelector("#resumeOverlay"), resumeButton: document.querySelector("#resumeButton"), nearMiss: document.querySelector("#nearMiss"),
@@ -479,6 +479,7 @@ function finishRun() {
   ui.unlock.textContent = state.unlocked.length > previousUnlocks ? "New biome awakened" : "";
   ui.resultHome.textContent = state.runType === "campaign" ? `${currentCampaignLevel().biome==="ember"?"Ember":"Bloom"} Chapter` : "Home";
   ui.results.hidden = false;
+  renderResultActions();
   renderRewardSeal();
   prepareStarTally();
   if (!state.runRewards.length) startStarTally();
@@ -487,6 +488,23 @@ function finishRun() {
   stopMusic();
   renderCosmetics();
   updateHud();
+}
+
+// Results actions: a campaign win leads with NEXT LEVEL (NEXT CHAPTER when the next level is on another island) and
+// shrinks Again to a small Replay; a loss leads with one big RETRY; Ascension says FLY AGAIN. No Hangar here.
+function levelAfter(levelId) {
+  const next = campaignLevels[campaignLevels.findIndex(level => level.id === levelId) + 1];
+  return next && isLevelUnlocked(next.id) ? next : null;
+}
+function renderResultActions() {
+  const next = state.runType === "campaign" && state.levelComplete && !state.practice ? levelAfter(state.levelId) : null;
+  ui.nextLevel.hidden = !next;
+  ui.retry.classList.toggle("replay", Boolean(next));
+  ui.retryLabel.textContent = next ? "Replay" : state.runType === "endless" ? "Fly again" : state.levelComplete ? "Again" : "Retry";
+  if (!next) return;
+  ui.nextLevel.dataset.level = next.id;
+  ui.nextLevelTitle.textContent = next.biome === currentCampaignLevel().biome ? "Next level" : "Next chapter";
+  ui.nextLevelName.textContent = `Level ${campaignLevels.indexOf(next) + 1} · ${next.name}`;
 }
 
 // Practice from the gatekeeper: replay a guardian level from just before its guardian, for no stars or rewards.
@@ -512,6 +530,7 @@ function finishPractice() {
   ui.resultHome.textContent = `${currentCampaignLevel().biome==="ember"?"Ember":"Bloom"} Chapter`;
   renderNextPlane(); renderHangarShip(ui.resultHangarShip);
   ui.results.hidden = false;
+  renderResultActions();
   renderRewardSeal(); prepareStarTally(); startStarTally();
   ui.shell.classList.remove("playing"); stopMusic(); updateHud();
 }
@@ -2700,6 +2719,7 @@ document.querySelector("#resultHangar").addEventListener("click", () => showScre
 document.querySelector("#ascension").addEventListener("click", () => startRun("endless"));
 for(const button of document.querySelectorAll("[data-chapter]"))button.addEventListener("click",()=>{if(!button.disabled){window.OrbitArchipelago?.pulse();openChapter(button.dataset.chapter);}});
 document.querySelector("#retry").addEventListener("click", () => state.dailyRun ? startDaily() : startRun(state.runType, state.levelId));
+ui.nextLevel.addEventListener("click", () => { if (ui.nextLevel.dataset.level) startRun("campaign", ui.nextLevel.dataset.level); });
 document.querySelector("#openGarage").addEventListener("click", () => showScreen("garage"));
 ui.hangarAction.addEventListener("click", () => hangarAct());
 ui.hangarTabs.addEventListener("click", event => { const tab = event.target.closest?.("[data-tab]")?.dataset.tab; if (!tab || tab === hangarTab) return; hangarTab = tab; beep(360, .03, "triangle"); renderGarage(); });

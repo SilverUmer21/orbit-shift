@@ -904,3 +904,19 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 @media (prefers-reduced-motion:reduce){.parcel-overlay:not(.open) .parcel-art,.parcel-overlay.open .parcel-light,.parcel-overlay.open .sparks,.lanterns .ignite,.lanterns .moon,.lanterns .next,.lanterns .ready,.pip.parcel::after{animation:none}.pc-face{transition-duration:.01s}}
 @media (max-height:700px){.mail-tabs{height:44px;margin-bottom:10px}.mail-tabs button{height:34px;font-size:11px}.card-strip{gap:6px}.album-grid{gap:0 6px}.album-stamp svg{width:min(52px,100%)}.album-reward{height:58px}.album-isle i{width:34px;height:34px}.album-isles{margin-bottom:8px}}
 @media (max-height:620px){.album-reward b{font-size:15px;white-space:nowrap}.album-reward small{font-size:9px;white-space:nowrap}.album-reward{gap:8px;height:52px}.parcel-gifts .gift{height:112px}.parcel-gifts .gift svg{width:40px;height:40px}.parcel-title{font-size:38px}.mail-tabs svg{display:none}.album-stamp small{display:none}.album-row{margin-top:2px}.album-stamp svg{width:min(46px,100%)}.album-hint{margin:4px 0}.album-reward canvas{width:72px;height:40px}.card-strip{width:min(300px,100%)}.postcard{width:min(300px,100%)}}
+
+/* Results actions: NEXT LEVEL leads after a win (Replay shrinks to a small button), RETRY leads after a loss. The labels
+   size to their button (container units) so they never spill out, down to 320 px. */
+.results .action-row{flex-wrap:nowrap;gap:12px}
+.results .result-hangar[hidden]{display:none}
+.next-level{container-type:inline-size;flex:1 1 auto;min-width:0;max-width:240px;height:78px;display:grid;place-items:center;align-content:center;gap:5px;padding:0 12px}
+.next-level[hidden]{display:none}
+.next-level b{max-width:100%;font:400 min(26px,11.5cqw)/1 var(--display);letter-spacing:.06em;white-space:nowrap;text-transform:uppercase}
+.next-level small{max-width:100%;overflow:hidden;text-overflow:ellipsis;font:900 min(11.5px,5.4cqw)/1.1 var(--ui);letter-spacing:.3px;color:#6B3A1A;white-space:nowrap;text-transform:none}
+.results #retry:not(.replay){flex:1 1 auto;min-width:0;max-width:240px}
+#retry.replay{position:relative;flex:0 0 auto;width:64px;min-width:64px;height:64px;padding:0;border-radius:20px;color:var(--paper);background:var(--fold-night);box-shadow:inset 0 2px 0 rgba(255,244,220,.14),0 5px 0 var(--night-900);overflow:visible;container-type:normal}
+#retry.replay:active{transform:translateY(4px);box-shadow:inset 0 2px 0 rgba(255,244,220,.1),0 1px 0 var(--night-900)}
+#retry.replay .play-label{display:grid;place-items:center;font-size:0;gap:0}
+#retry.replay .play-label svg{width:30px;height:30px}
+#retry.replay #retryLabel{position:absolute;left:50%;top:calc(100% + 7px);transform:translateX(-50%);font:900 11px/1 var(--ui);letter-spacing:1px;color:var(--mint-200);text-transform:uppercase}
+@media (max-height:620px),(max-width:360px){.next-level{height:64px}#retry.replay{width:52px;min-width:52px;height:52px;border-radius:17px}#retry.replay .play-label svg{width:25px;height:25px}#retry.replay #retryLabel{font-size:10px}}
