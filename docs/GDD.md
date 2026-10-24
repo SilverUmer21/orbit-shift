@@ -2,7 +2,7 @@
 
 Living document for the **Complete Remake** (`complete-remake-orbit-shift` branch). Read this before every work session and update it whenever something is built, decided or found.
 
-Last updated: 2026-10-18
+Last updated: 2026-10-24
 
 > ## ★ How we design (owner's rule, read first, every session)
 >
@@ -57,7 +57,8 @@ Sources: Homa Games "15 Golden Rules"; Voodoo design guide (GameAnalytics); Tap 
 - **Paper comets.**
 
 **Built (beta, behind a Settings switch, on by default for playtesting):**
-- **Express fold** (2026-10-18). A tap still reverses on press. Keeping the finger (or Space / arrow key) down for more than 0.14 s tucks the glider: orbit speed ×1.3 (`FOLD_BOOST`), +6 score/s while tucked, a slimmer silhouette, paper streaks, a longer trail, and a low whoosh plus a light haptic.
+- **Tap turns, hold boosts** (Direction 3, 2026-10-24, owner-approved). With Express fold on, a tap turns when the finger lifts within 0.18 s (`HOLD_DECIDE`). A press still down at 0.18 s tucks for speed and never turns. The press is answered in the same frame with a crouch, a tick, a ring timer and a 10 ms buzz, so the wait isn't felt. A pending tap still counts inside the CLOSE CALL grace. Settings → "Classic: turn on touch" (`#classicToggle`, `state.classicTurn`) restores turn-on-press. The Settings practice tutorial always turns on touch.
+- **Express fold** (2026-10-18). Holding tucks the glider: orbit speed ×1.3 (`FOLD_BOOST`), +6 score/s while tucked, a slimmer silhouette, paper streaks, a longer trail, and a low whoosh plus a light haptic.
 - Releasing untucks it in about 0.1 s. Gate formation and timing rules are unchanged; only the player's angular speed scales, including in the exact gate-crossing calculation.
 - The hold starts only from real input (pointer or key down), never from `reverse()` itself, so the test autopilot behaves exactly as before.
 
@@ -174,12 +175,12 @@ Design canvas (mockups and boards): https://claude.ai/artifact/DzV3n7kg777bLBkug
 
 | Screen | Status | Notes |
 |---|---|---|
-| Home | ✅ Built (Night Post v4, 2026-10-19) | Big ORBIT SHIFT title, live planet with the glider orbiting, and **Pip** (`pip.js` rig: always-alive base plus idle moves; see the Pip entries in the decisions log) placed just outside the orbit at the lower left, computed from the canvas layout. **Lantern string** shows the play streak (consecutive days in `stats.dates`; one lantern per night, a parcel on night 7; lit lanterns sway). **Mailbox** top right with a badge while tonight's letter is unflown; Pip's satchel seal glows then too; tapping Pip or the mailbox opens the Mailbag. PLAY shows "Level N". **Ascension pill** (orbit icon · trophy · best; `#homeBest` lives here). The closest-goal chip is hidden on Home. First launch shows only the title, the world, Pip and PLAY. |
+| Home | ✅ Built (Night Post v4, 2026-10-19) | Big ORBIT SHIFT title, live planet with the glider orbiting, and **Pip** (`pip.js` rig: always-alive base plus idle moves; see the Pip entries in the decisions log) placed just outside the orbit at the lower left, computed from the canvas layout. **Lantern string** shows the play streak (consecutive days in `stats.dates`; one lantern per night, a parcel on night 7; lit lanterns sway). **Mailbox** top right with a badge while tonight's letter is unflown; Pip's satchel seal glows then too; tapping Pip or the mailbox opens the Mailbag. PLAY shows "Level N". **Ascension portal** (D3 option B, 2026-10-24): a glowing dashed ring around a small planet with orbit ellipses and a sparkle, no plane, with "Ascension" and trophy · best underneath (`#homeBest` lives here). **Lanterns explained** (D3): after the first flight, a one-time card says what lanterns are and gives a starter Paper Moon. The newest lit lantern carries the night count. Tapping the string opens a status sheet (tonight lit or not, nights to the parcel, moons held). A dimmed string or a used moon gets one short toast. The closest-goal chip is hidden on Home. First launch shows only the title, the world, Pip and PLAY. |
 | Mailbag + Tonight's Letter | ✅ Built (2026-10-19) | Drawer with one big sealed envelope and FLY. **Daily seeded run:** Ascension with gameplay randomness (gate plans, routes, pairs, comets, hazard timing) seeded by the night number (`gameRandom()`, mulberry32); particles stay random. Verified: the same sky twice, and different from a normal run. The first flight each night is scored (+10 stars, saved as `state.daily`); results read "Letter delivered!" / "Night N" with Share postcard (a spoiler-free text card via share sheet or clipboard). Later flights are "Practice". The delivered state shows the score, a fly-again outline button and Share postcard. |
-| Results | ✅ Built (results pass) | "LEVEL CLEAR!" curved on an arc (no level name above). Three folded paper stars, no captions, that pop in one by one with a sparkle burst, then float and twinkle. Score, best, near-miss line. Minimal next plane: "+15 STARS" on top, then plane · thin bar · count on one quiet line (no card). No goal-reward text list or "New biome awakened" (reward cards cover them). AGAIN with a bold folded back arrow (chapter) and Hangar showing the live equipped ship, same as Home. Content centred between the top and the buttons on tall phones. Beats: stars pop → score counts up and lands (0–0.8 s) → NEW ORBIT RECORD stamps in with a dashed orbit ripple → stars fly to the badge while a paper plane rides the next-plane bar; when affordable the bar shines, the text turns gold and a dashed orbit ring circles the Hangar button. |
+| Results | ✅ Built (results pass; Direction 3 actions 2026-10-24) | **Actions (D3):** after a campaign win, a big gold **NEXT LEVEL** (`#nextLevel`, with "Level N · Name"; **NEXT CHAPTER** when the next level is in a new biome), with Replay as a small round button. After a loss, one big **RETRY**. Ascension shows **FLY AGAIN**. The Hangar button is hidden on results. Labels are sized with container units so they never overflow at 320. "LEVEL CLEAR!" curved on an arc (no level name above). Three folded paper stars, no captions, that pop in one by one with a sparkle burst, then float and twinkle. Score, best, near-miss line. Minimal next plane: "+15 STARS" on top, then plane · thin bar · count on one quiet line (no card). No goal-reward text list or "New biome awakened" (reward cards cover them). AGAIN with a bold folded back arrow (chapter) and Hangar showing the live equipped ship, same as Home. Content centred between the top and the buttons on tall phones. Beats: stars pop → score counts up and lands (0–0.8 s) → NEW ORBIT RECORD stamps in with a dashed orbit ripple → stars fly to the badge while a paper plane rides the next-plane bar; when affordable the bar shines, the text turns gold and a dashed orbit ring circles the Hangar button. |
 | In-game HUD | ✅ Restyled | Score, flow, fever bar, counters. Play area untouched except VFX: in-run labels (PERFECT, FEVER, FRAGMENT…) pop in like a stamped paper tag in Lilita One and drift up; PERFECT shows the streak ("PERFECT ×3"); every shockwave ring leaves a dashed orbit echo. |
 | Settings | ✅ Restyled | Paper switches, folded buttons. |
-| Tutorial panel | ✅ Restyled | |
+| Guided First Light | ✅ Built (D3, 2026-10-24) | A new player's PLAY opens Level 1 with a "Deliver the night mail" card (Pip presenting, letter → fold → glider). **Gate 1** slows, then waits completely for a tap: ghost finger with ripples, "TAP!", a red dashed path into the wall and a pulsing gold one back to the gap. **Gate 2** slows to 0.32× with "TAP!" only. **Gate 3** is not slowed. A miss in gates 1–3 bounces the gate back out ("AGAIN!") instead of crashing. Guided gates 1–2 are shaped so one tap about 1.1 s before the crossing is needed (this run only). The HUD fades in after gate 3 ("YOU'VE GOT IT") and `tutorialSeen` is set. **One-time tips** (`state.post.tips`, campaign only): HOLD with a filling ring at the start of Level 2 (0.25× until the fold is full); the first perfect ("Thread close to the edge / for a gold postmark") and the first fragment ("Catch 3 fragments / to earn a star") get a short slow-down and a card. Settings → Replay tutorial still runs the old four-step practice. |
 | Reward card | ✅ Built (Step 1) | Full-screen overlay, one card per reward: coral ribbon (NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!), counter dots, art drawn by game renderers, gold CLAIM, "Equip now" for trails/paints. After the last card, stars fly into the results star badge, which counts up; the next-plane bar fills from old to new total. Chapter clears keep the chapter stage art. |
 | Island map | ✅ Built (Step 2) | PixiJS island art kept. Paper label cards pinned beside islands (night cards when locked / Void), gold progress bar per chapter, pulsing dashed ring + bobbing NEXT pin on the chapter to play, star chip in the header, folded Ascension button with best score. |
 | Chapter screen | ✅ Built (Step 2, spacing pass) | Chapter planet removed (owner). "Stepping stones" (option A): levels zig-zag (28% / 72%) down the whole space between the story and PLAY on a dotted trail that turns mint (coral in Ember) up to the next level. Stars arc above each level; name and "Level N · 45s" centred below. Next level: big gold pulsing node, coral NEXT tag, gold name. Locked: lock node, muted label, GUARDIAN tag on guardian levels. Only the node, stars and label are tappable. One big PLAY for the next level. |
@@ -232,7 +233,7 @@ Research, two directions (A · Sorting Room recommended, B · Island Dock) and t
 - Every trail and paint gets a name and a tappable unlock hint.
 - Buying a plane plays a short unlock celebration, then Equip.
 
-### Direction 3 — feel, first minute, flow, challenge twists  ← proposed, awaiting owner decisions (2026-10-24)
+### Direction 3 — feel, first minute, flow, challenge twists  ✅ built (2026-10-24), Special Delivery in the next version
 
 The owner flagged six problems:
 - no Next level after a win, and a Hangar button on the results screen;
@@ -250,6 +251,29 @@ The owner also asked about challenge modes. The research, audit, proposal and de
 - **Ascension:** a portal button.
 - **Lanterns:** a first-night moment, a starter Paper Moon, a count, and a lantern sheet.
 - **Challenge modes:** optional "Special Delivery" remixes. The first three are Turn the world (the owner's idea, with Pip pinned at the top), Postage and Lantern night.
+
+**Owner's picks (2026-10-24) and what was built:**
+1. Input "good to go". Built: turn on lift, hold to boost, Classic setting, CLOSE CALL grace for a pending tap.
+2. Feel, "don't stretch it too long". Built: a short stretch and flip.
+   - Crouch on press and a spring with a paper puff on release.
+   - Gold boost aura with wind arcs, and a 24-point light/gold trail while tucked.
+   - The camera pulls back 3.5%, with a rising bandpass whoosh.
+   - Extra paper burst on a turn, and pentatonic perfect chimes.
+   - A 50 ms hit-stop on a perfect streak of 4+ (real input only).
+3. Guided tutorial "yeah ok". Built: Guided First Light and one-time tips (section 7).
+4. Ascension "B is good, just show an orbit not a plane". Built: orbit portal with no plane.
+5. Special Delivery "keep it in the GDD for next version". Not built; recorded below.
+- Also fixed: button text overflowed at 320 (NEXT LEVEL / NEXT CHAPTER). Container-unit sizing now fits 390×844, 390×760 and 320×568.
+
+**Next version: Special Delivery (recorded, not built).**
+- **What it is:** an optional remix that changes one rule. It is never the campaign's hard mode.
+- **How it reads:** one line of rule text, plus 1–3 wax seals for difficulty.
+- **When it appears:** it unlocks after the Solar Forge or 60 s in Ascension, as a stamp on levels already cleared. One twist a week becomes Tonight's Letter on a fixed night.
+- **Twists:**
+  - **Turn the world** (owner's idea): Pip stays pinned at the top, and a tap reverses the planet's spin and swings its gates. Every level works as-is, so it's the cheapest to prototype.
+  - **Postage:** every turn costs a stamp, and every gate passed pays one back.
+  - **Lantern night:** only the light around Pip shows the gates; a natural opener for the Void chapter.
+- Mockups: `design/paper-night/mockups/direction-3-board.html` (Challenge twists section).
 
 ### Later (not scheduled)
 Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not adopted), Void chapter, Android wrapper, V3 Constellation Weaving and Best-Run Ghost (see README).
@@ -298,6 +322,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 - An interim layout had Pip perched by the logo; it was replaced the same day. |
 | 2026-10-19 | The owner picked the 390×844 look, so the title is 60 px on all phones taller than 620 px (the 780 px step is removed). **The new animated Pip (`pip.js`) is wired into Home.** He is ticked from the game's frame loop only while Home shows, flies in each time Home opens, presents the letter when it's ready, watches the real glider, and hops on tap before the Mailbag opens (0.42 s). |
 | 2026-10-19 | Home felt packed on the owner's phone (the title covered the glider's orbit). The title is 60 px (54 px at ≤780 px tall, 42 px at ≤620 px); top buttons, lantern string and Pip are a little smaller. The planet is gameplay, so it stays as it is. |
+| 2026-10-24 | Direction 3 picks: (1) input approved; (2) feel approved, keep the stretch subtle and short; (3) guided tutorial approved; (4) Ascension option B, orbit only, no plane; (5) Special Delivery kept in the GDD for the next version; plus fix button text overflowing at 320. Results layout accepted. All built the same day except (5). |
 | 2026-10-24 | Owner review: results need NEXT LEVEL and no Hangar; Ascension button needs better visuals; lanterns must be explained; tutorial is poor; plane and boost need better animation; tap should turn and hold should only speed up. Owner proposed challenge modes (e.g. controlling the gates). Research and proposal: `docs/DIRECTION-3.md`, awaiting picks. |
 | 2026-10-19 | Postcard lines approved. Retention round 2 built behind the Night Post extras switch. A lantern now lights when a flight ends, not when the app is opened. `SAVE_VERSION` stays 5 and `trailStyles` stays 7 (the game's self-checks); the new save fields are additive, and Pressed petal lives in `bonusTrails`. |
 | 2026-10-19 | Hangar **A · Sorting Room** approved and built. Lanterns: dim-and-relight with at most 1 Paper Moon (owner left it to me). Parcel: few stars (5 → 10 → 15★ cap) plus a stamp plus a Moon; no trail every 4th parcel. Album page reward: a new Pressed-petal trail (owner left the design to me). Postcard lines drafted for approval. |
@@ -344,3 +369,5 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 - `state` and other top-level `const`s are not on `window`. In the harness use `contentWindow.eval(...)`.
 - Reward-card test contract: one button per reward in `#rewardChoices`, `#rewardName` keeps "Trail: spark" style text (visually hidden), clicking a choice selects it, `#continueRewards` on the last reward hides `#rewardSeal`.
 - Any element given a CSS `display` in `remake.css` that is toggled with `hidden` needs an explicit `[hidden]{display:none}` rule.
+- The guided tutorial and tips only change `timeScale` inside `frame()`, never inside `update()`, and need a trusted touch (`liveTouch`, set from `event.isTrusted`), so the tests' direct `update()` calls and stubbed events never see slow motion or tips. The tests start the old practice through `startTutorial()` / `#replayTutorial`, so that path is kept.
+- `tests/ascension-timing.cjs` needs pointerdown to advance the practice tutorial on press, so `liftTurn()` excludes `runType === "tutorial"`.

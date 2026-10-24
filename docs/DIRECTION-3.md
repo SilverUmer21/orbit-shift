@@ -1,6 +1,6 @@
 # Orbit Shift: Direction 3 — feel, the first minute, flow, and challenge twists
 
-Proposal, 2026-10-24. Nothing here is built yet; it is awaiting the owner's approval.
+Proposal, 2026-10-24. **Decided and built the same day** (input, feel, guided tutorial, results, Ascension portal B with orbit only, lanterns). Special Delivery is kept for the next version. See GDD §8 "Direction 3" for the picks and what shipped; screenshots in `design/paper-night/previews/d3-built/`.
 
 **Boards** (all in `design/paper-night/previews/`):
 
