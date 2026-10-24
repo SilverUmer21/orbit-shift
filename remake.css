@@ -920,3 +920,42 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 #retry.replay .play-label svg{width:30px;height:30px}
 #retry.replay #retryLabel{position:absolute;left:50%;top:calc(100% + 7px);transform:translateX(-50%);font:900 11px/1 var(--ui);letter-spacing:1px;color:var(--mint-200);text-transform:uppercase}
 @media (max-height:620px),(max-width:360px){.next-level{height:64px}#retry.replay{width:52px;min-width:52px;height:52px;border-radius:17px}#retry.replay .play-label svg{width:25px;height:25px}#retry.replay #retryLabel{font-size:10px}}
+
+/* Ascension portal (Home, right edge): a glowing ring with a planet and its orbits, the name and your best. */
+.ascension-portal{position:absolute;right:8px;z-index:3;display:grid;justify-items:center;gap:3px;width:92px;min-height:0;padding:0;border:0;background:none;box-shadow:none;color:var(--gold)}
+.ascension-portal[hidden]{display:none}
+.ascension-portal:active{transform:scale(.96);box-shadow:none}
+.portal-ring{display:block;width:76px;height:76px;border-radius:50%;background:radial-gradient(circle,#1F5A5E 0 42%,#12363D 43% 62%,#0B252A 63%);box-shadow:0 5px 0 var(--night-900),0 0 0 3px rgba(255,201,77,.8),0 0 24px 5px rgba(255,201,77,.24)}
+.portal-ring svg{display:block;width:100%;height:100%;overflow:visible}
+.portal-spin{transform-origin:50px 50px;animation:portalSpin 14s linear infinite}
+.portal-orbit{transform-origin:50px 50px;animation:portalSpin 9s linear infinite reverse}
+.portal-name{margin-top:4px;font:400 12.5px/1 var(--display);letter-spacing:1.2px;color:var(--paper);text-transform:uppercase;text-shadow:0 2px 0 var(--night-900)}
+.ascension-portal i{display:flex;align-items:center;gap:3px;font:400 14px/1 var(--display);font-style:normal;color:var(--gold);text-shadow:0 2px 0 var(--night-900)}
+.ascension-portal i svg{width:13px;height:13px}
+.ascension-portal i b{font:inherit}
+@keyframes portalSpin{to{transform:rotate(360deg)}}
+@media (max-height:620px){.ascension-portal{width:76px}.portal-ring{width:60px;height:60px}.portal-name{font-size:11px}.ascension-portal i{font-size:12px}}
+@media (prefers-reduced-motion:reduce){.portal-spin,.portal-orbit{animation:none}}
+/* Lanterns: tappable string with the night count; first-night card, details sheet, one-line notes. */
+.home .lanterns{pointer-events:auto;cursor:pointer}
+.lantern-count{font:400 12px var(--display);fill:var(--gold);letter-spacing:.5px}
+.lantern-overlay{position:absolute;inset:0;z-index:21;display:grid;place-items:center;padding:20px;background:rgba(6,20,23,.82);animation:revealIn .25s ease-out both}
+.lantern-overlay[hidden]{display:none}
+.lantern-overlay.sheet{place-items:start center;padding-top:max(130px,calc(env(safe-area-inset-top) + 120px));background:rgba(6,20,23,.55)}
+.lantern-card{display:grid;justify-items:center;gap:12px;width:min(350px,100%);padding:22px 18px 22px;border-radius:26px;background:var(--night-800);box-shadow:inset 0 0 0 2px rgba(255,201,77,.25),0 18px 40px rgba(0,0,0,.45);text-align:center}
+.sheet .lantern-card{background:linear-gradient(100deg,#FFF4DC 0 56%,#F3E6C8 56% 100%);box-shadow:0 7px 0 #C9B48C,0 26px 50px rgba(0,0,0,.45);color:var(--ink)}
+.lantern-row{width:100%}.lantern-row svg{display:block;width:100%;height:auto;overflow:visible}
+.lantern-title{margin:0;font:400 34px/1 var(--display);letter-spacing:1px;color:var(--gold);text-shadow:0 4px 0 var(--ember-lip),0 8px 0 var(--night-900)}
+.lantern-title.small{font-size:28px;color:var(--ink);text-shadow:none}
+.lantern-copy{margin:0;font:800 15px/1.4 var(--ui);color:var(--mint-200)}
+.sheet .lantern-copy{color:#5B3B2A}.sheet .lantern-copy b{color:var(--mint-700)}
+.lantern-moon{display:none;align-items:center;gap:10px;margin:0;padding:10px 12px;border-radius:16px;background:var(--night-700);font:800 13px/1.35 var(--ui);color:var(--paper);text-align:left}
+.lantern-moon svg{flex:0 0 auto;width:30px;height:30px}
+.with-moon .lantern-moon{display:flex}
+.sheet .lantern-moon{display:block;background:none;padding:0;color:#8A6A52;text-align:center}
+.sheet .lantern-moon[hidden]{display:none}
+.lantern-card .primary{width:min(220px,100%);height:58px}
+.home-toast{position:absolute;left:16px;right:16px;top:max(132px,calc(env(safe-area-inset-top) + 124px));z-index:6;display:grid;gap:3px;padding:12px 14px;border-radius:18px;background:var(--night-700);box-shadow:0 5px 0 var(--night-900),inset 0 0 0 2px rgba(127,168,162,.25);animation:revealIn .25s ease-out both;pointer-events:none}
+.home-toast[hidden]{display:none}
+.home-toast b{font:400 17px/1.1 var(--display);letter-spacing:.4px;color:var(--paper)}
+.home-toast small{font:800 12.5px/1.3 var(--ui);color:var(--mint-200)}

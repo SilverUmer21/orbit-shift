@@ -25,7 +25,7 @@ const ui = {
   rewardCount: document.querySelector("#rewardCount"), rewardBonus: document.querySelector("#rewardBonus"), rewardCard: document.querySelector("#rewardCard"), equipReward: document.querySelector("#equipReward"),
   resultStarChip: document.querySelector("#resultStarChip"), resultStarTotal: document.querySelector("#resultStarTotal"),
   mapNext: document.querySelector("#mapNext"), ascensionBest: document.querySelector("#ascensionBest"), chapterPlay: document.querySelector("#chapterPlay"), chapterPlayLevel: document.querySelector("#chapterPlayLevel"),
-  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), classic: document.querySelector("#classicToggle"), retry: document.querySelector("#retry"), retryLabel: document.querySelector("#retryLabel"), nextLevel: document.querySelector("#nextLevel"), nextLevelTitle: document.querySelector("#nextLevelTitle"), nextLevelName: document.querySelector("#nextLevelName"), extras: document.querySelector("#extrasToggle"), mailTabs: document.querySelector("#mailTabs"), cardBadge: document.querySelector("#cardBadge"), postcard: document.querySelector("#postcard"), cardStrip: document.querySelector("#cardStrip"), albumIsles: document.querySelector("#albumIsles"), albumPage: document.querySelector("#albumPage"), parcelOverlay: document.querySelector("#parcelOverlay"), parcelBox: document.querySelector("#parcelBox"), parcelGifts: document.querySelector("#parcelGifts"), parcelCollect: document.querySelector("#parcelCollect"), openMail: document.querySelector("#openMail"), mailBadge: document.querySelector("#mailBadge"), lanterns: document.querySelector("#lanterns"),
+  hangarShip: document.querySelector("#hangarShip"), hangarBadge: document.querySelector("#hangarBadge"), playLevel: document.querySelector("#playLevel"), resultTitle: document.querySelector("#resultTitle"), resultHangarShip: document.querySelector("#resultHangarShip"), resultHangar: document.querySelector("#resultHangar"), fold: document.querySelector("#foldToggle"), lanternIntro: document.querySelector("#lanternIntro"), lanternIntroRow: document.querySelector("#lanternIntroRow"), lanternIntroTitle: document.querySelector("#lanternIntroTitle"), lanternIntroOk: document.querySelector("#lanternIntroOk"), lanternSheet: document.querySelector("#lanternSheet"), lanternSheetRow: document.querySelector("#lanternSheetRow"), lanternSheetStatus: document.querySelector("#lanternSheetStatus"), lanternSheetMoon: document.querySelector("#lanternSheetMoon"), lanternSheetOk: document.querySelector("#lanternSheetOk"), homeToast: document.querySelector("#homeToast"), homeToastTitle: document.querySelector("#homeToastTitle"), homeToastText: document.querySelector("#homeToastText"), classic: document.querySelector("#classicToggle"), retry: document.querySelector("#retry"), retryLabel: document.querySelector("#retryLabel"), nextLevel: document.querySelector("#nextLevel"), nextLevelTitle: document.querySelector("#nextLevelTitle"), nextLevelName: document.querySelector("#nextLevelName"), extras: document.querySelector("#extrasToggle"), mailTabs: document.querySelector("#mailTabs"), cardBadge: document.querySelector("#cardBadge"), postcard: document.querySelector("#postcard"), cardStrip: document.querySelector("#cardStrip"), albumIsles: document.querySelector("#albumIsles"), albumPage: document.querySelector("#albumPage"), parcelOverlay: document.querySelector("#parcelOverlay"), parcelBox: document.querySelector("#parcelBox"), parcelGifts: document.querySelector("#parcelGifts"), parcelCollect: document.querySelector("#parcelCollect"), openMail: document.querySelector("#openMail"), mailBadge: document.querySelector("#mailBadge"), lanterns: document.querySelector("#lanterns"),
   pip: document.querySelector("#pip"), homeAscension: document.querySelector("#homeAscension"), mailbag: document.querySelector("#mailbag"), letterNight: document.querySelector("#letterNight"),
   letterCard: document.querySelector("#letterCard"), letterTitle: document.querySelector("#letterTitle"), letterScore: document.querySelector("#letterScore"), flyLetter: document.querySelector("#flyLetter"),
   shareLetter: document.querySelector("#shareLetter"), shareLetterMail: document.querySelector("#shareLetterMail"), practiceGuardian: document.querySelector("#practiceGuardian"), resumeOverlay: document.querySelector("#resumeOverlay"), resumeButton: document.querySelector("#resumeButton"), nearMiss: document.querySelector("#nearMiss"),
@@ -2168,7 +2168,7 @@ function updateHome() {
   ui.mailBadge.hidden = !returning || mail === 0; ui.mailBadge.textContent = mail;
   pipRig?.setReady(returning && mail > 0); pipRig?.setReduced(state.reducedEffects || matchMedia?.("(prefers-reduced-motion: reduce)").matches);
   ui.pip.classList.toggle("parcel", view.parcel);
-  if (returning) { renderLanterns(view); if (state.post.fx) { state.post.fx = ""; save(); } }
+  if (returning) { renderLanterns(view); if (state.nightPostExtras) homeLanternMoments(view); if (state.post.fx) { state.post.fx = ""; save(); } }
   placePip();
   ui.sound.checked = !state.muted;
   ui.haptics.checked = state.haptics;
@@ -2198,9 +2198,60 @@ function renderLanterns(view) {
     else svg += `${on ? '<circle cx="0" cy="12" r="17" fill="#FFC94D" opacity=".22"/>' : ""}<rect x="-5" y="0" width="10" height="3.5" rx="1" fill="#12363D"/><path d="M-8 4 H8 Q11 12 8 21 H-8 Q-11 12 -8 4Z" fill="${on ? body[0] : "#1A4A50"}" stroke="${on ? "none" : next ? "#7FA8A2" : "#2c5f66"}" stroke-width="1.2" ${next ? 'stroke-dasharray="2 2"' : ""}/><path d="M0 4 H8 Q11 12 8 21 H0Z" fill="${on ? body[1] : "#163F46"}"/>${on && view.gold ? '<path d="M0 7 L1.6 11 L5.5 12.5 L1.6 14 L0 18 L-1.6 14 L-5.5 12.5 L-1.6 11Z" fill="#FFC94D"/>' : `<path d="M-4 4 Q-6 12 -4 21 M4 4 Q6 12 4 21" stroke="${on ? "#C98A22" : "#2c5f66"}" stroke-width="1" fill="none"/>`}${slot.relit ? '<path d="M-6 9 L-1 7 L0 12 L-5 14Z" fill="#FFF4DC" opacity=".9"/><path d="M-5.5 9.5 L-1 12.5 M-1.5 8 L-4.5 13" stroke="#C98A22" stroke-width=".7"/>' : ""}<rect x="-5" y="21" width="10" height="3" rx="1" fill="#12363D"/>`;
     svg += "</g></g>";
   }
+  if (lit > 0 && view.count > 0) {
+    const t = lit / 8, x = (1 - t) * (1 - t) * -10 + 2 * (1 - t) * t * (W / 2) + t * t * (W + 10), y = (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * (y0 + sag) + t * t * y0;
+    svg += `<text class="lantern-count" x="${x}" y="${y + 45}" text-anchor="middle">${view.count}</text>`;
+  }
   ui.lanterns.innerHTML = svg + "</svg>";
-  ui.lanterns.setAttribute?.("aria-label", `${lit} lanterns lit${view.dim ? ", dimmed: fly tonight to relight them" : ""}`);
+  ui.lanterns.setAttribute?.("aria-label", `${view.count || lit} night${(view.count || lit) === 1 ? "" : "s"} lit${view.dim ? ", dimmed: fly tonight to relight them" : ""}. Tap for details.`);
 }
+// The lantern string, told once and explainable any time: a first-night card (Pip adds a starter Paper Moon), a sheet
+// when the string is tapped, and one-line notes when the string dims or a moon keeps a night.
+function lanternRow(view) {
+  let svg = '<svg viewBox="0 0 390 112" aria-hidden="true"><path d="M10 14 Q195 54 380 14" fill="none" stroke="#7FA8A2" stroke-opacity=".7" stroke-width="2"/>';
+  for (let i = 0; i < 7; i += 1) {
+    const x = 30 + i * 55, t = (x - 10) / 370, y = (1 - t) * (1 - t) * 14 + 2 * (1 - t) * t * 54 + t * t * 14, slot = view.slots[i], on = slot.on, tonight = !on && i === view.lit && !view.tonight;
+    svg += `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + 10}" stroke="#7FA8A2" stroke-width="1.6"/><g transform="translate(${x} ${y + 10}) scale(1.5)">`;
+    svg += i === 6 ? `<rect x="-10" y="2" width="20" height="18" rx="2" fill="${on || view.parcel ? "#FFF4DC" : "#1A4A50"}"/><rect x="-2" y="2" width="4" height="18" fill="${on || view.parcel ? "#FF6F61" : "#2c5f66"}"/><path d="M0 2 Q-7 -6 -8 0 Q-4 3 0 2 Q4 3 8 0 Q7 -6 0 2Z" fill="${on || view.parcel ? "#FF6F61" : "#2c5f66"}"/>`
+      : slot.moon ? '<path d="M4 0 A12 12 0 1 0 13 18 A9.5 9.5 0 1 1 4 0Z" fill="#FFF4DC"/>'
+      : `${on ? '<circle cx="0" cy="12" r="20" fill="#FFC94D" opacity=".3"/>' : ""}<rect x="-5" y="0" width="10" height="3.5" rx="1" fill="#12363D"/><path d="M-8 4 H8 Q11 12 8 21 H-8 Q-11 12 -8 4Z" fill="${on ? "#FFC94D" : "#1A4A50"}" stroke="${on ? "none" : tonight ? "#A8F0CF" : "#2c5f66"}" stroke-width="1.2" ${tonight ? 'stroke-dasharray="2 2"' : ""}/><path d="M0 4 H8 Q11 12 8 21 H0Z" fill="${on ? "#E0A93A" : "#163F46"}"/>`;
+    svg += `</g><text x="${x}" y="${y + 58}" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="10" fill="${on ? "#FFC94D" : tonight ? "#A8F0CF" : "#7FA8A2"}">${i === 6 ? "PARCEL" : tonight ? "TONIGHT" : "NIGHT " + (i + 1)}</text>`;
+  }
+  return svg + "</svg>";
+}
+function showLanternIntro(view) {
+  const post = state.post, gift = !post.starterMoon && !post.held;
+  post.toldLanterns = true;
+  if (!post.starterMoon) { post.starterMoon = true; if (gift) post.held = 1; }
+  save();
+  ui.lanternIntroRow.innerHTML = lanternRow(view);
+  ui.lanternIntroTitle.textContent = `Night ${view.count} lit!`;
+  ui.lanternIntro.classList.toggle("with-moon", gift);
+  ui.lanternIntro.hidden = false; pipRig?.react("present"); vibrate(12);
+}
+function openLanternSheet() {
+  if (ui.home.hidden) return;
+  const view = lanternView(), lit = view.count ? (view.count - 1) % 7 + 1 : 0, left = 7 - lit;
+  ui.lanternSheetRow.innerHTML = lanternRow(view);
+  const tonight = view.tonight ? "Tonight's lantern is lit ✓" : view.dim ? "Your lanterns dimmed. Fly once tonight to relight them." : "Fly once tonight to light the next lantern.";
+  const parcel = !state.nightPostExtras ? "" : view.parcel ? "Your parcel is ready: tap Pip!" : left > 0 ? `${left} more night${left === 1 ? "" : "s"} until the parcel` : "Parcel delivered. The next string starts tomorrow.";
+  ui.lanternSheetStatus.innerHTML = `${tonight}${parcel ? `<br><b>${parcel}</b>` : ""}`;
+  ui.lanternSheetMoon.hidden = !state.nightPostExtras;
+  ui.lanternSheetMoon.textContent = state.post.held ? "Paper Moon ready: if you miss a night, it keeps your lanterns lit." : "No Paper Moon right now. The weekly parcel brings one.";
+  ui.lanternSheet.hidden = false; beep(520, .04, "triangle");
+}
+let toastTimer = 0;
+function showHomeToast(title, text) {
+  ui.homeToastTitle.textContent = title; ui.homeToastText.textContent = text; ui.homeToast.hidden = false;
+  globalThis.clearTimeout?.(toastTimer); toastTimer = setTimeout(() => { ui.homeToast.hidden = true; }, 4600);
+}
+function homeLanternMoments(view) {
+  const post = state.post;
+  if (!post.toldLanterns && view.lit > 0 && ui.parcelOverlay.hidden) { showLanternIntro(view); return; }
+  if (view.fx === "moon") showHomeToast("A Paper Moon kept last night lit", "Light tonight's lantern to keep your string going.");
+  else if (view.dim && post.dimTold !== nightNumber()) { post.dimTold = nightNumber(); save(); showHomeToast("Your lanterns dimmed", "You missed last night. Fly once tonight to relight them."); }
+}
+
 // Pip sits just outside the orbit, lower left of the planet drawn on the game canvas.
 // Pip's rig (pip.js); absent in the test sandbox. Ticked from the frame loop only while Home is showing.
 const pipRig = window.OrbitPip?.create(ui.pip) || null;
@@ -2394,11 +2445,11 @@ function lightLantern(now = nightNumber()) {
 function lanternView(now = nightNumber()) {
   if (!state.nightPostExtras) {
     const streak = playStreak(), lit = streak ? (streak - 1) % 7 + 1 : 0;
-    return { lit, slots: Array.from({ length: 7 }, (_, i) => ({ on: i < lit })), dim: false, tonight: streak > 0, parcel: false, gold: false, fx: "" };
+    return { lit, count: streak, slots: Array.from({ length: 7 }, (_, i) => ({ on: i < lit })), dim: false, tonight: streak > 0, parcel: false, gold: false, fx: "" };
   }
   const post = state.post, alive = post.last != null && now - post.last <= 2, count = alive ? post.count : 0, lit = count ? (count - 1) % 7 + 1 : 0;
   const slots = Array.from({ length: 7 }, (_, i) => { const night = post.last - (lit - 1 - i); return { on: i < lit, moon: i < lit && post.moonAt.includes(night), relit: i < lit && post.relitAt.includes(night) }; });
-  return { lit, slots, dim: alive && now - post.last === 2, tonight: post.last === now, parcel: parcelReady(now), gold: post.gold, fx: post.fx };
+  return { lit, count, slots, dim: alive && now - post.last === 2, tonight: post.last === now, parcel: parcelReady(now), gold: post.gold, fx: post.fx };
 }
 function parcelReady(now = nightNumber()) {
   const post = state.post;
@@ -2814,6 +2865,10 @@ ui.extras.addEventListener("change", () => { state.nightPostExtras = ui.extras.c
 ui.mailTabs.addEventListener("click", event => { const tab = event.target.closest?.("[data-mail]")?.dataset.mail; if (!tab || tab === mailTab) return; mailTab = tab; beep(360, .03, "triangle"); renderMailbag(); });
 ui.postcard.addEventListener("click", () => { if (ui.postcard.classList.contains?.("empty")) return; ui.postcard.classList.toggle("flipped"); beep(300, .05, "triangle"); });
 ui.parcelCollect.addEventListener("click", closeParcel);
+ui.lanterns.addEventListener("click", openLanternSheet);
+ui.lanternIntroOk.addEventListener("click", () => { ui.lanternIntro.hidden = true; beep(660, .06, "triangle"); });
+ui.lanternSheetOk.addEventListener("click", () => { ui.lanternSheet.hidden = true; });
+ui.lanternSheet.addEventListener("click", event => { if (event.target === ui.lanternSheet) ui.lanternSheet.hidden = true; });
 ui.replayTutorial.addEventListener("click", startTutorial);
 ui.skipTutorial.addEventListener("click", skipTutorial);
 ui.continueRewards.addEventListener("click", claimReward);
