@@ -340,6 +340,8 @@ for e in game('cometWarn'):
     place(sfx, whoosh(1.1, 2000, 7000, .25, .95), e['t'], 1, -.3, .2)
 for e in game('tailSpark'): place(sfx, sparkle(6, .2, 93), e['t'], .5, pan_of(e), .4)
 place(sfx, whoosh(1.4, 180, 1200, .9, .5), 36.6, 1, .3, .3)
+# The fleet: the picture drops into slow motion (the tempo holds): a low tape-slow sweep and a soft boom mark it.
+place(sfx, whoosh(.9, 1400, 180, .6, .25), 39.75, 1, 0, .3); place(music, boom(.5, 2.0), 40.0, .45, 0, .3)
 # The fleet: a rising paper flick on every half-beat over a held dominant, then the cut.
 place(music, pad(CH['Asus'], 3.0, .4, .05, 2200), 40.0, .4, 0, .3)
 place(music, bass(33, 3.0, 'sub'), 40.0, .6, 0, 0)

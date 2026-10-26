@@ -34,16 +34,18 @@
       id: "void", seed: 31, t0: 34.0, t1: 45.0, preroll: 3.5,
       setup: `state.selected='void';state.selectedRider='manta';state.selectedTrail='paper';startRun('endless');state.elapsed=78;updateJourney(true);nextGate=1e9;nextHazard=1e9;nextComet=1e9;`,
       taps: [36.0, 38.0, 39.0, 40.0, 40.5, 41.0, 41.5, 42.0, 42.5],
+      // Slow motion for the comet, a slower showcase for the fleet (the music keeps its tempo), then the last gate.
       speed: t => {
         const comet = 1 - .72 * pulse(t, 36.55, 37.6) ** .5;
-        const last = t < 43 ? 1 : lerp(1, .1, easeOut(seg(t, 43.0, 43.6)));
+        const fleet = lerp(1, .42, easeOut(seg(t, 39.8, 40.15)));
+        const last = t < 43 ? fleet : lerp(.42, .1, easeOut(seg(t, 43.0, 43.6)));
         return comet * last;
       },
       comets: [{ at: 35.0, miss: .2 }],
       gates: [{ id: "v1", cross: 38.5, want: "perfect", letter: true }, { id: "v2", cross: 39.5, want: "perfect" }, { id: "L", cross: 44.25, want: "perfect" }],
       actions: [
-        ...["dart", "crescent", "splitwing", "shuttle", "ringsail", "manta"].map((r, i) => ({ at: 40 + i * .5, code: `state.selectedRider='${r}';state.selected='${["bloom", "ember", "void", "wax", "ember", "bloom"][i]}';state.selectedTrail='${["pollen", "spark", "ribbon", "echo", "crown", "paper"][i]}';player.glow=1;`, event: "swap", data: { rider: r, i } })),
-        { at: 42.8, code: `window.__dpr=6;dispatchEvent(new Event('resize'));` },
+        ...["dart", "crescent", "splitwing", "shuttle", "ringsail", "manta"].map((r, i) => ({ at: 40 + i * .5, code: `state.selectedRider='${r}';state.selected='${["bloom", "ember", "void", "wax", "ember", "bloom"][i]}';state.selectedTrail='${["pollen", "spark", "ribbon", "echo", "crown", "paper"][i]}';`, event: "swap", data: { rider: r, i } })),
+        { at: 39.7, code: `window.__dpr=6;dispatchEvent(new Event('resize'));` },
       ],
     },
   };
@@ -400,7 +402,7 @@
       if (e.type === "fever") fx.feverT = t;
       if (e.type === "tailSpark") fx.tags.push({ t, text: "TAIL SPARK", x: e.x, y: e.y });
       if (e.type === "letter") fx.tags.push({ t: t + .25, text: "LOST LETTER +2", x: e.x, y: e.y });
-      if (e.type === "swap") fx.tags.push({ t, text: { dart: "DART", crescent: "CRESCENT", splitwing: "SPLITWING", shuttle: "SHUTTLE", ringsail: "RING SAIL", manta: "MANTA" }[e.rider], x: inf.x, y: inf.y, swap: true });
+      if (e.type === "swap") fx.tags.push({ t, text: { dart: "DART", crescent: "CRESCENT", splitwing: "SPLITWING", shuttle: "SHUTTLE", ringsail: "RING SAIL", manta: "MANTA" }[e.rider], x: inf.x, y: inf.y, swap: true, i: e.i });
     }
   }
   F.seekShot = t => {
@@ -423,9 +425,11 @@
     if (sh.id === "ember") z = 1.06 + .05 * ease(seg(t, 27.6, 28.2)) * (1 - ease(seg(t, 29.7, 30.1)));
     if (sh.id === "void") {
       const inf = GB.info();
-      const push = ease(seg(t, 40.0, 43.0)), close = easeInOut(seg(t, 43.0, 44.1));
-      z = lerp(1.06, 1.3, push); z = lerp(z, 2.7, close);
-      fx0 = lerp(384, inf.x, push * .35 + close * .65); fy0 = lerp(222, inf.y, push * .35 + close * .65);
+      // The fleet: close on the glider so each plane reads; then closer still for the last gate.
+      const fleet = easeInOut(seg(t, 39.75, 40.2)), close = easeInOut(seg(t, 43.0, 44.1));
+      z = lerp(1.06, 2.2, fleet); z = lerp(z, 2.7, close);
+      const k = Math.max(fleet * .9, close * .95);
+      fx0 = lerp(384, inf.x, k); fy0 = lerp(222, inf.y, k);
       if (t > 36.5 && t < 37.7) { const k = pulse(t, 36.5, 37.7); z += .18 * k; fx0 = lerp(fx0, inf.x, .3 * k); fy0 = lerp(fy0, inf.y, .3 * k); }
     }
     const hw = 384 / z, hh = 216 / z;
@@ -507,10 +511,27 @@
         c.beginPath(); c.moveTo(px, py - 90 * k); c.lineTo(px + 4, py); c.lineTo(px, py + 90 * k); c.lineTo(px - 4, py); c.fill(); c.restore(); }
     }
     for (const tg of fx.tags) {
-      const age = t - tg.t, life = tg.swap ? .5 : 1.0; if (age > life) continue;
+      if (tg.swap) { fleetSwap(t, tg); continue; }
+      const age = t - tg.t, life = 1.0; if (age > life) continue;
       const [px, py] = toScreen(cam, tg.x, tg.y);
-      T.caption(g, G, tg.text, px + (tg.swap ? 0 : 0), py - 110 - age * 40, tg.swap ? 64 : 70, { style: "gold", alpha: clamp(age * 10) * clamp((life - age) * 6), scale: back(seg(age, 0, .15)) * .3 + .7, glow: .4 });
+      T.caption(g, G, tg.text, px, py - 110 - age * 40, 70, { style: "gold", alpha: clamp(age * 10) * clamp((life - age) * 6), scale: back(seg(age, 0, .15)) * .3 + .7, glow: .4 });
     }
+  }
+  // A plane swap: a ring bursts off the glider and its name pops above it, until the next swap.
+  function fleetSwap(t, tg) {
+    const age = t - tg.t, life = tg.i === 5 ? .9 : .5; if (age < 0 || age > life) return;
+    const [px, py] = fx.glider, k = seg(age, 0, .4);
+    if (k < 1) {
+      g.save(); g.strokeStyle = rgba(C.gold, 1 - k); g.lineWidth = 8 * (1 - k) + 2; g.setLineDash([3, 14]); g.lineCap = "round";
+      g.beginPath(); g.arc(px, py, 70 + easeOut(k) * 230, 0, TAU); g.stroke(); g.restore();
+      G.save(); G.globalAlpha = .7 * (1 - k); G.fillStyle = "#ffd36a"; G.beginPath(); G.arc(px, py, 60 + 80 * k, 0, TAU); G.fill(); G.restore();
+      sparkles(px, py, k, 260);
+    }
+    const a = clamp(age * 14) * clamp((life - age) * 8), pop = back(seg(age, 0, .16), 2.4);
+    const ty = clamp(py - 245, 330, H - 420);
+    T.caption(g, null, tg.text, px, ty, 92, { style: "gold", alpha: a, scale: .6 + .4 * pop });
+    g.save(); g.globalAlpha = a; setFont(g, 30, "Nunito", 900); g.textAlign = "center"; g.letterSpacing = "6px"; g.fillStyle = C.mint;
+    g.fillText(`${tg.i + 1} / 6`, px, ty + 50); g.restore();
   }
   function inkRing(x, y, k) {
     g.save(); g.strokeStyle = rgba(C.gold, (1 - k) * .9); g.lineWidth = 8 * (1 - k); g.beginPath(); g.arc(x, y, 100 + k * 120, 0, TAU); g.stroke(); g.restore();
