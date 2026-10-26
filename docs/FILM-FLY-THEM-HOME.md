@@ -40,7 +40,7 @@ For WhatsApp Status and Instagram Stories (also Reels, Shorts, TikTok): the same
 - The Sky World is restacked for a tall frame: Old Moon larger and centred, the horizon and islands lower, more star-envelopes between them.
 - Text stays inside the story safe zone (y 250–1580, clear of the profile bar at the top and the reply bar at the bottom): gameplay captions centred above the orbit, the first line on two lines, *Fly them / home.* stacked, a larger end card.
 - Tags and fleet names are kept inside the frame and follow the glider in the same frame.
-- **Story cut, 30 s:** film 17–26 (Ready, pilot? → Bloom) · 30–34 (Express Post) · 38–50 (Void, the fleet, the last gate, Moonrise, *Fly them home.*) · 54–59 (logo and end card). **Teaser, 15 s:** 38–48 · 54–59. Every cut is on a bar line, so the groove never skips a beat (`film/cuts.py`).
+- **Story cut, 30 s:** film 17–26 (Ready, pilot? → Bloom) · 32–34 (Express Post) · 36–50 (the comet near miss, the fleet, the last gate, Moonrise, *Fly them home.*) · 54–59 (logo and end card). **Teaser, 15 s:** 40–48 (opens on the first plane swap) · 52–59 (SHIFT slams in, end card). Every cut is on a bar line, so the groove never skips a beat (`film/cuts.py`).
 
 ## Rules for this film
 

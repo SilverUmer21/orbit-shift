@@ -7,11 +7,11 @@ import numpy as np
 from scipy.io import wavfile
 
 CUTS = {
-    # Ready, pilot? → Bloom (tap, thread, perfects, the planet blooms) → Express Post → Void perfects, the fleet, the
-    # last gate, Moonrise, "Fly them home." → the logo and the end card.
-    'story-30s': [(17.0, 26.0), (30.0, 34.0), (38.0, 50.0), (54.0, 59.0)],
-    # Hook first: a perfect in the Void, the six planes on the beat, the last gate, Moonrise → logo and end card.
-    'teaser-15s': [(38.0, 48.0), (54.0, 59.0)],
+    # Ready, pilot? → Bloom (tap, thread, perfects, the planet blooms) → Express Post → Void (the comet near miss, perfects,
+    # the fleet, the last gate) → Moonrise, "Fly them home." → the logo and the end card.
+    'story-30s': [(17.0, 26.0), (32.0, 34.0), (36.0, 50.0), (54.0, 59.0)],
+    # Hook first: the first plane swap on the downbeat, the fleet, the last gate, Moonrise → SHIFT slams in, the end card.
+    'teaser-15s': [(40.0, 48.0), (52.0, 59.0)],
 }
 FPS, XF, FADE = 60, .02, .6
 
