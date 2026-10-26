@@ -4,8 +4,10 @@
   const { TAU, clamp, lerp, ease, easeOut, back, C, rgba, mix, rng, canvas } = FT;
   const A = FilmArt;
   const S = {};
-  const W = 1920, H = 1080;
-  S.MOON = { x: 1240, y: 352, R: 236, travel: 1040 };
+  const { V, W, H } = FT;
+  // The vertical cut stacks the same diorama in a tall frame: the Moon higher and centred, the islands on the horizon
+  // near the foot of the frame, more sky between them.
+  S.MOON = V ? { x: 590, y: 700, R: 300, travel: 1040 } : { x: 1240, y: 352, R: 236, travel: 1040 };
 
   // Layer table: travel (px of vertical move from tau 0 to 1) and dolly depth.
   const L = { farStars: [700, .25], moon: [S.MOON.travel, .35], cloudFar: [1150, .55], stars: [1000, .6], islands: [1400, .8], cloudMid: [1300, .9], cloudNear: [1520, 1.25] };
@@ -18,10 +20,10 @@
   S.layerScale = name => Math.pow(cam.zoom, L[name][1]);
 
   const r = rng(2026);
-  const farStars = Array.from({ length: 170 }, () => ({ x: r() * W, y: -720 + r() * 1700, s: 1.6 + r() * 2.6, ph: r() * TAU, sp: .8 + r() * 1.6 }));
-  const stars = Array.from({ length: 74 }, () => ({ x: 40 + r() * (W - 80), y: -1000 + r() * 1650, s: 10 + Math.pow(r(), 2.2) * 30, ph: r() * TAU, rot: (r() - .5) * .5 }));
+  const farStars = Array.from({ length: V ? 200 : 170 }, () => ({ x: r() * W, y: -720 + r() * (V ? 2550 : 1700), s: 1.6 + r() * 2.6, ph: r() * TAU, sp: .8 + r() * 1.6 }));
+  const stars = Array.from({ length: V ? 84 : 74 }, () => ({ x: 40 + r() * (W - 80), y: -1000 + r() * (V ? 2420 : 1650), s: 10 + Math.pow(r(), 2.2) * 30, ph: r() * TAU, rot: (r() - .5) * .5 }));
   // Far paper ribbons (the map backdrop's flowing bands, at film scale).
-  const ribbons = [[-300, .22, "#3f7770", 11], [260, .16, "#3a6f69", 5], [-760, .14, "#4a8a80", 17]].map(([y, a, c, seed]) => {
+  const ribbons = (V ? [[-300, .22, "#3f7770", 11], [620, .16, "#3a6f69", 5], [-820, .14, "#4a8a80", 17], [1180, .12, "#3f7770", 23]] : [[-300, .22, "#3f7770", 11], [260, .16, "#3a6f69", 5], [-760, .14, "#4a8a80", 17]]).map(([y, a, c, seed]) => {
     const rr = rng(seed), pts = []; for (let x = -200; x <= W + 300; x += 240) pts.push([x, y + (rr() - .5) * 160]);
     return { pts, a, c, h: 70 + rr() * 60 };
   });
@@ -42,24 +44,25 @@
       if (chain.length > 2) threads.push(chain);
     } }
 
+  const isl = V ? [[300, 1470, 420], [820, 1400, 340], [590, 1640, 300]] : [[430, 880, 330], [1490, 850, 290], [980, 990, 250]];
   const islands = [
-    { id: "bloom", x: 430, y: 880, size: 330, lights: [[-60, -40], [-10, -62], [42, -48], [80, -20], [-96, -10]] },
-    { id: "ember", x: 1490, y: 850, size: 290, lights: [[-30, -44], [20, -56], [56, -30], [-64, -18]] },
-    { id: "void", x: 980, y: 990, size: 250, lights: [[-30, -30], [14, -44], [48, -22]] },
+    { id: "bloom", x: isl[0][0], y: isl[0][1], size: isl[0][2], lights: [[-60, -40], [-10, -62], [42, -48], [80, -20], [-96, -10]] },
+    { id: "ember", x: isl[1][0], y: isl[1][1], size: isl[1][2], lights: [[-30, -44], [20, -56], [56, -30], [-64, -18]] },
+    { id: "void", x: isl[2][0], y: isl[2][1], size: isl[2][2], lights: [[-30, -30], [14, -44], [48, -22]] },
   ];
   S.islands = islands;
   S.load = async () => {
     await Promise.all(islands.map(is => new Promise(res => { is.img = new Image(); is.img.onload = res; is.img.src = `../assets/archipelago/${is.id}-island.svg`; })));
     for (const is of islands) { const c = canvas(600, 600); c.getContext("2d").drawImage(is.img, 0, 0, 600, 600); is.bmp = c; }
-    S.rays = canvas(480, 270); S.rays2 = canvas(480, 270);
+    S.rays = canvas(W / 4, H / 4); S.rays2 = canvas(W / 4, H / 4);
   };
 
   // Cut-paper cloud band: bumpy top silhouette, two-tone fold, lit rim.
   const bands = {
-    cloudFar: { y: 780, seed: 3, bump: 70, step: 120, fill: "#123a41", shade: "#0f3137", rim: "#2c6d6c" },
-    cloudMid: { y: 905, seed: 9, bump: 90, step: 150, fill: "#0d2d33", shade: "#0a252a", rim: "#25605e" },
-    cloudNear: { y: 1035, seed: 21, bump: 110, step: 190, fill: "#0a2127", shade: "#081b20", rim: "#1f5352" },
-    wisp: { y: S.MOON.y - S.MOON.travel + S.MOON.R * 1.15, seed: 31, bump: 40, step: 90, fill: "#123a41", shade: "#0f3137", rim: "#3b7d78", x0: 520, x1: 1960, thick: 70 },
+    cloudFar: { y: V ? 1380 : 780, seed: 3, bump: 70, step: 120, fill: "#123a41", shade: "#0f3137", rim: "#2c6d6c" },
+    cloudMid: { y: V ? 1560 : 905, seed: 9, bump: 90, step: 150, fill: "#0d2d33", shade: "#0a252a", rim: "#25605e" },
+    cloudNear: { y: V ? 1780 : 1035, seed: 21, bump: 110, step: 190, fill: "#0a2127", shade: "#081b20", rim: "#1f5352" },
+    wisp: { y: S.MOON.y - S.MOON.travel + S.MOON.R * 1.15, seed: 31, bump: 40, step: 90, fill: "#123a41", shade: "#0f3137", rim: "#3b7d78", x0: V ? -60 : 520, x1: V ? 1200 : 1960, thick: 70 },
   };
   for (const b of Object.values(bands)) {
     const rr = rng(b.seed), pts = []; const x0 = b.x0 ?? -260, x1 = b.x1 ?? W + 260;
@@ -220,17 +223,17 @@
 
   function rays(g, G, st, mx, my) {
     const R = S.rays, c = R.getContext("2d"), q = .25;
-    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, 480, 270);
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W / 4, H / 4);
     const gr = c.createRadialGradient(mx * q, my * q, 0, mx * q, my * q, 260);
     gr.addColorStop(0, "rgba(255,240,200,1)"); gr.addColorStop(.25, "rgba(255,226,160,.55)"); gr.addColorStop(1, "rgba(255,226,160,0)");
-    c.fillStyle = gr; c.fillRect(0, 0, 480, 270);
+    c.fillStyle = gr; c.fillRect(0, 0, W / 4, H / 4);
     // Occluders: the paper in front of the light.
     c.save(); c.scale(q, q); c.fillStyle = "#000";
     for (const [name, key] of [["moon", "wisp"], ["cloudFar", "cloudFar"], ["cloudMid", "cloudMid"]]) { c.save(); layer(c, name); c.fill(bands[key].path); c.restore(); }
     c.restore();
     // Radial blur toward the Moon.
     const R2 = S.rays2, c2 = R2.getContext("2d");
-    c2.setTransform(1, 0, 0, 1, 0, 0); c2.clearRect(0, 0, 480, 270); c2.globalCompositeOperation = "lighter";
+    c2.setTransform(1, 0, 0, 1, 0, 0); c2.clearRect(0, 0, W / 4, H / 4); c2.globalCompositeOperation = "lighter";
     for (let i = 0; i < 9; i++) { const s = 1 + i * .09; c2.globalAlpha = .16 * (1 - i / 10); c2.setTransform(s, 0, 0, s, mx * q * (1 - s), my * q * (1 - s)); c2.drawImage(R, 0, 0); }
     c2.globalCompositeOperation = "source-over"; c2.globalAlpha = 1;
     g.save(); g.globalCompositeOperation = "lighter"; g.globalAlpha = .24 * st.rays; g.drawImage(R2, 0, 0, W, H); g.restore();

@@ -60,5 +60,7 @@
 
   function setFont(g, size, family = "Lilita One", weight = 400) { g.font = `${weight} ${size}px "${family}"`; }
 
-  window.FT = { TAU, clamp, lerp, inv, ease, easeOut, easeIn, easeInOut, expoOut, back, spring, pulse, steps, C, rgba, mix, rng, hash, noise1, canvas, fibreTile, cloudTop, setFont };
+  // Layout: landscape 1920 x 1080 (the film) or vertical 1080 x 1920 (?v=1: WhatsApp Status, Stories, Reels, Shorts).
+  const V = /[?&]v=1\b/.test(location.search), W = V ? 1080 : 1920, H = V ? 1920 : 1080;
+  window.FT = { V, W, H, TAU, clamp, lerp, inv, ease, easeOut, easeIn, easeInOut, expoOut, back, spring, pulse, steps, C, rgba, mix, rng, hash, noise1, canvas, fibreTile, cloudTop, setFont };
 })();

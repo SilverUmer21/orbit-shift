@@ -2,7 +2,7 @@
 
 Living document for the **Complete Remake** (`complete-remake-orbit-shift` branch). Read this before every work session and update it whenever something is built, decided or found.
 
-Last updated: 2026-10-22
+Last updated: 2026-10-26
 
 > ## ★ How we design (owner's rule, read first, every session)
 >
@@ -222,6 +222,9 @@ Research and proposal in `docs/RETENTION-STRATEGY.md`. Proposed waves: Tonight's
 - Gameplay is the real game on the virtual clock; every tap is on the 120 BPM grid; staged gates are copies of a gate the game planned, placed and aimed by `node film/render.cjs measure` so the game's own rules score them.
 - Polish pass (2026-10-23, owner approved): page folds lift in perspective with the old world showing through the paper; the white flashes into and out of the game became an orbit iris (a gold ring opening from the island / the glider). Fixed the fold's crease glow, which had been drawn at the screen's left edge.
 - Score: synthesised post-office kit and the one theme (`film/score.py`), −14 LUFS. Narration script is timed (`film/narration.json`) but not rendered (the good offline voice downloads from huggingface.co, blocked in the build environment).
+- Fleet swaps (2026-10-26, owner): slower (game at 0.42× from 39.8 s while the music keeps tempo) and a closer camera on the glider (2.2×), each plane's name and "n / 6" popping above it.
+- Vertical cut (2026-10-26, owner asked for WhatsApp Status and Instagram Stories): `film/release/orbit-shift-fly-them-home-1080x1920.mp4`, recomposed for 9:16 with the game's portrait layout and text inside the story safe zone; plus a 30 s story cut and a 15 s teaser cut on bar lines (`film/cuts.py`). Details in `docs/FILM-FLY-THEM-HOME.md`.
+- Organic launch plan (no ad spend): `reports/2026-10-26-launch-orbit-shift.md`. First goal: 12+ closed-test testers for 14 days (Play's rule for new personal accounts), then pre-registration.
 
 ### Step 3 — Hangar  ✅ built (2026-10-19): A · Sorting Room
 Pip's sorting loft:
@@ -279,6 +282,7 @@ Plane redesign (paper-plane set exists in `design/paper-night/svg/planes/`, not 
 | 2026-10-17 | Reward card approved: ribbons NEW TRAIL!/NEW PAINT!/NEW RELIC!/LEVEL CLEAR!, keep "Equip now" on trails and paints. |
 | 2026-10-17 | Step 2 approved: chapter levels labelled "Level N · Name" (option A); the big chapter planet removed from the levels screen (owner). |
 | 2026-10-22 | Film B "Fly Them Home" approved and built (owner: "everything's good and approved"): concept A with fold transitions and beat-synced taps, 16:9 60 fps master, the Blitzedo wordmark animation as the studio open, Moonrise and a hero Old Moon as film-only art, narration only if it makes the film better. Work goes on the new `intro` branch. |
+| 2026-10-26 | Owner: vertical film for WhatsApp Status and Instagram Stories, and an organic (no ads yet) marketing plan. Built the 9:16 cut, 30 s and 15 s cuts and `reports/2026-10-26-launch-orbit-shift.md`. |
 | 2026-10-19 | Home v4 approved. The owner's "redundant mail" note meant the extra envelope floating next to Pip, not the top-right mailbox. The mailbox and its badge stay; the floating envelope is removed (Pip already wears an envelope satchel). When tonight's letter is ready, the satchel's wax seal glows softly. |
 | 2026-10-19 | Home refinement (owner):
 - PLAY was "way too high" on its own row, so it's back at the bottom between Hangar and Islands, smaller (≈186×66).

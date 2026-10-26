@@ -1,6 +1,6 @@
 # Film tooling — "Fly Them Home"
 
-60 s presentation film, 1920×1080 at 60 fps. Plan and beat sheet: `docs/FILM-FLY-THEM-HOME.md`.
+60 s presentation film, 1920×1080 at 60 fps, plus a vertical 1080×1920 cut and 30 s / 15 s short cuts. Plan and beat sheet: `docs/FILM-FLY-THEM-HOME.md`.
 
 - `film.html` — the compositor page: the real game in an iframe (768×432 CSS px, rendered at 2.5× so its canvas is 1920×1080; 6× for the last-gate close-up), the film canvas, and Pip's rig from `pip.js`.
 - `js/timeline.js` — the edit: `Film.frame(t)` draws film second t. Story scenes are functions of t; gameplay comes from shots.
@@ -10,6 +10,7 @@
 - `js/post.js` — WebGL post: bloom and an anamorphic streak only from gold and the explicit glow layer, exposure, grade, vignette, grain, flash and fade.
 - `score.py` — the score and sound, synthesised from `events.json` (numpy + scipy), mastered to −14 LUFS.
 - `narration.json` — the narration script, timed to the edit (not rendered yet).
+- `cuts.py` — the 30 s story cut and the 15 s teaser from a rendered film and its score, cut on bar lines with short equal-power crossfades.
 
 ```sh
 python3 -m http.server 3112 --bind 127.0.0.1 &          # from the repo root
@@ -19,6 +20,14 @@ node film/render.cjs render film/out                     # 3600 frames + events.
 python3 film/score.py film/out/events.json film/out/score.wav
 ffmpeg -framerate 60 -i film/out/f%05d.jpg -i film/out/score.wav -c:v libx264 -preset slow -profile:v high -pix_fmt yuv420p \
   -crf 23 -g 120 -movflags +faststart -c:a aac -b:a 192k -shortest film/release/orbit-shift-fly-them-home-1920x1080.mp4
+```
+
+**Vertical cut (9:16, 1080×1920)** for WhatsApp Status and Instagram Stories: set `FILM_V=1` for `stills` and `render` (the page opens as `film.html?v=1`: a portrait frame and the game's portrait phone layout, 432×768 CSS px). Both layouts share `corrections.json`. The render's `events.json` records the game width, so `score.py` pans the same way in both.
+
+```sh
+FILM_V=1 node film/render.cjs render film/out-v
+python3 film/score.py film/out-v/events.json film/out-v/score.wav
+python3 film/cuts.py film/out-v film/out-v/score.wav film/release -1080x1920   # 30 s story cut and 15 s teaser
 ```
 
 The repo keeps the CRF 23 copy (22 MB). For YouTube or the Play Store, encode an upload master the same way at `-crf 19 -b:a 256k` (about 80 MB); it is not committed.

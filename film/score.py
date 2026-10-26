@@ -237,7 +237,10 @@ def cues(kind): return [c for c in CUES if c['type'] == kind]
 def cue(kind, default=None):
     c = cues(kind); return c[0]['t'] if c else default
 def game(kind, shot=None): return [e for e in GAME if e['type'] == kind and (shot is None or e.get('shot') == shot)]
-pan_of = lambda e: float(np.clip((e.get('x', 384) - 384) / 384 * .7, -.8, .8))
+# Panned by the glider's offset from the planet (game x; the vertical cut's portrait game is 432 wide), on the same scale
+# in both layouts.
+GW = LOG.get('gw', 768)
+pan_of = lambda e: float(np.clip((e.get('x', GW / 2) - GW / 2) / 384 * .7, -.8, .8))
 
 # 0 · studio sting: every pixel lands with a soft tick that rises left to right; the glow runs with a warm shimmer.
 for c in cues('pixel'):

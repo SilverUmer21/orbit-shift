@@ -10,6 +10,13 @@ html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#000}
 <iframe id="game" src="../index.html"></iframe>
 <div id="pipHost"></div>
 <canvas id="out" width="1920" height="1080"></canvas>
+<script>
+  // Vertical layout: a portrait frame and a portrait game (the game's own phone layout).
+  if (/[?&]v=1\b/.test(location.search)) {
+    document.head.insertAdjacentHTML("beforeend", "<style>html,body{width:1080px;height:1920px}#out{width:1080px;height:1920px}#game{width:432px;height:768px}</style>");
+    const o = document.getElementById("out"); o.width = 1080; o.height = 1920;
+  }
+</script>
 <script src="../pip.js"></script>
 <script src="js/util.js"></script><script src="js/fold.js"></script><script src="js/post.js"></script>
 <script src="js/art.js"></script><script src="js/sky.js"></script><script src="js/type.js"></script>

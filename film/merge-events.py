@@ -2,12 +2,12 @@
 # before its own start are duplicates): keep each event once, by type, time and shot.
 import json, sys
 out, parts = sys.argv[1], sys.argv[2:]
-cues, game, seen = None, [], set()
+cues, game, seen, gw = None, [], set(), 768
 for p in parts:
-    d = json.load(open(p)); cues = cues or d['cues']
+    d = json.load(open(p)); cues = cues or d['cues']; gw = d.get('gw', gw)
     for e in d['game']:
         k = (e['type'], round(e['t'], 3), e.get('shot'))
         if k not in seen: seen.add(k); game.append(e)
 game.sort(key=lambda e: e['t'])
-json.dump({'fps': 60, 'cues': cues, 'game': game}, open(out, 'w'), indent=1)
+json.dump({'fps': 60, 'gw': gw, 'cues': cues, 'game': game}, open(out, 'w'), indent=1)
 print(len(game), 'game events,', len(cues), 'cues')

@@ -3,7 +3,30 @@
 (() => {
   const { TAU, clamp, lerp, inv, ease, easeOut, easeIn, easeInOut, expoOut, back, spring, pulse, C, rgba, mix, rng, canvas, setFont } = FT;
   const A = FilmArt, S = Sky, T = FilmType, GB = Game;
-  const W = 1920, H = 1080, FPS = 60;
+  const { V, W, H } = FT, FPS = 60;
+  // The game canvas in CSS px: the film uses the game's landscape layout, the vertical cut its phone layout.
+  const GW = V ? 432 : 768, GH = V ? 768 : 432;
+  // Scene layout: the landscape film (1920 x 1080) and the vertical cut (1080 x 1920, story safe zones: text stays
+  // between y 250 and 1580).
+  const LY = V ? {
+    wm: [540, 860, 860], camDown: 1120, letterY: 960, letterS: 1.55, drift: [430, 1080, .34],
+    line1: { y: [1040, 1126], size: 64, split: 5 }, star: [640, 1320, 640, 300],
+    fold: [540, 1010], foldS: 1.32, pipIn: [300, 1220], pipAt: [250, 700], letterFrom: [900, -220], ready: [540, 1470, 112], p1: [900, 560], p2: [300, -640],
+    cap: { x: () => W / 2, dy: -70 }, gameZ: 1.04, gameFy: 399,
+    moonIn: [-330, 260], letterIn: [-330, -100, 110, 150],
+    flyHome: [[{ text: "Fly them", size: 170, style: "paper" }, { text: "home.", size: 170, style: "paper" }], 470, 160],
+    logo: [540, 760, 250], logoEnd: [.86, 210], pip: [250, 470, 400], card: { tag: 1090, noads: 1345, seal: 1480, tagSize: 66, pill: [800, 104, 40, 1150], noadsSize: 32, sealR: 58, wm: 340, by: 28 },
+  } : {
+    wm: [960, 470, 980], camDown: 720, letterY: 600, letterS: 1.25, drift: [760, 640, .3],
+    line1: { y: [880], size: 58 }, star: [1180, 2150, 330, 170],
+    fold: [880, 610], foldS: 1.02, pipIn: [560, 560], pipAt: [520, 380], letterFrom: [1500, -200], ready: [1290, 400, 104], p1: [1500, 300], p2: [200, -420],
+    cap: { x: side => side < 0 ? 330 : W - 330, dy: 0 }, gameZ: 1.06, gameFy: 222,
+    moonIn: [-540, 140], letterIn: [-520, -120, 120, 150],
+    flyHome: [[{ text: "Fly them home.", size: 150, style: "paper" }], 250, 0],
+    logo: [960, 360, 250], logoEnd: [.74, 130], pip: [470, 330, 250], card: { tag: 660, noads: 858, seal: 960, tagSize: 54, pill: [620, 82, 30, 712], noadsSize: 24, sealR: 44, wm: 258, by: 22 },
+  };
+  // Where the camera dives into the Bloom island (the island's screen position at the end of the sky story).
+  const ISLE = () => V ? [S.islands[0].x, S.islands[0].y + 60] : [430, 930];
   const F = { cues: [] };
   let out, comp, g, glow, G, post, prev, bgC, bgBlur, bgG, snap = null, snapAt = -1;
   const seg = (t, a, b) => clamp((t - a) / (b - a));
@@ -62,8 +85,9 @@
     F.W = GB.eval("window"); F.rider = n => GB.eval(`riders.find(r=>r.id==='${n}')`); F.palette = n => GB.eval(`cosmetics.find(c=>c.id==='${n}')`);
     post = FilmPost.create(out, comp, glow);
     F._layers = { comp, glow };
+    // One staging for both layouts: the game's physics don't depend on the screen's shape.
     try { GB.corr = await (await fetch("corrections.json", { cache: "no-store" })).json(); } catch (e) { GB.corr = {}; }
-    F.layout = T.logoLayout(g, W / 2, 360, 250);
+    F.layout = T.logoLayout(g, LY.logo[0], LY.logo[1], LY.logo[2]);
     buildFolds();
     storyCues();
   };
@@ -129,7 +153,7 @@
     if (t >= 4.4 && t < 5.3) foldAway(blackPage(), seg(t, 4.4, 5.25), creaseGlint("#ff6a4a"));
     if (t >= 2.4 && t < 6.8) letterScene(t, look);
     // Into the game and out of it through an orbit iris: a gold ring opens from the island / the glider.
-    if (t >= 19.45 && t < 45.2) { const k = seg(t, 19.45, 19.85); if (k < 1) iris(() => gameplay(t, look, opt), k, 430, 930); else gameplay(t, look, opt); }
+    if (t >= 19.45 && t < 45.2) { const k = seg(t, 19.45, 19.85); if (k < 1) iris(() => gameplay(t, look, opt), k, ...ISLE()); else gameplay(t, look, opt); }
     if (t >= 44.7 && t < 50.6) { const k = seg(t, 44.7, 45.15); if (k < 1) iris(() => moonrise(t, look), k, fx.glider[0], fx.glider[1]); else moonrise(t, look); }
     if (t >= 50.0) titleEnd(t, look);
     // Camera shake on impacts, applied to the finished comp.
@@ -140,19 +164,19 @@
   };
 
   // ---------------------------------------------------------------- 0-1 · studio sting, the seal, the letter
-  const EMBER0 = () => A.wordmarkPoint(W / 2, 470, 980);
-  const camDownAt = t => 720 * easeInOut(seg(t, 2.2, 3.0));
+  const EMBER0 = () => A.wordmarkPoint(...LY.wm);
+  const camDownAt = t => LY.camDown * easeInOut(seg(t, 2.2, 3.0));
   function emberPos(t) {
     // Falls from the foot of the t onto the seal point of the letter (which rises with the camera).
     const [x0, y0] = EMBER0(), k = seg(t, 2.15, 3.0), fall = easeIn(k);
-    const [sx, sy] = A.sealPoint(), endX = W / 2 + sx * 1.25, endY = 600 + sy * 1.25;
-    let x = lerp(x0, endX, ease(k)) + Math.sin(k * 6) * 22 * (1 - k), y = y0 + fall * (endY - y0 + 720) - camDownAt(t);
+    const [sx, sy] = A.sealPoint(), endX = W / 2 + sx * LY.letterS, endY = LY.letterY + sy * LY.letterS;
+    let x = lerp(x0, endX, ease(k)) + Math.sin(k * 6) * 22 * (1 - k), y = y0 + fall * (endY - y0 + LY.camDown) - camDownAt(t);
     if (k < .3) { x = Math.round(x / 12) * 12; y = Math.round(y / 12) * 12; }
     return [x, y, k];
   }
   function studio(t, look) {
     g.fillStyle = C.studio; g.fillRect(0, 0, W, H);
-    if (t < 2.75) A.wordmark(g, G, t, W / 2, 470 - camDownAt(t), 980);
+    if (t < 2.75) A.wordmark(g, G, t, LY.wm[0], LY.wm[1] - camDownAt(t), LY.wm[2]);
     if (t > 2.15 && t < 3.0) {
       const [x, y, k] = emberPos(t), r = lerp(9, 15, k);
       g.fillStyle = k < .3 ? C.redHot : "#ff7a3a";
@@ -181,8 +205,8 @@
   function letterScene(t, look) {
     // The letter rises into frame with the camera, takes the wax, turns over, then drifts up into the sky.
     const lf = letterFace(t), drift = easeInOut(seg(t, 4.9, 6.7));
-    const x = lerp(W / 2, 760, drift), y = 600 + 720 - camDownAt(t) - drift * 640 - Math.sin(t * 1.7) * 6 * seg(t, 3.4, 4);
-    const sc = lerp(1.25, .3, drift) * (1 + .06 * pulse(t, 3.0, 3.25)), rot = lerp(0, -.28, drift) + Math.sin(t * 1.3) * .015 * seg(t, 3.4, 4);
+    const x = lerp(W / 2, LY.drift[0], drift), y = LY.letterY + LY.camDown - camDownAt(t) - drift * LY.drift[1] - Math.sin(t * 1.7) * 6 * seg(t, 3.4, 4);
+    const sc = lerp(LY.letterS, LY.drift[2], drift) * (1 + .06 * pulse(t, 3.0, 3.25)), rot = lerp(0, -.28, drift) + Math.sin(t * 1.3) * .015 * seg(t, 3.4, 4);
     drawLetterCard(t, x, y, sc, rot, lf);
     look.warmth = .5 * (1 - seg(t, 4.2, 5.2));
   }
@@ -239,7 +263,7 @@
     if (t > 14.0) zoom = lerp(1, 1.04, seg(t, 14, 18));
     let zx = W / 2, zy = H / 2;
     if (t > 18.0) { const k = easeInOut(seg(t, 18.0, 19.0)); tau = lerp(.72, .05, k); }
-    if (t > 18.9) { const k = easeIn(seg(t, 18.9, 19.7)); zoom = lerp(1.04, 3.4, k); zx = lerp(W / 2, 430, Math.min(1, k * 3)); zy = lerp(H / 2, 930, Math.min(1, k * 3)); }
+    if (t > 18.9) { const k = easeIn(seg(t, 18.9, 19.7)), [ix, iy] = ISLE(); zoom = lerp(1.04, 3.4, k); zx = lerp(W / 2, ix, Math.min(1, k * 3)); zy = lerp(H / 2, iy, Math.min(1, k * 3)); }
     return { tau, zoom, zx, zy };
   }
   function skyStory(t, look) {
@@ -248,17 +272,22 @@
     S.draw(g, G, { ...cam, t, light, moon: { snore: 1, awake: 0, light: .25 }, curtain: 0, nearBlur: 6 });
     // The letter drifting up into the sky (continues from the seal scene).
     // Line 1.
-    if (t > 5.6 && t < 9.2) T.storyLine(g, G, [{ w: "Every" }, { w: "star" }, { w: "is" }, { w: "a" }, { w: "letter", gold: true }, { w: "that" }, { w: "never" }, { w: "arrived." }], W / 2, 880, 58, t - 5.7, 8.75 - t);
+    if (t > 5.6 && t < 9.2) {
+      const words = [{ w: "Every" }, { w: "star" }, { w: "is" }, { w: "a" }, { w: "letter", gold: true }, { w: "that" }, { w: "never" }, { w: "arrived." }], L1 = LY.line1;
+      // The vertical cut sets it on two lines; the second line's words keep rising in order.
+      const lines = L1.split ? [words.slice(0, L1.split), words.slice(L1.split)] : [words];
+      lines.forEach((ws, i) => T.storyLine(g, G, ws, W / 2, L1.y[i], L1.size, t - 5.7 - (i ? L1.split * .085 : 0), 8.75 - t));
+    }
     // A star passes close to the lens: a tiny sealed envelope.
     if (t > 5.8 && t < 8.8) closeStar(t);
     // Z's from Old Moon while the camera looks up.
     if (t > 9.4 && t < 14.4) zzz(t, cam);
     if (t > 12.6 && t < 19.8) pipAndFold(t, look);
     look.exposure = lerp(.94, 1, seg(t, 12, 17)); look.vig = .42; look.bloom = .9;
-    if (t > 19.0) { const k = seg(t, 19.0, 19.7); look.vig = .42 + k * .3; streaks(k, 430, 930); }
+    if (t > 19.0) { const k = seg(t, 19.0, 19.7); look.vig = .42 + k * .3; streaks(k, ...ISLE()); }
   }
   function closeStar(t) {
-    const k = seg(t, 5.8, 8.8), x = lerp(1180, 2150, easeIn(k)), y = lerp(330, 170, k), s = lerp(30, 360, easeIn(k)), blur = Math.max(0, (s - 160) / 18);
+    const k = seg(t, 5.8, 8.8), x = lerp(LY.star[0], LY.star[1], easeIn(k)), y = lerp(LY.star[2], LY.star[3], k), s = lerp(30, 360, easeIn(k)), blur = Math.max(0, (s - 160) / 18);
     g.save(); g.translate(x, y); g.rotate(-.2 + k * .25); if (blur > 0) g.filter = `blur(${blur}px)`;
     const w = s, h = s * .66;
     g.fillStyle = C.paper; g.fillRect(-w / 2, -h / 2, w, h);
@@ -309,22 +338,22 @@
   const FOLD_AT = [15.0, 15.5, 16.0];
   function pipAndFold(t, look) {
     // Letter path: falls from the top right into Pip's arms (14.3), then moves to the folding spot.
-    const catchT = 14.3, foldPos = [880, 610], foldScale = 1.02;
+    const catchT = 14.3, foldPos = LY.fold, foldScale = LY.foldS;
     const enter = easeOut(seg(t, 12.75, 13.85));
-    let pipX = lerp(-200, 560, enter) + Math.sin(t * 1.3) * 8, pipY = 560 + Math.sin(t * 2.1) * 6, pipH = 300;
+    let pipX = lerp(-200, LY.pipIn[0], enter) + Math.sin(t * 1.3) * 8, pipY = LY.pipIn[1] + Math.sin(t * 2.1) * 6, pipH = 300;
     const ride = seg(t, 17.3, 17.7);
     // Letter.
     let lx, ly, ls, lr;
-    if (t < catchT) { const k = easeInOut(seg(t, 12.9, catchT)); lx = lerp(1500, pipX + 110, k) + Math.sin(t * 2) * 30 * (1 - k); ly = lerp(-200, pipY + 40, k); ls = lerp(.45, .62, k); lr = lerp(.5, -.1, k) + Math.sin(t * 3) * .1 * (1 - k); }
+    if (t < catchT) { const k = easeInOut(seg(t, 12.9, catchT)); lx = lerp(LY.letterFrom[0], pipX + 110, k) + Math.sin(t * 2) * 30 * (1 - k); ly = lerp(LY.letterFrom[1], pipY + 40, k); ls = lerp(.45, .62, k); lr = lerp(.5, -.1, k) + Math.sin(t * 3) * .1 * (1 - k); }
     else { const k = easeInOut(seg(t, catchT + .1, 14.95)); lx = lerp(pipX + 110, foldPos[0], k); ly = lerp(pipY + 40, foldPos[1], k); ls = lerp(.62, foldScale, k); lr = lerp(-.1, 0, k); }
-    if (t >= catchT) pipX = lerp(pipX, 520, ease(seg(t, 14.3, 15))), pipY = lerp(pipY, 380, ease(seg(t, 14.3, 15)));
+    if (t >= catchT) pipX = lerp(pipX, LY.pipAt[0], ease(seg(t, 14.3, 15))), pipY = lerp(pipY, LY.pipAt[1], ease(seg(t, 14.3, 15)));
     const angles = FOLD_AT.map(a => Math.PI * easeInOut(seg(t, a, a + .36)));
     const pop = seg(t, 16.5, 16.95);
     // Launch.
     let gx = foldPos[0], gy = foldPos[1], gs = 6.8, gr = 0;
     if (t > 17.0) { gr = lerp(0, -.18, ease(seg(t, 17.0, 17.6))); gy += Math.sin(t * 2.4) * 8; }
     if (t > 18.0) {
-      const k = easeIn(seg(t, 18.0, 19.15)), isl = S.toScreen("islands", 430, 880), p0 = [gx, gy], p1 = [1500, 300], p2 = [isl[0] + 200, isl[1] - 420], p3 = [isl[0], isl[1] - 40];
+      const k = easeIn(seg(t, 18.0, 19.15)), isl = S.toScreen("islands", S.islands[0].x, S.islands[0].y), p0 = [gx, gy], p1 = LY.p1, p2 = [isl[0] + LY.p2[0], isl[1] + LY.p2[1]], p3 = [isl[0], isl[1] - 40];
       const b = (a, b2, c, d, u) => (1 - u) ** 3 * a + 3 * (1 - u) ** 2 * u * b2 + 3 * (1 - u) * u * u * c + u ** 3 * d;
       const nx = b(p0[0], p1[0], p2[0], p3[0], k), ny = b(p0[1], p1[1], p2[1], p3[1], k);
       const nx2 = b(p0[0], p1[0], p2[0], p3[0], Math.min(1, k + .01)), ny2 = b(p0[1], p1[1], p2[1], p3[1], Math.min(1, k + .01));
@@ -349,7 +378,7 @@
       if (k > 0) gliderAt(gx, gy, gs * back(k, 2.4), gr, "manta", "bloom", 1 - seg(t, 17.0, 17.8));
     }
     if (ride > 0 && t < 19.6) A.drawPip(g, gx - Math.cos(gr) * 6 * gs / 6.8, gy - 70 * gs / 6.8 * ride - 10, 150 * gs / 6.8, gr * .5);
-    if (t > 17.0 && t < 18.3) T.caption(g, null, "Ready, pilot?", 1290, 400, 104, { style: "gold", alpha: clamp((t - 17.0) * 6) * clamp((18.25 - t) * 5), scale: back(seg(t, 17.0, 17.3)) * .4 + .6, rot: -.05 });
+    if (t > 17.0 && t < 18.3) T.caption(g, null, "Ready, pilot?", LY.ready[0], LY.ready[1], LY.ready[2], { style: "gold", alpha: clamp((t - 17.0) * 6) * clamp((18.25 - t) * 5), scale: back(seg(t, 17.0, 17.3)) * .4 + .6, rot: -.05 });
     look.streak = .6;
   }
   function sparkles(x, y, k, r) {
@@ -419,21 +448,23 @@
   };
   F.measure = () => { for (const s of Object.values(shots)) GB.measure(s, s.t0, s.t1); return GB.corr; };
   function gameCam(t, sh) {
-    // Focus in game CSS px (the canvas is 768 x 432; the planet sits at 384, 237.6).
-    let z = 1.06, fx0 = 384, fy0 = 222;
-    if (sh.id === "bloom") { const k = easeOut(seg(t, 19.6, 20.15)); z = lerp(1.7, 1.06, k); fy0 = lerp(237.6, 222, k); }
-    if (sh.id === "ember") z = 1.06 + .05 * ease(seg(t, 27.6, 28.2)) * (1 - ease(seg(t, 29.7, 30.1)));
+    // Focus in game CSS px (landscape: the canvas is 768 x 432 and the planet sits at 384, 237.6; vertical: 432 x 768,
+    // planet at 216, 422.4).
+    const z0 = LY.gameZ, cx0 = GW / 2, pcy = V ? 422.4 : 237.6;
+    let z = z0, fx0 = cx0, fy0 = LY.gameFy;
+    if (sh.id === "bloom") { const k = easeOut(seg(t, 19.6, 20.15)); z = lerp(1.7, z0, k); fy0 = lerp(pcy, LY.gameFy, k); }
+    if (sh.id === "ember") z = z0 + .05 * ease(seg(t, 27.6, 28.2)) * (1 - ease(seg(t, 29.7, 30.1)));
     if (sh.id === "void") {
       const inf = GB.info();
       // The fleet: close on the glider so each plane reads; then closer still for the last gate.
       const fleet = easeInOut(seg(t, 39.75, 40.2)), close = easeInOut(seg(t, 43.0, 44.1));
-      z = lerp(1.06, 2.2, fleet); z = lerp(z, 2.7, close);
+      z = lerp(z0, 2.2, fleet); z = lerp(z, 2.7, close);
       const k = Math.max(fleet * .9, close * .95);
-      fx0 = lerp(384, inf.x, k); fy0 = lerp(222, inf.y, k);
+      fx0 = lerp(cx0, inf.x, k); fy0 = lerp(LY.gameFy, inf.y, k);
       if (t > 36.5 && t < 37.7) { const k = pulse(t, 36.5, 37.7); z += .18 * k; fx0 = lerp(fx0, inf.x, .3 * k); fy0 = lerp(fy0, inf.y, .3 * k); }
     }
-    const hw = 384 / z, hh = 216 / z;
-    return { z, fx: clamp(fx0, hw, 768 - hw), fy: clamp(fy0, hh, 432 - hh) };
+    const hw = W / 5 / z, hh = H / 5 / z;
+    return { z, fx: clamp(fx0, hw, GW - hw), fy: clamp(fy0, hh, GH - hh) };
   }
   const toScreen = (cam, x, y) => [W / 2 + (x - cam.fx) * 2.5 * cam.z, H / 2 + (y - cam.fy) * 2.5 * cam.z];
   function gameplay(t, look, opt) {
@@ -447,14 +478,14 @@
     fx.capX += (fx.capDir * 30 - fx.capX) * (1 - Math.exp(-12 / FPS));
     g.fillStyle = "#05090b"; g.fillRect(0, 0, W, H);
     g.save(); g.translate(W / 2 + sdx, H / 2); g.transform(1, 0, skew, 1, 0, 0); g.scale(2.5 * cam.z * (1 + .03 * sp), 2.5 * cam.z * (1 + .03 * sp)); g.translate(-cam.fx, -cam.fy);
-    g.drawImage(GB.canvas(), 0, 0, 768, 432); g.restore();
+    g.drawImage(GB.canvas(), 0, 0, GW, GH); g.restore();
+    fx.glider = toScreen(cam, inf.x, inf.y);
     overlays(t, sh, cam, inf, look);
     // Page folds between worlds: the last frame of the previous world folds up and flies away.
     for (const at of [27.0, 34.0]) if (t >= at && t < at + .62) {
       if (snapAt !== at) { snap = canvas(W, H); snap.getContext("2d").drawImage(prev, 0, 0); snapAt = at; F.page = pageSheet(snap, C.night700); }
       foldAway(F.page, seg(t, at, at + .62), creaseGlint());
     }
-    fx.glider = toScreen(cam, inf.x, inf.y);
     look.bloom = .8; look.goldGain = .4; look.streak = .55; look.vig = .3; look.exposure = 1.02;
     if (t > 43 && t < 45) { look.vig = .3 + .35 * ease(seg(t, 43, 43.5)); look.sat = 1.04 - .25 * ease(seg(t, 43, 43.5)); }
     void opt;
@@ -463,12 +494,12 @@
     const cap = (lines, t0, t1, side) => {
       if (t < t0 || t > t1) return;
       const a = clamp((t - t0) * 7) * clamp((t1 - t) * 6), pop = back(seg(t, t0, t0 + .28));
-      const xBase = side < 0 ? 330 : W - 330, drift = fx.capX;
+      const xBase = LY.cap.x(side), drift = fx.capX;
       // Keep the widest line inside the frame.
       const wMax = Math.max(...lines.map(ln => T.measure(g, ln.text, ln.size))), x0 = clamp(xBase, wMax / 2 + 70, W - wMax / 2 - 70);
       lines.forEach((ln, i) => {
         const off = (i ? -1 : 1) * drift + (i ? 34 : -26);
-        T.caption(g, null, ln.text, x0 + off, ln.y, ln.size, { style: ln.style, alpha: a * clamp((t - t0 - i * .12) * 7), scale: .55 + .45 * pop, rot: side * .03, skew: fx.shiftDir * .12 * pulse(t - fx.shiftT, 0, .3) });
+        T.caption(g, null, ln.text, x0 + off, ln.y + LY.cap.dy, ln.size, { style: ln.style, alpha: a * clamp((t - t0 - i * .12) * 7), scale: .55 + .45 * pop, rot: side * .03, skew: fx.shiftDir * .12 * pulse(t - fx.shiftT, 0, .3) });
       });
     };
     if (sh.id === "bloom") {
@@ -488,7 +519,7 @@
     // Express Post: gold floods in from the edges.
     if (inf.fever > 0) {
       const k = clamp((t - fx.feverT) * 3) * clamp(inf.fever);
-      const vg = g.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, 1100); vg.addColorStop(0, "rgba(255,201,77,0)"); vg.addColorStop(1, `rgba(255,201,77,${.32 * k})`);
+      const vg = g.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, Math.hypot(W, H) / 2); vg.addColorStop(0, "rgba(255,201,77,0)"); vg.addColorStop(1, `rgba(255,201,77,${.32 * k})`);
       g.fillStyle = vg; g.fillRect(0, 0, W, H);
       G.save(); G.globalAlpha = .25 * k; G.fillStyle = vg; G.fillRect(0, 0, W, H); G.restore();
       look.warmth = .6 * k;
@@ -513,7 +544,7 @@
     for (const tg of fx.tags) {
       if (tg.swap) { fleetSwap(t, tg); continue; }
       const age = t - tg.t, life = 1.0; if (age > life) continue;
-      const [px, py] = toScreen(cam, tg.x, tg.y);
+      const [px0, py] = toScreen(cam, tg.x, tg.y), hw = T.measure(g, tg.text, 70) / 2 + 40, px = clamp(px0, hw, W - hw);
       T.caption(g, G, tg.text, px, py - 110 - age * 40, 70, { style: "gold", alpha: clamp(age * 10) * clamp((life - age) * 6), scale: back(seg(age, 0, .15)) * .3 + .7, glow: .4 });
     }
   }
@@ -528,10 +559,10 @@
       sparkles(px, py, k, 260);
     }
     const a = clamp(age * 14) * clamp((life - age) * 8), pop = back(seg(age, 0, .16), 2.4);
-    const ty = clamp(py - 245, 330, H - 420);
-    T.caption(g, null, tg.text, px, ty, 92, { style: "gold", alpha: a, scale: .6 + .4 * pop });
+    const ty = clamp(py - 245, 330, H - 420), hw = T.measure(g, tg.text, 92) / 2 + 40, nx = clamp(px, hw, W - hw);
+    T.caption(g, null, tg.text, nx, ty, 92, { style: "gold", alpha: a, scale: .6 + .4 * pop });
     g.save(); g.globalAlpha = a; setFont(g, 30, "Nunito", 900); g.textAlign = "center"; g.letterSpacing = "6px"; g.fillStyle = C.mint;
-    g.fillText(`${tg.i + 1} / 6`, px, ty + 50); g.restore();
+    g.fillText(`${tg.i + 1} / 6`, nx, ty + 50); g.restore();
   }
   function inkRing(x, y, k) {
     g.save(); g.strokeStyle = rgba(C.gold, (1 - k) * .9); g.lineWidth = 8 * (1 - k); g.beginPath(); g.arc(x, y, 100 + k * 120, 0, TAU); g.stroke(); g.restore();
@@ -566,7 +597,7 @@
     const letterAtMoon = (gg, GG, mx, my) => {
       // The letter slips under the curtain and glows in front of the Moon.
       if (t < 46.05) return;
-      const k = easeInOut(seg(t, 46.05, 46.6)), x = lerp(mx - 520, mx - 120, k), y = lerp(my + 120, my + 150, k), s = lerp(.62, .5, k);
+      const k = easeInOut(seg(t, 46.05, 46.6)), [a0, a1, b0, b1] = LY.letterIn, x = lerp(mx + a0, mx + a1, k), y = lerp(my + b0, my + b1, k), s = lerp(.62, .5, k);
       gg.save(); gg.translate(x, y); gg.rotate(lerp(-.2, .05, k) + Math.sin(t * 2) * .03); gg.scale(s, s); gg.drawImage(A.frontDone, -LETTER.W / 2, -LETTER.H / 2, LETTER.W, LETTER.H); gg.restore();
       const gl = seg(t, 46.4, 47.2) * (1 - seg(t, 48.2, 49));
       GG.fillStyle = rgba("#ffd36a", .3 * gl); GG.beginPath(); GG.arc(x, y, 130, 0, TAU); GG.fill();
@@ -577,7 +608,7 @@
     if (t < 46.1) {
       const [mx, my] = S.toScreen("moon", S.MOON.x, S.MOON.y - S.MOON.travel);
       const k = easeOut(seg(t, 44.9, 45.35));
-      const x = lerp(-200, mx - 540, k), y = lerp(760, my + 140, k);
+      const x = lerp(-200, mx + LY.moonIn[0], k), y = lerp(V ? my + 820 : 760, my + LY.moonIn[1], k);
       if (t < 45.5) gliderAt(x, y, 5.2 * (1 - easeIn(seg(t, 45.35, 45.5))), lerp(-.5, -.05, k), "manta", "bloom", 1);
       else {
         const a = [45.95, 45.75, 45.55].map(s => Math.PI * (1 - easeInOut(seg(t, s, s + .2))));
@@ -585,7 +616,10 @@
       }
       G.save(); G.globalAlpha = .4 * pulse(t, 45.3, 45.8); G.fillStyle = "#ffd36a"; G.beginPath(); G.arc(x, y, 120, 0, TAU); G.fill(); G.restore();
     }
-    if (t > 48.4 && t < 50.6) T.caption(g, null, "Fly them home.", W / 2, 250, 150, { style: "paper", alpha: clamp((t - 48.4) * 3) * clamp((50.55 - t) * 4), scale: .9 + .1 * easeOut(seg(t, 48.4, 49.4)) });
+    if (t > 48.4 && t < 50.6) {
+      const [lines, y0, dy] = LY.flyHome;
+      lines.forEach((ln, i) => T.caption(g, null, ln.text, W / 2, y0 + i * dy, ln.size, { style: ln.style, alpha: clamp((t - 48.4 - i * .12) * 3) * clamp((50.55 - t) * 4), scale: .9 + .1 * easeOut(seg(t, 48.4 + i * .12, 49.4)) }));
+    }
     look.exposure = lerp(.95, 1.06, ease(seg(t, 47.0, 48.0))) - .04 * ease(seg(t, 48.4, 50));
     look.bloom = lerp(.8, .95, ease(seg(t, 47.0, 48.0))); look.goldGain = .4; look.streak = .6; look.vig = lerp(.45, .32, open); look.warmth = .3 * open;
     if (t >= 50.0) look.fadeToTitle = seg(t, 50.0, 50.6);
@@ -607,7 +641,8 @@
     if (t < 50.6) g.restore();
     const lay = F.layout, end = easeInOut(seg(t, 55.0, 55.7));
     g.save(); G.save();
-    const lt = (c) => { c.translate(W / 2, 360); c.scale(lerp(1, .74, end), lerp(1, .74, end)); c.translate(-W / 2, -360 - end * 130); };
+    const [lx, ly] = LY.logo, [ls, lu] = LY.logoEnd;
+    const lt = (c) => { c.translate(lx, ly); c.scale(lerp(1, ls, end), lerp(1, ls, end)); c.translate(-lx, -ly - end * lu); };
     lt(g); lt(G);
     // The glider circles the O; its trail becomes the letter.
     const O = lay.orbit.letters[0], ocx = O.x + O.w / 2, ocy = lay.orbit.y - lay.size * .36, orr = lay.size * .3;
@@ -630,29 +665,31 @@
     if (t > 52.12 && t < 52.4) look.shake = 1 - seg(t, 52.12, 52.4);
     // Pip arrives and perches by the logo.
     if (t > 52.75) {
-      const k = easeOut(seg(t, 52.75, 53.8)), px = lerp(-200, lerp(470, 470, end), k), py = lerp(260, lerp(330, 250, end), k) + Math.sin(t * 2) * 6;
+      const [ppx, ppy, ppy2] = LY.pip, k = easeOut(seg(t, 52.75, 53.8)), px = lerp(-200, ppx, k), py = lerp(ppy - 70, lerp(ppy, V ? ppy2 : 250, end), k) + Math.sin(t * 2) * 6;
       A.drawPip(g, px, py, lerp(240, 190, end));
     }
     // End card.
     if (t > 55.5) {
       const a1 = ease(seg(t, 55.6, 56.0)), a2 = ease(seg(t, 56.05, 56.4)), a3 = ease(seg(t, 56.4, 56.8));
-      g.save(); setFont(g, 54, "Nunito", 900); g.textAlign = "center"; g.letterSpacing = "1px";
-      g.globalAlpha = a1; g.fillStyle = C.mint; g.fillText("One tap. Deliver the night.", W / 2, 660 + (1 - a1) * 16);
+      const cd = LY.card;
+      g.save(); setFont(g, cd.tagSize, "Nunito", 900); g.textAlign = "center"; g.letterSpacing = "1px";
+      g.globalAlpha = a1; g.fillStyle = C.mint; g.fillText("One tap. Deliver the night.", W / 2, cd.tag + (1 - a1) * 16);
       // Store pill.
-      g.globalAlpha = a2; const pw = 620, ph = 82, py = 712 + (1 - a2) * 16;
+      g.globalAlpha = a2; const [pw, ph, ps, pY] = cd.pill, py = pY + (1 - a2) * 16;
       g.fillStyle = rgba(C.night900, .85); round(g, W / 2 - pw / 2, py, pw, ph, 22); g.fill(); g.lineWidth = 4; g.strokeStyle = C.gold; g.stroke();
-      setFont(g, 30, "Nunito", 900); g.letterSpacing = "2px"; g.textAlign = "left";
+      setFont(g, ps, "Nunito", 900); g.letterSpacing = "2px"; g.textAlign = "left";
       const w1 = g.measureText("COMING SOON TO ").width, w2 = g.measureText("GOOGLE PLAY").width, sx = W / 2 - (w1 + w2) / 2;
-      g.fillStyle = C.paper; g.fillText("COMING SOON TO ", sx, py + 52); g.fillStyle = C.gold; g.fillText("GOOGLE PLAY", sx + w1, py + 52);
-      g.globalAlpha = a3; setFont(g, 24, "Nunito", 900); g.letterSpacing = "6px"; g.textAlign = "center"; g.fillStyle = C.muted; g.fillText("NO ADS · PLAYS OFFLINE", W / 2, 858);
+      g.fillStyle = C.paper; g.fillText("COMING SOON TO ", sx, py + ph / 2 + ps * .36); g.fillStyle = C.gold; g.fillText("GOOGLE PLAY", sx + w1, py + ph / 2 + ps * .36);
+      g.globalAlpha = a3; setFont(g, cd.noadsSize, "Nunito", 900); g.letterSpacing = "6px"; g.textAlign = "center"; g.fillStyle = C.muted; g.fillText("NO ADS · PLAYS OFFLINE", W / 2, cd.noads);
       g.restore();
       // The studio's seal.
       if (t > 56.9) {
-        const k = seg(t, 57.0, 57.14), cxs = W / 2 - 150, cys = 960;
-        A.seal(g, G, cxs, cys, 44, { splash: k, press: seg(t, 57.08, 57.22), heat: 1 - seg(t, 57.2, 58.4) });
+                // The seal, "A GAME BY" and the wordmark, centred as a group.
+        const sr = cd.sealR, gap = sr * 1.73, k = seg(t, 57.0, 57.14), cxs = W / 2 - (gap + cd.wm - sr) / 2, cys = cd.seal;
+        A.seal(g, G, cxs, cys, sr, { splash: k, press: seg(t, 57.08, 57.22), heat: 1 - seg(t, 57.2, 58.4) });
         const a4 = ease(seg(t, 57.25, 57.7));
-        g.save(); g.globalAlpha = a4; setFont(g, 22, "Nunito", 900); g.letterSpacing = "5px"; g.fillStyle = C.muted; g.textAlign = "left"; g.fillText("A GAME BY", cxs + 76, cys - 22); g.restore();
-        A.wordmark(g, G, Math.max(0, t - 57.15), cxs + 76 + 129, cys + 22, 258, a4);
+        g.save(); g.globalAlpha = a4; setFont(g, cd.by, "Nunito", 900); g.letterSpacing = "5px"; g.fillStyle = C.muted; g.textAlign = "left"; g.fillText("A GAME BY", cxs + gap, cys - sr / 2); g.restore();
+        A.wordmark(g, G, Math.max(0, t - 57.15), cxs + gap + cd.wm / 2, cys + sr / 2, cd.wm, a4);
         if (t < 57.4) look.shake = Math.max(look.shake || 0, .5 * (1 - seg(t, 57.0, 57.3)));
       }
     }

@@ -25,7 +25,7 @@
   const FINAL = `#version 300 es
   precision highp float; in vec2 uv; out vec4 o;
   uniform sampler2D comp, b1, b2, streak; uniform float exposure, bloom, streakAmt, contrast, sat, vig, grain, frame, fade, flash, warmth, lift;
-  uniform vec3 flashColor;
+  uniform vec3 flashColor; uniform vec2 res, vigShape;
   float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
   void main(){
     vec3 c = texture(comp, uv).rgb * exposure;
@@ -34,8 +34,8 @@
     c = (c - .5) * contrast + .5 + lift;
     float l = dot(c, vec3(.299, .587, .114)); c = mix(vec3(l), c, sat);
     c *= vec3(1. + warmth * .06, 1. + warmth * .01, 1. - warmth * .07);
-    vec2 q = (uv - .5) * vec2(1.0, .82); c *= 1. - vig * smoothstep(.28, .92, length(q) * 1.35);
-    c += (h(uv * vec2(1920., 1080.) + frame * 7.13) - .5) * grain;
+    vec2 q = (uv - .5) * vigShape; c *= 1. - vig * smoothstep(.28, .92, length(q) * 1.35);
+    c += (h(uv * res + frame * 7.13) - .5) * grain;
     c = mix(c, flashColor, flash);
     c *= 1. - fade;
     o = vec4(clamp(c, 0., 1.), 1.); }`;
@@ -91,6 +91,7 @@
       u1(P.final, "contrast", o.contrast ?? 1.04); u1(P.final, "sat", o.sat ?? 1.04); u1(P.final, "vig", o.vig ?? .35);
       u1(P.final, "grain", o.grain ?? .028); u1(P.final, "frame", o.frame || 0); u1(P.final, "fade", o.fade || 0);
       u1(P.final, "flash", o.flash || 0); u1(P.final, "warmth", o.warmth || 0); u1(P.final, "lift", o.lift || 0);
+      u2(P.final, "res", W, H); u2(P.final, "vigShape", W >= H ? 1 : .82, W >= H ? .82 : 1);
       const fc = o.flashColor || [1, .96, .86]; gl.uniform3f(gl.getUniformLocation(P.final, "flashColor"), fc[0], fc[1], fc[2]);
       draw();
     }

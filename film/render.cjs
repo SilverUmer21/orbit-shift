@@ -5,13 +5,15 @@
 const fs = require('fs'), path = require('path');
 const { chromium } = require('/opt/node-tools/node_modules/playwright');
 const FPS = 60, DUR = 60, MODE = process.argv[2] || 'render';
+// FILM_V=1 renders the vertical cut (1080 x 1920); it shares corrections.json (the game's physics don't depend on layout).
+const VERT = process.env.FILM_V === '1', VW = VERT ? 1080 : 1920, VH = VERT ? 1920 : 1080;
 async function open() {
   const browser = await chromium.launch({ args: ['--disable-gpu-vsync', '--use-angle=swiftshader', '--disable-accelerated-2d-canvas', '--disable-gpu-compositing'] });
-  const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+  const context = await browser.newContext({ viewport: { width: VW, height: VH }, deviceScaleFactor: 1 });
   await context.addInitScript({ content: `Object.defineProperty(window,'devicePixelRatio',{get:()=>window.__dpr||2.5,configurable:true});window.orbitMaxPixelRatio=8;\n` + fs.readFileSync(path.join(__dirname, 'vclock.js'), 'utf8') });
   const page = await context.newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message)); page.on('console', m => { if (m.type() === 'error' || m.text().startsWith('measure')) console.log('[page]', m.text()); });
-  await page.goto('http://127.0.0.1:3112/film/film.html');
+  await page.goto(`http://127.0.0.1:3112/film/film.html${VERT ? '?v=1' : ''}`);
   const ok = await page.evaluate(() => window.filmReady);
   if (ok !== true) throw new Error('film init failed: ' + ok);
   return { browser, page, errors };
@@ -47,7 +49,7 @@ async function open() {
       if (f % 120 === 0) console.log(`frame ${f} (${(f / FPS).toFixed(1)} s) ${((Date.now() - t0) / 1000 / Math.max(1, f - f0 + 1)).toFixed(3)} s/frame`);
     }
     const ev = await page.evaluate(() => Film.events());
-    fs.writeFileSync(path.join(out, 'events.json'), JSON.stringify({ fps: FPS, from, to, ...ev }, null, 1));
+    fs.writeFileSync(path.join(out, 'events.json'), JSON.stringify({ fps: FPS, from, to, gw: VERT ? 432 : 768, ...ev }, null, 1));
   }
   if (errors.length) console.log('page errors:', errors.slice(0, 10));
   await browser.close();

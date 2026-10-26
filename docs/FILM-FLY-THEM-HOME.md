@@ -32,6 +32,16 @@ Approved by the owner on 2026-10-22 (concept A with C's fold transitions and B's
 - **Page folds** (the studio black page at 0:04.4, Bloom → Ember at 0:27, Ember → Void at 0:34): the old frame folds in half twice and flies off. The lifting half is drawn in perspective (it comes toward the camera as it turns), its back is paper with the old world showing faintly through, and it has a lit edge and a soft shadow that widens as it lifts. Pip's letter fold at 0:15 uses the same 3D lift.
 - **Orbit iris** (into the game at 0:19.5, out of it into Moonrise at 0:44.7): no white flashes. A gold ring, the game's dashed orbit with a lit paper edge, opens from the island and later from the glider, revealing the next scene inside it, with a ring of chimes.
 
+## Vertical cut and short cuts (2026-10-26)
+
+For WhatsApp Status and Instagram Stories (also Reels, Shorts, TikTok): the same 60 s film recomposed for **1080×1920** (`FILM_V=1`), not a crop. Same story, timing, score and gameplay staging (the game's physics don't depend on the screen's shape, so every tap and perfect lands on the same beat).
+
+- The game is filmed in its own **portrait phone layout** (432×768 CSS px at 2.5×), so the planet, orbit and gates fill the frame the way players see them.
+- The Sky World is restacked for a tall frame: Old Moon larger and centred, the horizon and islands lower, more star-envelopes between them.
+- Text stays inside the story safe zone (y 250–1580, clear of the profile bar at the top and the reply bar at the bottom): gameplay captions centred above the orbit, the first line on two lines, *Fly them / home.* stacked, a larger end card.
+- Tags and fleet names are kept inside the frame and follow the glider in the same frame.
+- **Story cut, 30 s:** film 17–26 (Ready, pilot? → Bloom) · 30–34 (Express Post) · 38–50 (Void, the fleet, the last gate, Moonrise, *Fly them home.*) · 54–59 (logo and end card). **Teaser, 15 s:** 38–48 · 54–59. Every cut is on a bar line, so the groove never skips a beat (`film/cuts.py`).
+
 ## Rules for this film
 
 - Blitzedo red appears only in the opening and the closing seal, so the game keeps its own palette (Blitzedo DESIGN.md: each game keeps its own visual personality; the wordmark gets no added sparkle beyond its own animation).
